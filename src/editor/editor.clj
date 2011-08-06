@@ -2,7 +2,8 @@
           JFrame
           JPanel
           JButton
-          JOptionPane))
+          JOptionPane
+          JLabel))
 (import '(java.awt.event ActionListener))
 
 ;;; Make a button
@@ -32,3 +33,15 @@
 (def act (proxy [ActionListener] []
            (actionPerformed [event] (say-hello))))
 (.addActionListener button act)
+
+(defn counter-app []
+  (let [label (JLabel. "Counter: 0")
+        button (JButton. "Add 1")
+        panel (doto (JPanel.)
+                (.setOpaque true)
+                (.add label)
+                (.add button))]
+    (doto (JFrame. "Counter App")
+      (.setContentPane panel)
+      (.setSize 300 100)
+      (.setVisible true))))
