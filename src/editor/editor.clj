@@ -35,8 +35,12 @@
 (.addActionListener button act)
 
 (defn counter-app []
-  (let [label (JLabel. "Counter: 0")
-        button (JButton. "Add 1")
+  (let [counter (atom 0)
+        label (JLabel. "Counter: 0")
+        button (doto (JButton. "Add 1")
+                 (on-action evnt
+                            (.setText label
+                                      (str "Counter:" (swap! counter inc))))) 
         panel (doto (JPanel.)
                 (.setOpaque true)
                 (.add label)
@@ -45,3 +49,8 @@
       (.setContentPane panel)
       (.setSize 300 100)
       (.setVisible true))))
+
+(defmacro on-action [component event & body]
+  `(.~component addActionListener
+                (proxy [java.awt.event.ActionListener] []
+                  (actionPerformed [~event] ~@body))))
