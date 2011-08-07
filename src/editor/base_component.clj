@@ -25,12 +25,17 @@
 
 (deftemplate npc
   "NPC模板"
-  (object-base :asset-type NPC)
+  (object-base :category NPC)
   (placement))
 
 (deftemplate tree
   "果树模板"
-  (object-base :asset-type TREE)
+  (object-base :category TREE)
+  (placement))
+
+(deftemplate player
+  "玩家模板"
+  (object-base :category PLAYER)
   (placement))
 
 (defnpc (object-base :asset-id 10 :display-name "村长")
@@ -44,3 +49,5 @@
 (deftree (object-base :asset-id 10 :display-name "苹果树"))
 (deftree (object-base :asset-id 11 :display-name "梨树"))
 (deftree (object-base :asset-id 12 :display-name "橘子树"))
+
+(name :name)
