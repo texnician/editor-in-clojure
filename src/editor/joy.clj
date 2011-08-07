@@ -149,5 +149,5 @@
 
 (defn qsort [xs]
   (sort-parts (list xs)))
-
+(into [] (vec (map keyword '[MONDAY THUESDAY WEDNESDAY THURSDAY FRIDAY SATURDAY SUNDAY])) )
 (take 10 (qsort (mon 100)))
