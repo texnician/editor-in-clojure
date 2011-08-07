@@ -127,3 +127,27 @@
 
 (taker 10 tri-nums)
 (nthr tri-nums 99)
+(defn mon [n]
+  (take n (repeatedly #(rand-int n))))
+(mon 10)
+
+(defn sort-parts [work]
+  (lazy-seq
+   (loop [[part & parts] work]
+     (if-let [[pivot & xs] (seq part)]
+       (let [smaller? #(< % pivot)]
+         (recur (list*
+                 (filter smaller? xs)
+                 pivot
+                 (remove smaller? xs)
+                 parts)))
+       (when-let [[x & parts] parts]
+         (cons x (sort-parts parts)))))))
+
+(= (concat (list '(1 2 3) 4 '(5 6 7)) '(8 0 1))
+   (list* '(1 2 3) 4 '(5 6 7) '(8 0 1)))
+
+(defn qsort [xs]
+  (sort-parts (list xs)))
+
+(take 10 (qsort (mon 100)))
