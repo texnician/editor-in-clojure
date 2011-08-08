@@ -144,10 +144,43 @@
        (when-let [[x & parts] parts]
          (cons x (sort-parts parts)))))))
 
+(defn qsort [xs]
+  (sort-parts (list xs)))
+
 (= (concat (list '(1 2 3) 4 '(5 6 7)) '(8 0 1))
    (list* '(1 2 3) 4 '(5 6 7) '(8 0 1)))
 
-(defn qsort [xs]
-  (sort-parts (list xs)))
-(into [] (vec (map keyword '[MONDAY THUESDAY WEDNESDAY THURSDAY FRIDAY SATURDAY SUNDAY])) )
+(vec (map keyword '[MONDAY THUESDAY WEDNESDAY THURSDAY FRIDAY SATURDAY SUNDAY]))
 (take 10 (qsort (mon 100)))
+
+(map [:chthon :phthor :beowulf :grendel] '(0 3))
+
+(defn fnth [n]
+  (apply comp (cons first (take (dec n) (repeat rest)))))
+
+((fnth 5) (range 10))
+
+(map (comp keyword #(.toLowerCase %) name) '[MONDAY THUESDAY WEDNESDAY THURSDAY FRIDAY SATURDAY SUNDAY])
+(apply str (interpose "," '[a b c]))
+
+(def plays [{:band "Burial", :plays 979, :loved 9}
+            {:band "Eno", :plays 2333, :loved 15}
+            {:band "Bill Evans", :plays 979, :loved 9}
+            {:band "Magma", :plays 2665, :loved 31}])
+(def sort-by-loved-ratio (partial sort-by #(/ (:plays %) (:loved %))))
+(sort-by-loved-ratio plays)
+
+(defn columns [c]
+  (fn [x]
+    (vec (map x c))))
+
+(defn sort-by-columns [c]
+  (partial sort-by (columns c)))
+
+(some '#{c d e} '(b c d a))
+
+((sort-by-columns [:plays]) plays)
+((columns [:plays :loved :band]) '{:band "Burial", :plays 979, :loved 9})
+
+;; map, reduce, filter, for, some, repeatedly, sort-by, keep
+;; take-while, and drop-while
