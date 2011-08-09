@@ -121,3 +121,87 @@
 
 (use '[clojure.xml :as xml])
 (xml/emit d)
+
+(defmacro resolution [] `x)
+
+(def x 9)
+(let [x 109] (resolution))
+
+(defmacro awhen [expr & body]
+  `(let [~'it ~expr]
+     (when ~'it
+       (do ~@body))))
+
+(awhen [:a :b :c] (second it))
+
+(import [java.io BufferedReader InputStreamReader]
+        [java.net URL])
+
+(defn joc-www []
+  (-> "http://www.google.com" URL.
+      .openStream InputStreamReader. BufferedReader.))
+
+(let [stream (joc-www)]
+  (with-open [page stream]
+    (println (.readLine page))
+    (print "The stream will now close... "))
+  (println "but let's read from it anyway.")
+  (.readLine stream))
+
+(partition 3 '(1 2 3 4 5 6 7))
+
+
+(fn doubler
+  ([f x]
+     {:post [(= (* 2 x) %)],
+      :pre [(pos? x)]}
+     (f x)))
+
+(into '[f] '[a b c])
+
+(declare collect-bodies)
+
+(defmacro contract [name & forms]
+  (list* `defn name (collect-bodies forms)))
+
+(fn doubler
+  ([f x]
+     {:post [(= (* 2 x) %)],
+      :pre [(pos? x)]}
+     (f x)))
+
+(declare build-contract)
+
+(defn collect-bodies [forms]
+  (for [form (partition 3 forms)]
+    (build-contract form)))
+
+(defn build-contract [c]
+  (let [args (first c)]
+    (list (into '[f] args)
+          (apply merge
+                 (for [con (rest c)]
+                   (cond (= (first con) :require)
+                         (assoc {} :pre (vec (rest con)))
+                         (= (first con) :ensure)
+                         (assoc {} :post (vec (rest con)))
+                         :else (throw (Exception. (str "Unknown tag " (first con)) )))))
+          (list* 'f args))))
+
+(first '(:require (pos? x)))
+{:pre (vec (rest '(:require (pos? x) (number? x))))}
+(macroexpand-1 '(contract doubler
+          [x]
+          (:require (pos? x))
+          (:ensure (= (* 2 x) %))))
+
+(:refer-clojure :exclude [defstruct])
+(:use (clojure set xml))
+(:use [clojure.test :only (are is)])
+(:require (clojure [zip :as z]))
+(:import '(java.util Date)
+         '(java.io File))
+
+(if-let [[_, v] (find {:a nil :b 2} :a)]
+  v)
+(find {:a nil :b 2} :a)
