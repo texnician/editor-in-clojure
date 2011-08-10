@@ -26,7 +26,7 @@
 (defn get-go-component [key]
   (key *go-commponent-domain*))
 
-{:tag :go-component-meta
+(register-go-component :object-base {:tag :go-component-meta
  :attrs {:name "object-base" :comment "GameObject基本组件"}
  :content [{:tag :go-attribute
             :attrs {:name "id",
@@ -49,7 +49,8 @@
             :attrs {:name "display-name"
                     :type "string"
                     :default "Base Object"
-                    :doc "Oject的名字"}}]}
+                    :doc "Oject的名字"}}]})
+
 
 (= (name :object-base) "object-base")
 

@@ -1,6 +1,8 @@
 (require '[clojure.walk :as walk])
-(:use '[clojure.data.json :only (json-str write-json read-json)])
+(:use [clojure.data.json :only (json-str write-json read-json)])
 
+    (ns your.project.namespace
+      (:use [clojure.data.json :only (json-str write-json read-json)]))
 
 (-> 25 Math/sqrt int list)
 (clojure.walk/macroexpand-all '(->> (/ 144 12) (/ ,,, 2 3) str keyword list))
