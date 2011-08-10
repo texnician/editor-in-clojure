@@ -1,7 +1,30 @@
 (ns editor.core)
 
+(defcomponent object-base
+  "GameObject基本组件"
+  (id :type int
+      :default 0
+      :doc "object在游戏运行时唯一的id"
+      :runtime-only true)
+  (asset-type :type int
+              :default 0
+              :doc "object的asset类型"
+              :constraint asset-type-enum)
+  (asset-id :type int
+            :default 0
+            :doc "object在所属asset_type集合中的id,在所属asset_type集合中唯一")
+  (display-name :type string
+                :default "Base Object"
+                :doc "Object的名字"))
+
 (defmacro defcomponent [name & body]
   `())
+
+(defn register-in-go-component-domain [key c]
+  (assoc *go-commponent-domain* key c))
+
+(defn get-go-component [key]
+  (key *go-commponent-domain*))
 
 {:tag :go-component-meta
  :attrs {:name "object-base" :comment "GameObject基本组件"}

@@ -1,7 +1,8 @@
 (ns editor.component
   (:use (editor core)))
 
-(defcomponent object-base
+(defdomain go-commponent
+  (defcomponent object-base
   "GameObject基本组件"
   (id :type int
       :default 0
@@ -17,6 +18,7 @@
   (display-name :type string
                 :default "Base Object"
                 :doc "Object的名字"))
+  )
 
 (defattribute id
   :type int
@@ -44,7 +46,9 @@
         :portrait "arts/npc/master_02.png"
         :animation "arts/npc/master_03.gif"))
 
-(defnpc (object-base :asset-id 20 :display-name "新手引导"))
+(defnpc (object-base :asset-id 20 :display-name "新手引导"
+                     :pic-id "act/xx/.png"
+                     :))
 (defnpc (object-base :asset-id 30 :display-name "家园管理员"))
 
 (deftree (object-base :asset-id 10 :display-name "苹果树"))
