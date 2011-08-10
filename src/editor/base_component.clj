@@ -1,8 +1,28 @@
 (ns editor.component
-  (:use (editor core)))
+  (:use (editor core))
+  (:use [clojure.xml :as xml]))
 
 (defdomain go-commponent
   (defcomponent object-base
+  "GameObject基本组件"
+  (id :type int
+      :default 0
+      :doc "object在游戏运行时唯一的id"
+      :runtime-only true)
+  (asset-type :type int
+              :default 0
+              :doc "object的asset类型"
+              :constraint (in-enum :UNDEFINED :NPC :PLAYER :ITEM :PLANT))
+  (asset-id :type int
+            :default 0
+            :doc "object在所属asset_type集合中的id,在所属asset_type集合中唯一")
+  (display-name :type string
+                :default "Base Object"
+                :doc "Object的名字"))
+  )
+(into [] (vals (go-component-domain)))
+(editor.domain/go-component-domain->xml)
+(macroexpand '(defcomponent object-base
   "GameObject基本组件"
   (id :type int
       :default 0
@@ -17,9 +37,7 @@
             :doc "object在所属asset_type集合中的id,在所属asset_type集合中唯一")
   (display-name :type string
                 :default "Base Object"
-                :doc "Object的名字"))
-  )
-
+                :doc "Object的名字")))
 (defattribute id
   :type int
   :default 0
