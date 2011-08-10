@@ -1,4 +1,5 @@
-(ns component)
+(ns editor.component
+  (:use (editor domain)))
+
 (defmacro defcomponent [component & body]
-  (declare)
-  `'(~(str component)))
+  `(register-go-component ))

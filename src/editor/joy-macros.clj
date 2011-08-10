@@ -1,4 +1,6 @@
 (require '[clojure.walk :as walk])
+(:use '[clojure.data.json :only (json-str write-json read-json)])
+
 
 (-> 25 Math/sqrt int list)
 (clojure.walk/macroexpand-all '(->> (/ 144 12) (/ ,,, 2 3) str keyword list))
@@ -241,10 +243,31 @@
 (:import '(java.util Date)
          '(java.io File))
 
+
 (if-let [[_, v] (find {:a nil :b 2} :a)]
   v)
 (find {:a nil :b 2} :a)
 
+(:use (clojure data.json))
+(:use [clojure.data.json :only (json-str write-json read-json)])
+(clojure.data.json/pprint-json {:tag :go-fruit
+ :attrs {:doc "游戏中所有果实的数据"}
+ :content
+ [{:tag :go
+   :attrs {:doc "苹果"}
+   :content
+   [{:tag :go-component
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9527 :display-name "苹果"}}]}
+  {:tag :go
+   :attrs {:doc "鸭梨"}
+   :content
+   [{:tag :go-component
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9528 :display-name "鸭梨"}}]}
+  {:tag :go
+   :attrs {:doc "桃子"}
+   :content
+   [{:tag :go-component
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9529 :display-name "桃子"}}]}]} :escape-unicode false)
 (xml/emit {:tag :go-fruit
  :attrs {:doc "游戏中所有果实的数据"}
  :content
@@ -259,7 +282,11 @@
    [{:tag :go-component
      :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9528 :display-name "鸭梨"}}]}
   {:tag :go
-   :attrs {:doc "鸭梨"}
+   :attrs {:doc "桃子"}
    :content
    [{:tag :go-component
-     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9528 :display-name "桃子"}}]}]})
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9529 :display-name "桃子"}}]}]})
+
+(:Card1 + :Card2 = :Card3)
+
+(xml/emit )
