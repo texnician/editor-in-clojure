@@ -36,10 +36,10 @@
                     :runtime-only "true"}}
            {:tag :go-attribute
             :attrs {:name "asset-type"
-                    :type "int"
+                    :type enum
                     :default 0
                     :doc "objectµÄassetÀàĞÍ"
-                    :constraint [:NPC :ITEM :PLANT]}}
+                    :constraint asset-type-enum}}
            {:tag :go-attribute
             :attrs {:name "asset-id"
                     :type "int"
@@ -81,3 +81,8 @@
 
 (defmacro deftemplate [name & body]
   `())
+
+( defcomponent)
+(meta #'defcomponent)
+(ns-unmap 'editor.core 'defcomponent)
+(ns-unmap ')
