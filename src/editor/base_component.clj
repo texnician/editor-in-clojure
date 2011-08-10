@@ -1,4 +1,5 @@
-(ns component)
+(ns editor.component
+  (:use (editor core)))
 
 (defcomponent object-base
   "GameObject基本组件"
