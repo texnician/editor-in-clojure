@@ -24,3 +24,34 @@
 
 (defmulti compiler :os)
 (defmethod compiler ::unix [m] (get m :c-compiler))
+(defmethod compiler ::osx [m] (get m :c-compiler))
+
+(def clone (partial beget {}))
+(def unix {:os ::unix :c-compiler "cc" :home "/home" :dev "/dev"})
+(def osx (-> (clone unix) (put :os ::osx)
+             (put :c-compiler "gcc")
+             (put :home "/Users")))
+
+(compiler unix)
+(compiler osx)
+
+(defmulti home :os)
+(defmethod home ::unix [m] (get m :home))
+(home unix)
+(home osx)
+(derive ::osx ::unix)
+(parents ::osx)
+(ancestors ::osx)
+(isa? ::osx ::unix)
+
+(derive ::osx ::bsd)
+(defmethod home ::bsd [m] "/home")
+
+(home osx)
+
+(prefer-method home ::unix ::bsd)
+(home osx)
+
+(remove-method home ::unix)
+(remove-method home ::bsd)
+(home osx)

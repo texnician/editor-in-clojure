@@ -122,6 +122,45 @@
 (use '[clojure.xml :as xml])
 (xml/emit d)
 
+(xml/emit {:tag :go-component
+ :attrs {:name "object-base" :comment "GameObject基本组件"}
+ :content [{:tag :go-attribute
+            :attrs {:name "id",
+                    :type "int",
+                    :default 0,
+                    :doc "object在游戏运行时唯一的id"
+                    :runtime-only "true"}}
+           {:tag :go-attribute
+            :attrs {:name "asset-type"
+                    :type "int"
+                    :default 0
+                    :doc "object的asset类型"
+                    :constraint [:NPC :ITEM :PLANT]}}
+           {:tag :go-attribute
+            :attrs {:type "int"
+                    :default 0
+                    :doc "object在所属asset_type集合中的id,在所属asset_type集合中唯一"}}
+           {:tag :go-attribute
+            :attrs {:name "display-name"
+                    :type "string"
+                    :default "Base Object"
+                    :doc "Oject的名字"}}]}) 
+(xml/emit {:tag :go-fruit
+ :attrs {:doc "游戏中所有果实的数据"}
+ :content
+ [{:tag :go
+   :attrs {:doc "苹果"}
+   :content
+   [{:tag :go-component
+     :attrs {:id 0 :asset-type :FRUIT :asset-id 9527 :display-name "苹果"}}
+    {:tag :go
+     :attrs {:doc "鸭梨"}
+     :content [{:tag :go-component
+                :attrs {:id 0 :asset-type :FRUIT :asset-id 9528 :display-name "鸭梨"}}]}
+    {:tag :go
+     :attrs {:doc "鸭梨"}
+     :content [{:tag :go-component
+                :attrs {:id 0 :asset-type :FRUIT :asset-id 9528 :display-name "桃子"}}]}]}]})
 (defmacro resolution [] `x)
 
 (def x 9)
@@ -205,3 +244,22 @@
 (if-let [[_, v] (find {:a nil :b 2} :a)]
   v)
 (find {:a nil :b 2} :a)
+
+(xml/emit {:tag :go-fruit
+ :attrs {:doc "游戏中所有果实的数据"}
+ :content
+ [{:tag :go
+   :attrs {:doc "苹果"}
+   :content
+   [{:tag :go-component
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9527 :display-name "苹果"}}]}
+  {:tag :go
+   :attrs {:doc "鸭梨"}
+   :content
+   [{:tag :go-component
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9528 :display-name "鸭梨"}}]}
+  {:tag :go
+   :attrs {:doc "鸭梨"}
+   :content
+   [{:tag :go-component
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9528 :display-name "桃子"}}]}]})
