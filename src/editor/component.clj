@@ -1,32 +1,6 @@
 (ns editor.component
   (:use (editor domain)))
 
-(register-go-component :object-base
-                       {:tag :go-component-meta
-                        :attrs {:name "object-base" :comment "GameObject基本组件"}
-                        :content [{:tag :go-attribute
-                                   :attrs {:name "id",
-                                           :type "int",
-                                           :default 0,
-                                           :doc "object在游戏运行时唯一的id"
-                                           :runtime-only "true"}}
-                                  {:tag :go-attribute
-                                   :attrs {:name "asset-type"
-                                           :type "int"
-                                           :default 0
-                                           :doc "object的asset类型"
-                                           :constraint [:NPC :ITEM :PLANT]}}
-                                  {:tag :go-attribute
-                                   :attrs {:name "asset-id"
-                                           :type "int"
-                                           :default 0
-                                           :doc "object在所属asset_type集合中的id,在所属asset_type集合中唯一"}}
-                                  {:tag :go-attribute
-                                   :attrs {:name "display-name"
-                                           :type "string"
-                                           :default "Base Object"
-                                           :doc "Oject的名字"}}]})
-
 (declare build-component-body)
 
 (defmacro defcomponent [name & body]
