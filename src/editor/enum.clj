@@ -27,9 +27,6 @@
   "Get enum value of sym."
   `((global-enum-map ~enum) ~(keyword sym)))
 
-
-(let [[v & k] [:a 1 2 3 4]]
-  (println v k))
 (defmacro defenum [name & body]
   (let [name-str (str name)
         [doc & enums] (if (string? (first body))
