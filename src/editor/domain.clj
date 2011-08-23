@@ -12,6 +12,6 @@
          (defn ~register-name [~'key ~'val]
            (let [~'new-domain (assoc (~domain-name) ~'key ~'val)]
              (def ~domain-name (fn [] ~'new-domain)))))))
-(go-component-domain->xml)
-(macroexpand-1 '(defdomain go-component))
-(defdomain go-template)
+
+(defdomain go-component)
+(defdomain global-enum)

@@ -52,7 +52,7 @@
                     :doc "Oject的名字"}}]})
 
 
-(= (name :object-base) "object-base")
+(= (Name :object-base) "object-base")
 
 {:tag :go-template
  :attrs {:name "fruit" :comment "果实的模板"}

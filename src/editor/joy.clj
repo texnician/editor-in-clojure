@@ -73,10 +73,14 @@
   (cond (map? coll) (seq coll)
         (set? coll) (map #(vector % %) coll)
         :else (map vector (iterate inc 0) coll)))
+
+(seq (array-map :NPC 0 :PLANT 1 :PLAYER 2))
+(contains?  :NPC)
+(index #{:a :b :c :d})
 (defn pos [pred coll]
   (for [[i v] (index coll) :when (pred v)] i))
 (:a {:a 1 :b 2 :c 3})
-(pos #(= % 3) [:a 1 :b 2 :c 3 :d 4])
+(pos #(= % 3) [:a 1 :b 2 :c 3 :d 4 3])
 (pos 3 {:a 1 :b 2 :c 3 :d 3})
 
 (defn xconj [t v]
