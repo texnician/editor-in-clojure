@@ -69,7 +69,7 @@
 ;;                        :content ["(Unamed)"]}]}
 
 (defn make-component-node [comp-key & attrs]
-  "生成一个component节点"
+  "根据component name 生成一个component节点"
   (if-let [comp-meta-node ((go-component-domain) comp-key)]
     (let [comp-meta (make-meta-comp comp-meta-node)
           meta-attrs (comp-meta :attributes)]
