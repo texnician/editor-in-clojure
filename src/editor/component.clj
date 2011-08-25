@@ -5,7 +5,7 @@
 
 (defmacro defcomponent [name & body]
   `(register-go-component ~(keyword name)
-                          {:tag :go-component
+                          {:tag :meta-go-component
                            :attrs {:name ~(str name)
                                    :doc ~(if (string? (first body))
                                            (first body) "No doc")}
@@ -27,49 +27,53 @@
       acc
       (recur (conj acc (build-attribute (first l))) (rest l)))))
 
-;; [{:tag :go-attribute, :attrs {:name "id", :type "int", :default 0, :doc "DomainÄÚµÄÎ¨Ò»id"}}
-;;              {:tag :go-attribute, :attrs {:name "name", :type "string", :default "(unamed object)", :doc "ObjectµÄÃû×Ö"}}]
+;; [{:tag :go-attribute, :attrs {:name "id", :type "int", :default 0, :doc "Domainå†…çš„å”¯ä¸€id"}}
+;;              {:tag :go-attribute, :attrs {:name "name", :type "string", :default "(unamed object)", :doc "Objectçš„åå­—"}}]
 
 ;; {:id {:type "int"
 ;;       :default 0
-;;       :doc "DomainÄÚµÄÎ¨Ò»id"}
+;;       :doc "Domainå†…çš„å”¯ä¸€id"}
 ;;  :name {:type "string"
 ;;         :default "(unamed object)"
-;;         :doc "ObjectµÄÃû×Ö"}}
+;;         :doc "Objectçš„åå­—"}}
 
 (defn make-meta-attributes [meta-attribute-node]
-  "¸ù¾İmeta-attribute-nodeÉú³Émeta-attributes"
+  "æ ¹æ®meta-attribute-nodeç”Ÿæˆmeta-attributes"
   (if-let [attr-maps (map :attrs meta-attribute-node)]
     (into {} (map (fn [entry]
                     [(keyword (entry :name)) (dissoc entry :name)])
                   attr-maps))))
 
 ;; {:name "base"
-;;  :doc "ObjectµÄÃû×Ö"
+;;  :doc "Objectçš„åå­—"
 ;;  :attributes {:id {:type "int"
 ;;                    :default 0
-;;                    :doc "DomainÄÚµÄÎ¨Ò»id"}
+;;                    :doc "Domainå†…çš„å”¯ä¸€id"}
 ;;               :name {:type "string"
 ;;                      :default "(unamed object)"
-;;                      :doc "ObjectµÄÃû×Ö"}}}
+;;                      :doc "Objectçš„åå­—"}}}
 
 (defn make-meta-comp [meta-node]
-  "¸ù¾İgo-component-domainÖĞµÄcomponent nodeÉú³ÉÒ»¸ömeta component"
+  "æ ¹æ®go-component-domainä¸­çš„component nodeç”Ÿæˆä¸€ä¸ªmeta component"
   (assoc (meta-node :attrs) :attributes (make-meta-attributes (meta-node :content))))
 
-;; {:content [{:tag :go-attribute, :attrs {:name "id", :type "int", :default 0, :doc "DomainÄÚµÄÎ¨Ò»id"}} {:tag :go-attribute, :attrs {:name "name", :type "string", :default "(unamed object)", :doc "ObjectµÄÃû×Ö"}}], :attrs {:name "base", :doc "Game object»ù±¾×é¼ş"}, :tag :go-component}
+(defn component-attribute-keys [comp-key]
+  "è¿”å›ä¸€ä¸ªcomponentæ‰€æœ‰çš„attribute key"
+  (-> ((go-component-domain) comp-key) make-meta-comp :attributes keys))
+
+;; {:content [{:tag :go-attribute, :attrs {:name "id", :type "int", :default 0, :doc "Domainå†…çš„å”¯ä¸€id"}} {:tag :go-attribute, :attrs {:name "name", :type "string", :default "(unamed object)", :doc "Objectçš„åå­—"}}], :attrs {:name "base", :doc "Game objectåŸºæœ¬ç»„ä»¶"}, :tag :go-component}
 
 ;; {:tag :go-component
-;;             :attrs {:name "base" :doc "»ù±¾×é¼ş"}
+;;             :attrs {:name "base" :doc "åŸºæœ¬ç»„ä»¶"}
 ;;             :content [{:tag :id
-;;                        :attrs {:type "int" :doc "DomainÄÚµÄÎ¨Ò»id"}
+;;                        :attrs {:type "int" :doc "Domainå†…çš„å”¯ä¸€id"}
 ;;                        :content ["0"]}
 ;;                       {:tag :name
-;;                        :attrs {:type "string" :doc "ObjectµÄÃû×Ö"}
+;;                        :attrs {:type "string" :doc "Objectçš„åå­—"}
 ;;                        :content ["(Unamed)"]}]}
 
 (defn make-component-node [comp-key & attr-vals]
-  "¸ù¾İcomponent name Éú³ÉÒ»¸öcomponent½Úµã"
+  "æ ¹æ®component name ç”Ÿæˆä¸€ä¸ªcomponentèŠ‚ç‚¹"
   (if-let [comp-meta-node ((go-component-domain) comp-key)]
     (let [comp-meta (make-meta-comp comp-meta-node)
           meta-attrs (comp-meta :attributes)]
@@ -85,3 +89,6 @@
                                           [(str default)]
                                           nil))
                                       }) meta-attrs))})))
+
+(defn component-attr-keys [comp-key]
+  )
