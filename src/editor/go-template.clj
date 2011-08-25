@@ -33,22 +33,37 @@
                       {:tag :item-lifetime,
                        :attrs {:type "int", :default 0, :doc "物品的存在时间，0表示无限制"},
                        :content ["10"]}]}
+           ]}
+
+{:base {:id ""}
+ :item-base {max-own-num ""}}
+[{:tag :go-component,
+  :attrs {:name "base"},
+  :content [{:tag :id,
+             :content ["0"]}
+            {:tag :name,
+             :content ["未命名的果实"]}]}
+ {:tag :go-component,
+  :attrs {:name "item-base"},
+  :content [{:tag :max-own-num,
+             :content ["99999"]}
+            {:tag :item-lifetime,
+             :content ["10"]}]}
+ ]
+
+{:tag :fruit
+ :attrs {:id 2 :name "鸭梨"}
+ :content [{:tag :go-component,
+            :attrs {:name "base"},
+            :content [{:tag :id,
+                       :content ["2"]}
+                      {:tag :name,
+                       :content ["鸭梨"]}]}
            {:tag :go-component,
-            :attrs {:name "trade", :doc "交易相关的组件"},
-            :content [{:tag :is-tradable,
-                       :attrs {:type "bool", :default true, :doc "是否可以交易"},
-                       :content ["true"]}
-                      {:tag :buy-price,
-                       :attrs {:type "int", :default 0, :doc "购买价格"},
-                       :content ["0"]}
-                      {:tag :sell-price,
-                       :attrs {:type "int", :default 0, :doc "回收价格"},
-                       :content ["0"]}
-                      {:tag :repair-price,
-                       :attrs {:type "int", :default 0, :doc "修理价格"},
-                       :content ["0"]}
-                      {:tag :is-gift,
-                       :attrs {:type "bool", :default true, :doc "是否可以赠送"},
-                       :content ["true"]}]}]}
+            :attrs {:name "item-base"},
+            :content [{:tag :max-own-num,
+                       :content ["99"]}
+                      {:tag :item-lifetime,
+                       :content ["0"]}]}]}
 
 (deffruit :id 2 :name "鸭梨" :max-own-num 99)

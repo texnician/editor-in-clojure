@@ -1,4 +1,5 @@
-(ns editor.component
+(ns editor.base-component
+  (:use (editor component))
   (:use (editor core))
   (:use [clojure.xml :as xml]))
 
