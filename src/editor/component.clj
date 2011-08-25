@@ -75,13 +75,13 @@
           meta-attrs (comp-meta :attributes)]
       {:tag :go-component
        :attrs {:name (comp-meta :name) :doc (comp-meta :doc)}
-       :conent (apply vector (map (fn [x]
-                                    {:tag (first x)
-                                     :attrs (second x)
-                                     :content
-                                     (if-let [v ((first x) (peek attr-vals))]
-                                       [(str v)]
-                                       (if-let [default ((second x) :default)]
-                                         [(str default)]
-                                         nil))
-                                     }) meta-attrs))})))
+       :content (apply vector (map (fn [x]
+                                     {:tag (first x)
+                                      :attrs (second x)
+                                      :content
+                                      (if-let [v ((first x) (peek attr-vals))]
+                                        [(str v)]
+                                        (if-let [default ((second x) :default)]
+                                          [(str default)]
+                                          nil))
+                                      }) meta-attrs))})))
