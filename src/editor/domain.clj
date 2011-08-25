@@ -15,3 +15,5 @@
 
 (defdomain go-component)
 (defdomain global-enum)
+(defdomain go-template)
+(defdomain fruits)

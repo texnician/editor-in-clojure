@@ -31,7 +31,7 @@
   (let [name-str (str name)
         [doc & enums] (if (string? (first body))
                         body
-                        (conj "" body))]
+                        (conj body ""))]
     `(register-global-enum ~(keyword name)
                            (build-enum-body ~name-str ~doc ~@(map (fn [x]
                                                                     `'~x) enums)))))
