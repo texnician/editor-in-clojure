@@ -55,7 +55,7 @@
               (rest enums)))))
 
 (defenum asset-type-enum
-  "Asset类型枚举"
+  "Asset绫诲瀷鏋氫妇"
   UNDEFINED
   NPC
   PLAYER
@@ -63,7 +63,7 @@
   ITEMS
   MAPS)
 
-(register-global-enum :asset-type-enum {:tag :global-enum :attrs {:name "asset-type-enum" :doc "Asset类型枚举"}
+(register-global-enum :asset-type-enum {:tag :global-enum :attrs {:name "asset-type-enum" :doc "Asset绫诲瀷鏋氫妇"}
                                         :content [{:tag :item :attrs {:name "UNDEFINED"} :content ["0"]}
                                                   {:tag :item :attrs {:name "NPC"} :content ["1"]}
                                                   {:tag :item :attrs {:name "PLAYER"} :content ["2"]}

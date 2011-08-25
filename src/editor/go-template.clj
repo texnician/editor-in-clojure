@@ -1,48 +1,78 @@
 (ns editor.go-template
-  (:use (editor template)))
+  (:use (editor template))
+  (:use (editor component))
+  (:use (editor go-component)))
 
 (deftemplate fruit
-  "¹ûÊµµÄÄ£°å"
-  (base :name "Î´ÃüÃûµÄ¹ûÊµ")
+  "æœå®çš„æ¨¡æ¿"
+  (base :name "æœªå‘½åçš„æœå®")
   (item-base :item-lifetime 10)
   (trade))
 
 (deftemplate seed
-  "ÖÖ×ÓµÄÄ£°å"
-  (base :name "Î´ÃüÃûµÄÖÖ×Ó")
+  "ç§å­çš„æ¨¡æ¿"
+  (base :name "æœªå‘½åçš„ç§å­")
   (item-base :item-lifetime 3)
   (seeding))
 
-(deffruit :id 1 :name "Æ»¹û" :max-own-num 99)
+(deffruit :id 1 :name "è‹¹æœ" :max-own-num 99)
 
-{:tag :go-template,
- :attrs {:name "fruit", :doc "¹ûÊµµÄÄ£°å"},
+(def *sample-template* {:tag :go-template,
+ :attrs {:name "fruit", :doc "æœå®çš„æ¨¡æ¿"},
  :content [{:tag :go-component,
-            :attrs {:name "base", :doc "Game object»ù±¾×é¼ş"},
+            :attrs {:name "base", :doc "Game objectåŸºæœ¬ç»„ä»¶"},
             :content [{:tag :id,
-                       :attrs {:type "int", :default 0, :doc "DomainÄÚµÄÎ¨Ò»id"},
+                       :attrs {:type "int", :default 0, :doc "Domainå†…çš„å”¯ä¸€id"},
                        :content ["0"]}
                       {:tag :name,
-                       :attrs {:type "string", :default "(unamed object)", :doc "ObjectµÄÃû×Ö"},
-                       :content ["Î´ÃüÃûµÄ¹ûÊµ"]}]}
+                       :attrs {:type "string", :default "(unamed object)", :doc "Objectçš„åå­—"},
+                       :content ["æœªå‘½åçš„æœå®"]}]}
            {:tag :go-component,
-            :attrs {:name "item-base", :doc "ÎïÆ·µÄ»ù±¾ÊôĞÔ"},
+            :attrs {:name "item-base", :doc "ç‰©å“çš„åŸºæœ¬å±æ€§"},
             :content [{:tag :max-own-num,
-                       :attrs {:type "int", :default 99999, :doc "ÎïÆ·µÄ×î´ó³ÖÓĞÊıÁ¿"},
+                       :attrs {:type "int", :default 99999, :doc "ç‰©å“çš„æœ€å¤§æŒæœ‰æ•°é‡"},
                        :content ["99999"]}
                       {:tag :item-lifetime,
-                       :attrs {:type "int", :default 0, :doc "ÎïÆ·µÄ´æÔÚÊ±¼ä£¬0±íÊ¾ÎŞÏŞÖÆ"},
+                       :attrs {:type "int", :default 0, :doc "ç‰©å“çš„å­˜åœ¨æ—¶é—´ï¼Œ0è¡¨ç¤ºæ— é™åˆ¶"},
                        :content ["10"]}]}
-           ]}
+           ]})
+(defn- extract-attribute-key [node]
+  (:tag node))
+
+(defn- extract-attribute-value [node]
+  (-> node :content first))
+
+(defn- extract-attribute-list [attr-nodes]
+  (into {} (map (fn [c]
+                [(extract-attribute-key c) (extract-attribute-value c)]) attr-nodes)))
+
+(defn make-concrete-template [template-node]
+  (into {} (map (fn [x]
+                  [(-> x :attrs :name keyword)
+                   (if-let [content (:content x)]
+                     (extract-attribute-list content))]) (:content template-node))))
+
+(def *sample-concrete-template* (make-concrete-template *sample-template*))
+
+(defn find-attribute-component [attr-key comps]
+  (some (fn [x]
+          (if (contains? (set (component-attribute-keys x)) attr-key)
+            x)) comps))
+
+(defn assoc-concrete-attribute-value [concrete-template attr-key value]
+  (let [comp-key (find-attribute-component attr-key (keys concrete-template))
+        comp-attrs (concrete-template comp-key)]
+    (assoc concrete-template comp-key (assoc comp-attrs attr-key value))))
 
 {:base {:id ""}
- :item-base {max-own-num ""}}
+ :item-base {:max-own-num ""}}
+
 [{:tag :go-component,
   :attrs {:name "base"},
   :content [{:tag :id,
              :content ["0"]}
             {:tag :name,
-             :content ["Î´ÃüÃûµÄ¹ûÊµ"]}]}
+             :content ["æœªå‘½åçš„æœå®"]}]}
  {:tag :go-component,
   :attrs {:name "item-base"},
   :content [{:tag :max-own-num,
@@ -52,13 +82,13 @@
  ]
 
 {:tag :fruit
- :attrs {:id 2 :name "Ñ¼Àæ"}
+ :attrs {:id 2 :name "é¸­æ¢¨"}
  :content [{:tag :go-component,
             :attrs {:name "base"},
             :content [{:tag :id,
                        :content ["2"]}
                       {:tag :name,
-                       :content ["Ñ¼Àæ"]}]}
+                       :content ["é¸­æ¢¨"]}]}
            {:tag :go-component,
             :attrs {:name "item-base"},
             :content [{:tag :max-own-num,
@@ -66,4 +96,4 @@
                       {:tag :item-lifetime,
                        :content ["0"]}]}]}
 
-(deffruit :id 2 :name "Ñ¼Àæ" :max-own-num 99)
+(deffruit :id 2 :name "é¸­æ¢¨" :max-own-num 99)

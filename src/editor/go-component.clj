@@ -2,28 +2,28 @@
   (:use (editor component)))
 
 (defcomponent base
-  "Game object»ù±¾×é¼ş"
-  (id :type int :default 0 :doc "DomainÄÚµÄÎ¨Ò»id")
-  (name :type string :default "(unamed object)" :doc "ObjectµÄÃû×Ö"))
+  "Game objectåŸºæœ¬ç»„ä»¶"
+  (id :type int :default 0 :doc "Domainå†…çš„å”¯ä¸€id")
+  (name :type string :default "(unamed object)" :doc "Objectçš„åå­—"))
 
 (defcomponent item-base
-  "ÎïÆ·µÄ»ù±¾ÊôĞÔ"
-  (max-own-num :type int :default 99999 :doc "ÎïÆ·µÄ×î´ó³ÖÓĞÊıÁ¿")
-  (item-lifetime :type int :default 0 :doc "ÎïÆ·µÄ´æÔÚÊ±¼ä£¬0±íÊ¾ÎŞÏŞÖÆ"))
+  "ç‰©å“çš„åŸºæœ¬å±æ€§"
+  (max-own-num :type int :default 99999 :doc "ç‰©å“çš„æœ€å¤§æŒæœ‰æ•°é‡")
+  (item-lifetime :type int :default 0 :doc "ç‰©å“çš„å­˜åœ¨æ—¶é—´ï¼Œ0è¡¨ç¤ºæ— é™åˆ¶"))
 
 (defcomponent seeding
-  "ÖÖ×ÓÊôĞÔ×é¼ş"
-  (fruit-id :type int :default 0 :doc "¹ûÊµid" :reference fruits-domain))
+  "ç§å­å±æ€§ç»„ä»¶"
+  (fruit-id :type int :default 0 :doc "æœå®id" :reference fruits-domain))
 
 (defcomponent trade
-  "½»Ò×Ïà¹ØµÄ×é¼ş"
-  (is-tradable :type bool :default true :doc "ÊÇ·ñ¿ÉÒÔ½»Ò×")
-  (buy-price :type int :default 0 :doc "¹ºÂò¼Û¸ñ")
-  (sell-price :type int :default 0 :doc "»ØÊÕ¼Û¸ñ")
-  (repair-price :type int :default 0 :doc "ĞŞÀí¼Û¸ñ")
-  (is-gift :type bool :default true :doc "ÊÇ·ñ¿ÉÒÔÔùËÍ"))
+  "äº¤æ˜“ç›¸å…³çš„ç»„ä»¶"
+  (is-tradable :type bool :default true :doc "æ˜¯å¦å¯ä»¥äº¤æ˜“")
+  (buy-price :type int :default 0 :doc "è´­ä¹°ä»·æ ¼")
+  (sell-price :type int :default 0 :doc "å›æ”¶ä»·æ ¼")
+  (repair-price :type int :default 0 :doc "ä¿®ç†ä»·æ ¼")
+  (is-gift :type bool :default true :doc "æ˜¯å¦å¯ä»¥èµ é€"))
 
 (defcomponent vip-item
-  "VIPÎïÆ·Ïà¹Ø×é¼ş"
-  (vip-level :type int :default 0 :doc "VIPÏŞ¹ºµÈ¼¶")
-  (vip-only :type bool :default false :doc "ÊÇ·ñVIP×¨Êô"))
+  "VIPç‰©å“ç›¸å…³ç»„ä»¶"
+  (vip-level :type int :default 0 :doc "VIPé™è´­ç­‰çº§")
+  (vip-only :type bool :default false :doc "æ˜¯å¦VIPä¸“å±"))
