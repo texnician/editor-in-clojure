@@ -44,8 +44,6 @@
                     [(keyword (entry :name)) (dissoc entry :name)])
                   attr-maps))))
 
-;; {:content [{:tag :go-attribute, :attrs {:name "id", :type "int", :default 0, :doc "Domain内的唯一id"}} {:tag :go-attribute, :attrs {:name "name", :type "string", :default "(unamed object)", :doc "Object的名字"}}], :attrs {:name "base", :doc "Game object基本组件"}, :tag :go-component}
-
 ;; {:name "base"
 ;;  :doc "Object的名字"
 ;;  :attributes {:id {:type "int"
@@ -59,6 +57,8 @@
   "根据go-component-domain中的component node生成一个meta component"
   (assoc (meta-node :attrs) :attributes (make-meta-attributes (meta-node :content))))
 
+;; {:content [{:tag :go-attribute, :attrs {:name "id", :type "int", :default 0, :doc "Domain内的唯一id"}} {:tag :go-attribute, :attrs {:name "name", :type "string", :default "(unamed object)", :doc "Object的名字"}}], :attrs {:name "base", :doc "Game object基本组件"}, :tag :go-component}
+
 ;; {:tag :go-component
 ;;             :attrs {:name "base" :doc "基本组件"}
 ;;             :content [{:tag :id
@@ -68,18 +68,20 @@
 ;;                        :attrs {:type "string" :doc "Object的名字"}
 ;;                        :content ["(Unamed)"]}]}
 
-(defn make-component-node [comp-key & attrs]
+(defn make-component-node [comp-key & attr-vals]
   "根据component name 生成一个component节点"
   (if-let [comp-meta-node ((go-component-domain) comp-key)]
     (let [comp-meta (make-meta-comp comp-meta-node)
           meta-attrs (comp-meta :attributes)]
       {:tag :go-component
        :attrs {:name (comp-meta :name) :doc (comp-meta :doc)}
-       :conent (map (fn [x]
-                      {:tag (first x)
-                       :attrs (second x)
-                       :content
-                       (if-let [v ((second x) :default)]
-                         [(str v)]
-                         nil)
-                       }) meta-attrs)})))
+       :conent (apply vector (map (fn [x]
+                                    {:tag (first x)
+                                     :attrs (second x)
+                                     :content
+                                     (if-let [v ((first x) (peek attr-vals))]
+                                       [(str v)]
+                                       (if-let [default ((second x) :default)]
+                                         [(str default)]
+                                         nil))
+                                     }) meta-attrs))})))
