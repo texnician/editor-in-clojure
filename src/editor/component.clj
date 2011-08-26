@@ -1,15 +1,13 @@
 (ns editor.component
   (:use (editor domain)))
 
-(declare build-component-body)
-
 (defmacro defcomponent [name & body]
-  `(register-go-component ~(keyword name)
-                          {:tag :meta-go-component
-                           :attrs {:name ~(str name)
-                                   :doc ~(if (string? (first body))
-                                           (first body) "No doc")}
-                           :content (build-attribute-list '~(rest body))}))
+  `(register-in-domain :meta-go-component ~(keyword name)
+                       {:tag :meta-go-component
+                        :attrs {:name ~(str name)
+                                :doc ~(if (string? (first body))
+                                        (first body) "No doc")}
+                        :content (build-attribute-list '~(rest body))}))
 
 (defn- fix-attribute-meta-data [x]
   (if-let [[key v] x]
@@ -53,13 +51,14 @@
 ;;                      :default "(unamed object)"
 ;;                      :doc "Object的名字"}}}
 
-(defn make-meta-comp [meta-node]
-  "根据go-component-domain中的component node生成一个meta component"
-  (assoc (meta-node :attrs) :attributes (make-meta-attributes (meta-node :content))))
+(defn make-meta-comp [comp-key]
+  "根据go-component-domain中的component key生成一个meta component"
+  (if-let [meta-node ((get-domain :meta-go-component) comp-key)]
+    (assoc (meta-node :attrs) :attributes (make-meta-attributes (meta-node :content)))))
 
 (defn component-attribute-keys [comp-key]
   "返回一个component所有的attribute key"
-  (-> ((go-component-domain) comp-key) make-meta-comp :attributes keys))
+  (-> comp-key make-meta-comp :attributes keys))
 
 ;; {:content [{:tag :go-attribute, :attrs {:name "id", :type "int", :default 0, :doc "Domain内的唯一id"}} {:tag :go-attribute, :attrs {:name "name", :type "string", :default "(unamed object)", :doc "Object的名字"}}], :attrs {:name "base", :doc "Game object基本组件"}, :tag :go-component}
 
@@ -74,9 +73,8 @@
 
 (defn make-component-node [comp-key & attr-vals]
   "根据component name 生成一个component节点"
-  (if-let [comp-meta-node ((go-component-domain) comp-key)]
-    (let [comp-meta (make-meta-comp comp-meta-node)
-          meta-attrs (comp-meta :attributes)]
+  (if-let [comp-meta (make-meta-comp comp-key)]
+    (let [meta-attrs (comp-meta :attributes)]
       {:tag :go-component
        :attrs {:name (comp-meta :name) :doc (comp-meta :doc)}
        :content (apply vector (map (fn [x]
@@ -90,5 +88,23 @@
                                           nil))
                                       }) meta-attrs))})))
 
-(defn component-attr-keys [comp-key]
-  )
+(defn get-attribute-meta-info [comp-key attr-key attr-key-set]
+  "返回attribute的meta info, :doc :type 等等, attr-key-set为要查询的key set, 例如#{:doc :type}"
+  (if-let [comp-meta (make-meta-comp comp-key)]
+    (let [attributes (comp-meta :attributes)]
+      (into {} (filter #(-> % second nil? not) (map (fn [x]
+                                         [x (-> attributes attr-key x)]) attr-key-set))))))
+
+(defn make-inspect-table-rows [comp-key]
+  "返回适用于clojure/inspect-table格式的表"
+  (if-let [comp-meta (make-meta-comp comp-key)]
+    (let [comp-name (comp-meta :name)
+          attributes (comp-meta :attributes)]
+      (apply vector (map (fn [x]
+                           (if-let [meta-attr (second x)]
+                             [(-> x first name) (:doc meta-attr) (:default meta-attr) (:type meta-attr)  comp-name]))
+                         attributes)))))
+
+;; Local Variables:
+;; coding: utf-8
+;; End:
