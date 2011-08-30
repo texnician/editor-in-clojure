@@ -1,4 +1,11 @@
-(ns editor.core)
+(ns editor.core
+  (:use (clojure pprint)))
+
+(defn print1 [obj & writer]
+  (if-let [w (first writer)]
+    (pprint obj w)
+    (pprint obj))
+  (flush))
 
 (declare collect-bodies)
 
@@ -23,6 +30,7 @@
                     (assoc {} :post (vec (rest con)))
                     :else (throw (Exception. (str "Unknown tag " (first con)))))))
      (list* 'f args))))
+
 
 (def doubler-contract
   (contract doubler

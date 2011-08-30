@@ -49,7 +49,7 @@
       (.setContentPane panel)
       (.setSize 300 100)
       (.setVisible true))))
-(counter-app)
+
 (defmacro on-action [component event & body]
   `(.~component addActionListener
                 (proxy [java.awt.event.ActionListener] []

@@ -76,7 +76,7 @@
             (:require (keyword? attr-key)
                       (not-empty comps)
                       (every? keyword comps))
-            (:ensure (and (str "属性不存在:" attr-key) (keyword? %)))))
+            (:ensure (and "属性不存在" (keyword? %)))))
 
 (defn find-attribute-component [attr-key comps]
   (some (fn [x]
