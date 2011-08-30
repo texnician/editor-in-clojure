@@ -1,5 +1,5 @@
 (ns editor.template
-  (:use (editor domain component)))
+  (:use (editor domain component core)))
 
 ;; {:tag :go-template
 ;;  :attrs {:name "fruit" :doc "果实的模板"}
@@ -33,7 +33,7 @@
 ;;                                                  '(:base ) '(:item-base {:item-lifetime 10}) '(:trade)))
 
 (declare register-go)
-
+(some #{:f} '(:a :b :c :d))
 (defmacro deftemplate [temp-name & body]
   (let [key-name (keyword temp-name)
         [doc & comp-list] (if (string? (first body))
@@ -46,6 +46,8 @@
                                                                  (list (apply array-map attr-vals))
                                                                  nil) (keyword (first x)))) comp-list)))
          (defn ~(symbol (str "def" (str temp-name))) [& ~'vals]
+           {:pre [(-> ~'vals count even?)
+                  (some #{:id} ~'vals)]}
            (register-go ~key-name (apply array-map ~'vals))))))
 
 (defn- extract-attribute-key [node]
@@ -69,18 +71,25 @@
   (if-let [template-node ((get-domain :go-template) template-key)]
     (node->concrete-object template-node)))
 
+(def input-attribute-contract
+  (contract input-attribute [attr-key comps]
+            (:require (keyword? attr-key)
+                      (not-empty comps)
+                      (every? keyword comps))
+            (:ensure (and (str "属性不存在:" attr-key) (keyword? %)))))
+
 (defn find-attribute-component [attr-key comps]
   (some (fn [x]
           (if (contains? (set (component-attribute-keys x)) attr-key)
             x)) comps))
 
 (defn assoc-concrete-attribute-value [concrete-template attr-key value]
-  (let [comp-key (find-attribute-component attr-key (keys concrete-template))
+  (let [comp-key ((partial input-attribute-contract find-attribute-component) attr-key (keys concrete-template))
         comp-attrs (concrete-template comp-key)]
     (assoc concrete-template comp-key (assoc comp-attrs attr-key value))))
 
 (defn get-attribute-value [obj attr-key]
-  (let [comp-key (find-attribute-component attr-key (keys obj)) 
+  (let [comp-key ((partial input-attribute-contract find-attribute-component) attr-key (keys obj)) 
         comp-attrs (obj comp-key)]
     (attr-key comp-attrs)))
 
