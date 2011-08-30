@@ -127,44 +127,44 @@
 (xml/emit d)
 
 (xml/emit {:tag :go-component
- :attrs {:name "object-base" :comment "GameObject»ù±¾×é¼ş"}
+ :attrs {:name "object-base" :comment "GameObjectåŸºæœ¬ç»„ä»¶"}
  :content [{:tag :go-attribute
             :attrs {:name "id",
                     :type "int",
                     :default 0,
-                    :doc "objectÔÚÓÎÏ·ÔËĞĞÊ±Î¨Ò»µÄid"
+                    :doc "objectåœ¨æ¸¸æˆè¿è¡Œæ—¶å”¯ä¸€çš„id"
                     :runtime-only "true"}}
            {:tag :go-attribute
             :attrs {:name "asset-type"
                     :type "int"
                     :default 0
-                    :doc "objectµÄassetÀàĞÍ"
+                    :doc "objectçš„assetç±»å‹"
                     :constraint [:NPC :ITEM :PLANT]}}
            {:tag :go-attribute
             :attrs {:type "int"
                     :default 0
-                    :doc "objectÔÚËùÊôasset_type¼¯ºÏÖĞµÄid,ÔÚËùÊôasset_type¼¯ºÏÖĞÎ¨Ò»"}}
+                    :doc "objectåœ¨æ‰€å±asset_typeé›†åˆä¸­çš„id,åœ¨æ‰€å±asset_typeé›†åˆä¸­å”¯ä¸€"}}
            {:tag :go-attribute
             :attrs {:name "display-name"
                     :type "string"
                     :default "Base Object"
-                    :doc "OjectµÄÃû×Ö"}}]}) 
+                    :doc "Ojectçš„åå­—"}}]}) 
 (xml/emit {:tag :go-fruit
- :attrs {:doc "ÓÎÏ·ÖĞËùÓĞ¹ûÊµµÄÊı¾İ"}
+ :attrs {:doc "æ¸¸æˆä¸­æ‰€æœ‰æœå®çš„æ•°æ®"}
  :content
  [{:tag :go
-   :attrs {:doc "Æ»¹û"}
+   :attrs {:doc "è‹¹æœ"}
    :content
    [{:tag :go-component
-     :attrs {:id 0 :asset-type :FRUIT :asset-id 9527 :display-name "Æ»¹û"}}
+     :attrs {:id 0 :asset-type :FRUIT :asset-id 9527 :display-name "è‹¹æœ"}}
     {:tag :go
-     :attrs {:doc "Ñ¼Àæ"}
+     :attrs {:doc "é¸­æ¢¨"}
      :content [{:tag :go-component
-                :attrs {:id 0 :asset-type :FRUIT :asset-id 9528 :display-name "Ñ¼Àæ"}}]}
+                :attrs {:id 0 :asset-type :FRUIT :asset-id 9528 :display-name "é¸­æ¢¨"}}]}
     {:tag :go
-     :attrs {:doc "Ñ¼Àæ"}
+     :attrs {:doc "é¸­æ¢¨"}
      :content [{:tag :go-component
-                :attrs {:id 0 :asset-type :FRUIT :asset-id 9528 :display-name "ÌÒ×Ó"}}]}]}]})
+                :attrs {:id 0 :asset-type :FRUIT :asset-id 9528 :display-name "æ¡ƒå­"}}]}]}]})
 (defmacro resolution [] `x)
 
 (def x 9)
@@ -253,42 +253,38 @@
 (:use (clojure data.json))
 (:use [clojure.data.json :only (json-str write-json read-json)])
 (clojure.data.json/pprint-json {:tag :go-fruit
- :attrs {:doc "ÓÎÏ·ÖĞËùÓĞ¹ûÊµµÄÊı¾İ"}
+ :attrs {:doc "æ¸¸æˆä¸­æ‰€æœ‰æœå®çš„æ•°æ®"}
  :content
  [{:tag :go
-   :attrs {:doc "Æ»¹û"}
+   :attrs {:doc "è‹¹æœ"}
    :content
    [{:tag :go-component
-     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9527 :display-name "Æ»¹û"}}]}
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9527 :display-name "è‹¹æœ"}}]}
   {:tag :go
-   :attrs {:doc "Ñ¼Àæ"}
+   :attrs {:doc "é¸­æ¢¨"}
    :content
    [{:tag :go-component
-     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9528 :display-name "Ñ¼Àæ"}}]}
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9528 :display-name "é¸­æ¢¨"}}]}
   {:tag :go
-   :attrs {:doc "ÌÒ×Ó"}
+   :attrs {:doc "æ¡ƒå­"}
    :content
    [{:tag :go-component
-     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9529 :display-name "ÌÒ×Ó"}}]}]} :escape-unicode false)
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9529 :display-name "æ¡ƒå­"}}]}]} :escape-unicode false)
 (xml/emit {:tag :go-fruit
- :attrs {:doc "ÓÎÏ·ÖĞËùÓĞ¹ûÊµµÄÊı¾İ"}
+ :attrs {:doc "æ¸¸æˆä¸­æ‰€æœ‰æœå®çš„æ•°æ®"}
  :content
  [{:tag :go
-   :attrs {:doc "Æ»¹û"}
+   :attrs {:doc "è‹¹æœ"}
    :content
    [{:tag :go-component
-     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9527 :display-name "Æ»¹û"}}]}
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9527 :display-name "è‹¹æœ"}}]}
   {:tag :go
-   :attrs {:doc "Ñ¼Àæ"}
+   :attrs {:doc "é¸­æ¢¨"}
    :content
    [{:tag :go-component
-     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9528 :display-name "Ñ¼Àæ"}}]}
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9528 :display-name "é¸­æ¢¨"}}]}
   {:tag :go
-   :attrs {:doc "ÌÒ×Ó"}
+   :attrs {:doc "æ¡ƒå­"}
    :content
    [{:tag :go-component
-     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9529 :display-name "ÌÒ×Ó"}}]}]})
-
-(:Card1 + :Card2 = :Card3)
-
-(xml/emit )
+     :attrs {:name "object-base" :id 0 :asset-type :FRUIT :asset-id 9529 :display-name "æ¡ƒå­"}}]}]})

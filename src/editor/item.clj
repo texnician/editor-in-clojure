@@ -11,8 +11,3 @@
 (defseed :id 103 :name "桃树种子" :fruit-id 3 :item-lifetime 7)
 (defseed :id 104 :name "铁树种子" :fruit-id 0 :item-lifetime 100 :max-own-num 1)
 (defseed :id 105 :name "西瓜种子" :item-lifetime 8 :max-own-num 100)
-
-(defcomposite-rule "机器人" (+ "树妖" "史莱姆" "苹果"))
-
-(defcomposite-rule "超级史莱姆" (* "史莱姆" 3))
-(defcard :id 30001 :name "魔兽卡" )

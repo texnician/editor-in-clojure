@@ -17,6 +17,8 @@
 ;;          (in-ns '~old-ns)
 ;;          name)))
 
+(def *global-domain* {})
+
 (defn init-global-domain []
   (def *global-domain* {}))
 
