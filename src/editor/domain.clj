@@ -28,15 +28,40 @@
     (do (def *global-domain* (assoc *global-domain* name {}))
         (get-domain name))))
 
+(defn foo [x]
+  {:tag 'a
+   :attrs 'b
+   :content (if-not (empty? x) (str x) nil)
+   })
+
+(defn translate-xml-escape-char [{tag :tag attrs :attrs content :content}]
+  (letfn [(fix-xml-string [s]
+            (apply str (replace {\< "&lt;",
+                                 \> "&gt;",
+                                 \& "&amp;",
+                                 \' "&apos;",
+                                 \" "&quot;"} s)))
+          (fix-attr [attr]
+            (if (empty? attr)
+              nil
+              (into {} (map (fn [[key val]]
+                              [key (if (string? val) (fix-xml-string val) val)]) attr))))]
+    {:tag tag
+     :attrs (fix-attr attrs)
+     :content 
+     (if (empty? content)
+       nil
+       ;; recursivly translate
+       (into [] (map translate-xml-escape-char content)))}))
+
 (defn domain->xml [name-key]
   (if-let [domain (get-domain name-key)]
-    (xml/emit {:tag (keyword (str (name name-key) "-domain"))
-               :content (into [] (vals domain))})))
+    (xml/emit (translate-xml-escape-char {:tag (keyword (str (name name-key) "-domain"))
+                                          :content (into [] (vals domain))}))))
 
 (defn domain->xml-file [filename name-key]
   (if-let [domain (get-domain name-key)]
-    (spit filename (with-out-str (xml/emit {:tag (keyword (str (name name-key) "-domain"))
-                                            :content (into [] (vals domain))})))))
+    (spit filename (with-out-str (domain->xml name-key)))))
 
 (defn register-in-domain [name key val]
   (if-let [domain (get-domain name)]
