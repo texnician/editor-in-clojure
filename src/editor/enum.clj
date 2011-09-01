@@ -38,7 +38,7 @@
 
 (declare build-enum-items)
 
-(defn- build-enum-body [name doc & enums]
+(defn build-enum-body [name doc & enums]
   {:tag :global-enum
    :attrs {:name name :doc doc}
    :content (build-enum-items enums)})
