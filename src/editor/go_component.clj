@@ -27,3 +27,6 @@
   "VIP物品相关组件"
   (vip-level :type int :default 0 :doc "VIP限购等级")
   (vip-only :type bool :default false :doc "是否VIP专属"))
+
+(defcomponent rpg
+  "RPG游戏通用组件")
