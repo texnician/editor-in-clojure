@@ -28,5 +28,12 @@
   (vip-level :type int :default 0 :doc "VIP限购等级")
   (vip-only :type bool :default false :doc "是否VIP专属"))
 
-(defcomponent rpg
-  "RPG游戏通用组件")
+(defcomponent rpg-property
+  "RPG游戏通用属性组件"
+  (level :type int :default 1 :max 100 :doc "等级;战斗时暂时无用。与技能点习得与属性增加有关")
+  (exp :type int :default 0 :doc "经验满，则等级提升;经验主要在战斗胜利后获得，其它途径也可获得")
+  (hp :type int :default 1 :doc "战斗时最重要的可见变量;HP=0时，判定为死亡状态。死亡状态则从战场上移除，失去一切战斗功能")
+  (mp :type int :default 1
+      :doc "战斗时较重要的可见变量。技能使用都是要通过消耗
+  MP来进行的;MP=0时，或者MP<技能需要MP，则不能释放技能;有些攻击会根据MP值来进行共
+  计数值的判定"))
