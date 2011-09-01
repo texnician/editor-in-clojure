@@ -48,11 +48,12 @@
                               [key (if (string? val) (fix-xml-string val) val)]) attr))))]
     {:tag tag
      :attrs (fix-attr attrs)
-     :content 
-     (if (empty? content)
-       nil
-       ;; recursivly translate
-       (into [] (map translate-xml-escape-char content)))}))
+     :content
+     (cond (empty? content) nil
+           ;; if string value, fix string
+           (and (string? (first content)) (= 1 (count content))) [(fix-xml-string (first content))]
+           ;; recursivly translate
+           :else (into [] (map translate-xml-escape-char content)))}))
 
 (defn domain->xml [name-key]
   (if-let [domain (get-domain name-key)]
