@@ -34,10 +34,9 @@
   (exp :type int :default 0 :doc "经验;经验满，则等级提升;经验主要在战斗胜利后获得，其它途径也可获得")
   (hp :type int :default 1 :doc "hp;战斗时最重要的可见变量;HP=0时，判定为死亡状态。死亡状态则从战场上移除，失去一切战斗功能")
   (mp :type int :default 1
-      :doc "mp;战斗时较重要的可见变量。技能使用都是要通过消耗
-  MP来进行的;MP=0时，或者MP<技&能'需\"要>MP，则不能释放技能;有些攻击会根据MP值来进行共
+      :doc "战斗时较重要的可见变量。技能使用都是要通过消耗
+  MP来进行的;MP=0时，或者MP<技能需要MP，则不能释放技能;有些攻击会根据MP值来进行共
   计数值的判定"))
-
 
 (defcomponent monster-property
   "怪物专有属性组件"
@@ -56,3 +55,4 @@
   (dodge-rate :type int :default 1 :max 10000 :doc "回避率;与速度有关(除了各种技能提升回避率")
   (crit-rate :type int :default 1 :max 10000 :doc "暴击率;每个怪物都有自己特定的暴击率;物理攻击可享受加成，但魔法攻击一部分没有暴击;怪物的特性会影响暴击几率;部分武器可以提高暴击率")
   (magic-resistance :type int :default 0 :max 7 :doc "抗性(魔法防御);28种抗性"))
+>>>>>>> office
