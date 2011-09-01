@@ -55,4 +55,3 @@
   (dodge-rate :type int :default 1 :max 10000 :doc "回避率;与速度有关(除了各种技能提升回避率")
   (crit-rate :type int :default 1 :max 10000 :doc "暴击率;每个怪物都有自己特定的暴击率;物理攻击可享受加成，但魔法攻击一部分没有暴击;怪物的特性会影响暴击几率;部分武器可以提高暴击率")
   (magic-resistance :type int :default 0 :max 7 :doc "抗性(魔法防御);28种抗性"))
->>>>>>> office
