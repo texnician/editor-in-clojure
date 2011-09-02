@@ -7,11 +7,12 @@
   (base :name "未命名的果实")
   (item-base :item-lifetime 10)
   (trade))
-  (deftemplate seed
-    "种子的模板"
-    (base :name "未命名的种子")
-    (item-base :item-lifetime 3)
-    (seeding))
+
+(deftemplate seed
+  "种子的模板"
+  (base :name "未命名的种子")
+  (item-base :item-lifetime 3)
+  (seeding))
 
 (deftemplate monster
   "怪物的模板"

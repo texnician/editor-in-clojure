@@ -17,15 +17,15 @@
 ;;          (in-ns '~old-ns)
 ;;          name)))
 
-(def *global-domain* {})
+(def *global-domain* (atom {}))
 
 (defn init-global-domain []
-  (def *global-domain* {}))
+  (reset! *global-domain* {}))
 
 (defn get-domain [name]
-  (if-let [domain (*global-domain* name)]
+  (if-let [domain ((deref *global-domain*) name)]
     domain
-    (do (def *global-domain* (assoc *global-domain* name {}))
+    (do (swap! *global-domain* #(assoc % name {}))
         (get-domain name))))
 
 (defn foo [x]
@@ -66,7 +66,7 @@
 
 (defn register-in-domain [name key val]
   (if-let [domain (get-domain name)]
-    (def *global-domain* (assoc *global-domain* name (assoc domain key val)))))
+    (swap! *global-domain* #(assoc % name (assoc domain key val)))))
 
 (defn reset-domain [name]
-  (def *global-domain* (assoc *global-domain* name {})))
+  (swap! *global-domain* #(assoc % name {})))

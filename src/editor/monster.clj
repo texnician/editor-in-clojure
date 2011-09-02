@@ -10,5 +10,5 @@
   :speed 4 :mental 6 :dodge-rate 2500 :crit-rate 2000 :magic-resistance 20)
 
 (defmonster :level 6 :id 3 :name "恶魔犬" :hp 500 :mp 500 :species DEMON
-  :monster-rank SS :generation 8 :summon-cost 3 :attack 40 :defence 100
+  :monster-rank SS :genration 8 :summon-cost 3 :attack 40 :defence 100
   :speed 3 :mental 10 :dodge-rate 2000 :crit-rate 1000 :magic-resistance 70)
