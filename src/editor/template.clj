@@ -38,17 +38,24 @@
   (let [key-name (keyword temp-name)
         [doc & comp-list] (if (string? (first body))
                             body
-                            (conj body ""))]
+                            (conj body ""))
+        fvals (gensym)
+        x (gensym)]
     `(do (register-in-domain :go-template ~key-name
                          (make-template-node ~key-name ~doc
-                                             ~@(map (fn [x]
-                                                      `'~(conj (if-let [attr-vals (next x)]
+                                             ~@(map (fn [y]
+                                                      `'~(conj (if-let [attr-vals (next y)]
                                                                  (list (apply array-map attr-vals))
-                                                                 nil) (keyword (first x)))) comp-list)))
-         (defn ~(symbol (str "def" (str temp-name))) [& ~'vals]
+                                                                 nil) (keyword (first y)))) comp-list)))
+         (defn ~(symbol (str "def" (str temp-name) "-fn")) [& ~'vals]
            {:pre [(-> ~'vals count even?)
                   (some #{:id} ~'vals)]}
-           (register-go ~key-name (apply array-map ~'vals))))))
+           (register-go ~key-name (apply array-map ~'vals)))
+         (defmacro ~(symbol (str "def" (str temp-name))) [& ~'vals]
+           (let [~fvals (map (fn [~x]
+                              (if-not (or (keyword? ~x) (integer? ~x) (string? ~x)) (str ~x)
+                                      ~x)) ~'vals)]
+             `(~'~(symbol (str "def" (str temp-name) "-fn")) ~@~fvals))))))
 
 (defn- extract-attribute-key [node]
   (:tag node))
@@ -148,6 +155,7 @@
 (defn register-go [obj-key attr-map]
   "在object domain中注册一个concrete object"
   (let [obj (make-concrete-game-object obj-key attr-map)]
+    (println obj)
     (register-in-domain obj-key
                         (keyword (str (get-attribute-value obj :id)))
                         {:tag obj-key
