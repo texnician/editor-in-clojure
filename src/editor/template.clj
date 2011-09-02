@@ -175,7 +175,7 @@
                                                 (:id attr-map)
                                                 (:name attr-map)
                                                 (.getMessage e))))))
-         
+
 (defn make-game-object-inspect-table [obj]
   "返回一个符合clojure/inspect-table格式的表"
   (let [comps (keys obj)]
