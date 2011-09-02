@@ -1,5 +1,7 @@
 (ns editor.template
-  (:use (editor domain component core)))
+  (:use (editor domain component core))
+  (:import (java.lang Exception
+                      IllegalArgumentException)))
 
 ;; {:tag :go-template
 ;;  :attrs {:name "fruit" :doc "果实的模板"}
@@ -90,10 +92,17 @@
           (if (contains? (set (component-attribute-keys x)) attr-key)
             x)) comps))
 
+;; (defn assoc-concrete-attribute-value [concrete-template attr-key value]
+;;   (let [comp-key ((partial input-attribute-contract find-attribute-component) attr-key (keys concrete-template))
+;;         comp-attrs (concrete-template comp-key)]
+;;     (assoc concrete-template comp-key (assoc comp-attrs attr-key value))))
+
 (defn assoc-concrete-attribute-value [concrete-template attr-key value]
-  (let [comp-key ((partial input-attribute-contract find-attribute-component) attr-key (keys concrete-template))
+  (let [comp-key (find-attribute-component attr-key (keys concrete-template))
         comp-attrs (concrete-template comp-key)]
-    (assoc concrete-template comp-key (assoc comp-attrs attr-key value))))
+    (if (keyword? comp-key)
+      (assoc concrete-template comp-key (assoc comp-attrs attr-key value))
+      (throw (Exception. (format "不存在的属性 '%s'" attr-key))))))
 
 (defn get-attribute-value [obj attr-key]
   (let [comp-key ((partial input-attribute-contract find-attribute-component) attr-key (keys obj)) 
@@ -154,14 +163,18 @@
 
 (defn register-go [obj-key attr-map]
   "在object domain中注册一个concrete object"
-  (let [obj (make-concrete-game-object obj-key attr-map)]
-    (println obj)
-    (register-in-domain obj-key
-                        (keyword (str (get-attribute-value obj :id)))
-                        {:tag obj-key
-                         :attrs {:id (get-attribute-value obj :id)
-                                 :name (get-attribute-value obj :name)}
-                         :content (make-game-object-components obj)})))
+  (try (let [obj (make-concrete-game-object obj-key attr-map)]
+         (register-in-domain obj-key
+                             (keyword (str (get-attribute-value obj :id)))
+                             {:tag obj-key
+                              :attrs {:id (get-attribute-value obj :id)
+                                      :name (get-attribute-value obj :name)}
+                              :content (make-game-object-components obj)}))
+       (catch Exception e (print1 (format "error:%s:%d:%s: %s"
+                                                (name obj-key)
+                                                (:id attr-map)
+                                                (:name attr-map)
+                                                (.getMessage e))))))
 
 (defn make-game-object-inspect-table [obj]
   "返回一个符合clojure/inspect-table格式的表"
