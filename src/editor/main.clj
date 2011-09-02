@@ -4,7 +4,6 @@
   (:gen-class))
 
 (defn -main [& args]
-  (println "Welcome to happy world compiler! These are your args:" args)
   (let [files (map #(str %) args)]
     (doall (map load-file files)))
   (all-meta-component->xml-file)

@@ -170,11 +170,11 @@
                               :attrs {:id (get-attribute-value obj :id)
                                       :name (get-attribute-value obj :name)}
                               :content (make-game-object-components obj)}))
-       (catch Exception e (print1 (format "error:%s:%d:%s: %s"
-                                                (name obj-key)
-                                                (:id attr-map)
-                                                (:name attr-map)
-                                                (.getMessage e))))))
+       (catch Exception e (println (format "error:%s:%d:%s: %s"
+                                           (name obj-key)
+                                           (:id attr-map)
+                                           (:name attr-map)
+                                           (.getMessage e))))))
 
 (defn make-game-object-inspect-table [obj]
   "返回一个符合clojure/inspect-table格式的表"
