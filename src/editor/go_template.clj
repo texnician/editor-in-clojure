@@ -13,3 +13,10 @@
   (base :name "未命名的种子")
   (item-base :item-lifetime 3)
   (seeding))
+
+(deftemplate monster
+  "怪物的模板"
+  (base :name "未命名的怪物")
+  (rpg-property)
+  (monster-property)
+  (combat-property))
