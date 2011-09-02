@@ -33,7 +33,7 @@
 ;;                                                  '(:base ) '(:item-base {:item-lifetime 10}) '(:trade)))
 
 (declare register-go)
-(some #{:f} '(:a :b :c :d))
+
 (defmacro deftemplate [temp-name & body]
   (let [key-name (keyword temp-name)
         [doc & comp-list] (if (string? (first body))
