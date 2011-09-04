@@ -1,5 +1,5 @@
 (ns editor.template
-  (:use (editor domain component core))
+  (:use (editor domain component core error))
   (:import (java.lang Exception
                       IllegalArgumentException)))
 
@@ -102,7 +102,7 @@
         comp-attrs (concrete-template comp-key)]
     (if (keyword? comp-key)
       (assoc concrete-template comp-key (assoc comp-attrs attr-key value))
-      (throw (Exception. (format "不存在的属性 '%s'" attr-key))))))
+      (emit-error :attribute-not-exist {:attr (name attr-key)}))))
 
 (defn get-attribute-value [obj attr-key]
   (let [comp-key ((partial input-attribute-contract find-attribute-component) attr-key (keys obj)) 
@@ -170,11 +170,12 @@
                               :attrs {:id (get-attribute-value obj :id)
                                       :name (get-attribute-value obj :name)}
                               :content (make-game-object-components obj)}))
-       (catch Exception e (println (format "error:%s:%d:%s: %s"
-                                           (name obj-key)
-                                           (:id attr-map)
-                                           (:name attr-map)
-                                           (.getMessage e))))))
+       (catch Exception e (binding [*out* *err*]
+                            (println (format "%s:%d:%s: %s"
+                                             (name obj-key)
+                                             (:id attr-map)
+                                             (:name attr-map)
+                                             (.getMessage e)))))))
 
 (defn make-game-object-inspect-table [obj]
   "返回一个符合clojure/inspect-table格式的表"
