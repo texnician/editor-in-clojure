@@ -42,7 +42,7 @@
   "怪物专有属性组件"
   (species :type enum :default UNDEFINED-SPECIES :in-domain monster-species-enum
            :doc "物种属性;在战斗中，有专门针对某物种的攻击技能，带来附加伤害。物种属性也与怪物合成有关")
-  (monster-rank :type string :default "F" :doc "RANK;战斗中暂时无用。与怪物属性有关，最明显的怪物强弱标识")
+  (monster-rank :type enum :default F :in-domain monster-rank-enum :doc "RANK;战斗中暂时无用。与怪物属性有关，最明显的怪物强弱标识")
   (generation :type int :default 0 :max 10 :doc "怪物的后代数(合成次数)")
   (summon-cost :type int :default 1 :max 3 :doc "召唤消耗;仅在配置阵容时有用"))
 
