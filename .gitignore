@@ -8,3 +8,6 @@ pom.xml
 *~
 *#
 *.xml
+*.h
+*.cpp
+
