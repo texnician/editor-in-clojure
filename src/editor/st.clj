@@ -44,12 +44,19 @@
 ;ST st = new ST("<b>$u.id$</b>: $u.name$", '$', '$');
 ;st.add("u", new User(999, "parrt"));
 ;;;String result = st.render(); // "<b>999</b>: parrt"
-;; (let [st (ST. "<b>$u.getId()$</b>: $u.getName()$" \$ \$)]
-;;   (.add st "u" (proxy [Object] []
-;;                  (getId [] 10)
-;;                  (getName [] "parrt")))
-;;   (.render st))
-;; (.getId (make-user 999 "parrt"))
+(let [st (ST. "$u$-><b>$u.id$</b>: $u.name$" \$ \$)]
+  (.add st "u" (proxy [Object] []
+                 (id []
+                   (println "ahaha")
+                   10)
+                 (name []
+                   (println "oyaya")
+                   "parrt")
+                 (toString []
+                   (println "myaaa")
+                   "abc")))
+  (.render st))
+(.getId (make-user 999 "parrt"))
 
 ;; ST st = new ST("<items:{it|<it.id>: <it.lastName>, <it.firstName>\n}>");
 ;; st.addAggr("items.{ firstName ,lastName, id }", "Ter", "Parr", 99); // add() uses varargs
@@ -57,8 +64,6 @@
 ;; String expecting =
 ;;         "99: Parr, Ter"+newline +
 ;;         "34: Burns, Tom"+newline;
-
-(st-aggr "_: _ _" [{:id "99" :first-name "Ter" :last-name "Parr"}])
 
 (let [st (ST. "<items:{it|<it.id>: <it.lastName>, <it.firstName>\n}>")]
   (doto st
