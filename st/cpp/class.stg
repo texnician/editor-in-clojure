@@ -1,0 +1,7 @@
+cpp_class(name, bases) ::= <<
+class <name> <base_list(bases)>
+{
+};
+>>
+
+base_list(bases) ::= "<if(bases)>: <bases:{x | public <x>}; separator=\", \"><endif>"

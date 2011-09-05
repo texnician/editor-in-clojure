@@ -1,0 +1,14 @@
+import "class.stg"
+
+component_header(manifest, name, body) ::= <<
+// <manifest>
+
+#ifndef <name>
+#define <name>
+
+<cpp_class("BaseComponent", ["IComponent", "Object"])>
+
+#endif // <name>
+>>
+
+
