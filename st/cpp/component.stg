@@ -7,6 +7,7 @@ component_header(manifest, name, body) ::= <<
 #define <name>
 
 <cpp_class("BaseComponent", ["IComponent", "Object"])>
+<body>
 
 #endif // <name>
 >>
