@@ -6,7 +6,10 @@ component_header(manifest, name, body) ::= <<
 #ifndef <name>
 #define <name>
 
-<cpp_class("BaseComponent", ["IComponent", "Object"])>
+#include \<string\>
+#include \<sstream\>
+#include "icomponent.h"
+
 <body>
 
 #endif // <name>
