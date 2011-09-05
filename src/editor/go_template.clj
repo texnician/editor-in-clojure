@@ -19,4 +19,5 @@
   (base :name "未命名的怪物")
   (rpg-property)
   (monster-property)
+  (trade)
   (combat-property))

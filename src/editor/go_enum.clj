@@ -6,7 +6,7 @@
   METAL                                 ;金属类
   SLIME                                 ;史莱姆
   DRAGON                                ;龙
-  NATURAL                               ;自然
+  NATURE                                ;自然
   ORC                                   ;魔兽
   SUBSTANCE                             ;物质
   DEMON                                 ;恶魔
