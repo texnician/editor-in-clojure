@@ -6,5 +6,5 @@ pom.xml
 .lein-deps-sum
 .svn
 *~
-#*#
+*#
 *.xml

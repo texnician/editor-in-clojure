@@ -5,6 +5,7 @@
 (deffruit :id 2 :name "鸭梨" :max-own-num 99)
 (deffruit :id 3 :name "桃子" :max-own-num 999 :is-tradable false)
 (deffruit :id 4 :name "无花果" :max-own-num 10 :item-lifetime 3)
+(deffruit :id 7 :name "西瓜" :max-own-num 10 :is-gift true :item-lifetime 4)
 
 (defseed :id 101 :name "苹果种子" :fruit-id 1)
 (defseed :id 102 :name "鸭梨种子" :fruit-id 2)
