@@ -23,7 +23,3 @@
     (throw (Exception. (format "error<%d> %s" (:code e) ((:msg-fn e) args))))))
 
 (deferror :attribute-not-exist 1001 "属性'<attr>'不存在")
-
-(string/split "abc;def;ghi" #";")
-(string/join \| (string/split "abc;def;ghi" #";"))
-("key-value")
