@@ -1,6 +1,7 @@
-cpp_class(name, bases) ::= <<
+cpp_class(name, bases, statements) ::= <<
 class <name> <base_list(bases)>
 {
+    <statements; separator="\n">
 };
 >>
 
