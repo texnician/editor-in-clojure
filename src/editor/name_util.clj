@@ -10,6 +10,11 @@
   (let [tokens (split-clojure-token key)]
     (apply str (map #(string/capitalize %) tokens))))
 
+(defn clojure-token->cpp-enum-token [key]
+  "Convert clojure symbol name to valid c++ enum token"
+  (let [tokens (split-clojure-token key)]
+    (string/join \_ (map #(string/upper-case %) tokens))))
+
 (defn cpp-component-name [comp-key]
   "Return c++ component name"
   (format "%sComponent" (clojure-token->cpp-token comp-key)))
@@ -26,6 +31,3 @@
   "Return c++ header guard define name"
   (let [tokens (split-clojure-token comp-key)]
     (format "_%s_COMPONENT_H_" (string/join \_ (map #(string/upper-case %) tokens)))))
-
-(cpp-getter-name :id)
-(cpp-component-name :base)
