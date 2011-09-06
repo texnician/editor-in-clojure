@@ -11,6 +11,14 @@
   (let [type-info (get-attribute-meta-info comp-key attr-key #{:default})]
     (str (:default type-info))))
 
+(defmulti define-type (fn [comp-key attr-key lang]
+                        [(get-attribute-type comp-key attr-key) lang]))
+
+(defmethod define-type [:int :cpp] [comp-key attr-key lang] "int")
+(defmethod define-type [:string :cpp] [comp-key attr-key lang] "std::string")
+(defmethod define-type [:enum :cpp] [comp-key attr-key lang] "int")
+(defmethod define-type [:bool :cpp] [comp-key attr-key lang] "bool")
+
 (defmulti getter-return-type (fn [comp-key attr-key lang]
                                [(get-attribute-type comp-key attr-key) lang]))
 
@@ -27,7 +35,10 @@
   "bool")
 
 (defmulti attribute-member-name (fn [attr lang] lang))
-(defmethod attribute-member-name :cpp [attr lang] (str (name attr) \_))
+(defmethod attribute-member-name :cpp [attr lang] (str (clojure-token->cpp-variable-token (name attr)) \_))
+
+(defmulti setter-argument-name (fn [attr lang] lang))
+(defmethod setter-argument-name :cpp [attr lang] (clojure-token->cpp-variable-token (name attr)))
 
 (defmulti setter-argument-type (fn [comp-key attr-key lang]
                                  [(get-attribute-type comp-key attr-key) lang]))
@@ -51,7 +62,7 @@
   (get-attribute-default-value comp-key attr-key))
 
 (defmethod attribute-default-value [:string :cpp] [comp-key attr-key lang]
-  (get-attribute-default-value comp-key attr-key))
+  (str \" (get-attribute-default-value comp-key attr-key) \"))
 
 (defmethod attribute-default-value [:bool :cpp] [comp-key attr-key lang]
   (get-attribute-default-value comp-key attr-key))
@@ -62,9 +73,12 @@
 
 (defn make-cpp-attribute [comp-key attr-key]
   {:member-name (attribute-member-name attr-key :cpp)
+   :define-type (define-type comp-key attr-key :cpp)
    :getter-return-type (getter-return-type comp-key attr-key :cpp)
    :getter-name (cpp-getter-name attr-key)
    :setter-name (cpp-setter-name attr-key)
    :setter-argument-type (setter-argument-type comp-key attr-key :cpp)
-   :setter-argument-name (name attr-key)
+   :setter-argument-name (setter-argument-name attr-key :cpp)
    :default-value (attribute-default-value comp-key attr-key :cpp)})
+
+(make-cpp-attribute :base :name)
