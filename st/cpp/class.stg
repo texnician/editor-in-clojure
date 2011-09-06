@@ -1,8 +1,52 @@
-cpp_class(name, bases, statements) ::= <<
-class <name> <base_list(bases)>
+component_class(name, bases, attributes, getters_and_setters) ::= <<
+class <name> <bases>
 {
-    <statements; separator="\n">
+    <attributes>
+
+public:
+    <name>()
+        {}
+
+    virtual ~<name>()
+        {}
+
+    int Type() const
+        {
+            return 0;
+        }
+        
+    const char* Name() const
+        {
+            return "<name>";
+        }
+        
+    <getters_and_setters>
 };
 >>
 
-base_list(bases) ::= "<if(bases)>: <bases:{x | public <x>}; separator=\", \"><endif>"
+bases(base_list) ::= "<if(base_list)>: <base_list:{x | public <x>}; separator=\", \"><endif>"
+
+attributes(types, names, docs) ::= "<types, names, docs:{t,n,d |<attr(t, n, d)>}; separator=\"\n\">"
+
+attr(type, name, doc) ::= <<
+// <doc>
+<type> <name>;
+>>
+
+getters_and_setters(types, getters, setters, m_names, arg_names) ::= "<types, getters, setters, m_names, arg_names:
+                                                                      {t,g,s,m,a |<getter_and_setter(t, g, s, m, a)>}; separator=\"\n\n\">"
+
+getter_and_setter(type, getter, setter, m_name, arg_name) ::= <<
+<type> <getter>() const
+    {
+        return <m_name>;
+    }
+
+void <setter>(const <type>& <arg_name>)
+    {
+        <m_name> = <arg_name>;
+    }
+>>
+
+
+
