@@ -93,7 +93,7 @@
   (if-let [comp-meta (make-meta-comp comp-key)]
     (let [attributes (comp-meta :attributes)]
       (into {} (filter #(-> % second nil? not) (map (fn [x]
-                                         [x (-> attributes attr-key x)]) attr-key-set))))))
+                                                      [x (-> attributes attr-key x)]) attr-key-set))))))
 
 (defn make-inspect-table-rows [comp-key]
   "返回适用于clojure/inspect-table格式的表"

@@ -55,7 +55,9 @@
 
 (defn attributes [st attr-builder]
   (fn [comp-key]
-    (doseq [op (map st-add-op (mapcat (comp #(list ["types" (:define-type %)] ["names" (:member-name %)])
+    (doseq [op (map st-add-op (mapcat (comp #(list ["types" (:define-type %)]
+                                                   ["names" (:member-name %)]
+                                                   ["docs" (:doc %)])
                                              (partial attr-builder comp-key))
                                        (component-attribute-keys comp-key)))]
       (op st))
@@ -87,7 +89,7 @@
         class-st (.getInstanceOf group "component_class")
         cls (component-class class-st bases initialize attrs gas)
         file-st (.getInstanceOf group "component_header")]
-    (spit "tmp_1.h" ((component-class-file file-st cls) comp-key))))
+    (spit "tmp_1.h" ((component-class-file file-st cls) comp-key))
+    (keys (.getAttributes file-st))))
 
-(gen-component :monster-property)
-
+;(gen-component :monster-property)
