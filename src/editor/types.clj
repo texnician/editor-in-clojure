@@ -1,5 +1,5 @@
 (ns editor.types
-  (:use (editor core component name-util)))
+  (:use (editor core component name-util enum)))
 
 (defn get-attribute-type [comp-key attr-key]
   "返回一个attribute的类型"
@@ -68,8 +68,11 @@
   (get-attribute-default-value comp-key attr-key))
 
 (defmethod attribute-default-value [:enum :cpp] [comp-key attr-key lang]
-  (clojure-token->cpp-enum-token (get-attribute-default-value comp-key attr-key)))
-
+  (let [int-value ((fn-global-enum-map (keyword (:in-domain (get-attribute-meta-info comp-key attr-key #{:in-domain}))))
+                   (keyword (get-attribute-default-value comp-key attr-key)))]
+    (format "%d /* %s */"
+            int-value
+            (clojure-token->cpp-enum-token (get-attribute-default-value comp-key attr-key)))))
 
 (defn make-cpp-attribute [comp-key attr-key]
   {:member-name (attribute-member-name attr-key :cpp)
@@ -79,6 +82,5 @@
    :setter-name (cpp-setter-name attr-key)
    :setter-argument-type (setter-argument-type comp-key attr-key :cpp)
    :setter-argument-name (setter-argument-name attr-key :cpp)
-   :default-value (attribute-default-value comp-key attr-key :cpp)})
-
-(make-cpp-attribute :base :name)
+   :default-value (attribute-default-value comp-key attr-key :cpp)
+   :doc (:doc (get-attribute-meta-info comp-key attr-key #{:doc}))})
