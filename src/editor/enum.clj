@@ -15,9 +15,11 @@
 
 (defmacro global-enum-map [enum]
   "Get enum [key value] map."
-  `(fn-global-enum-map ~(keyword enum)))
+  (let [enum-key (keyword enum)]
+    `(fn-global-enum-map ~enum-key)))
 
-(defn- fn-global-enum-map [enum]
+(keyword (quote ooxx))
+(defn fn-global-enum-map [enum]
   (into {} (map (fn [x]
                   (let [k (-> x :attrs :name keyword)
                         v (-> x :content first read-string)]

@@ -12,3 +12,11 @@
   DEMON                                 ;恶魔
   ZOMBIE                                ;僵尸
   )
+
+(defenum monster-rank-enum
+  F
+  G
+  A
+  B
+  S
+  SS)
