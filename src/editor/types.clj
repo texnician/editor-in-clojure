@@ -37,6 +37,9 @@
 (defmulti attribute-member-name (fn [attr lang] lang))
 (defmethod attribute-member-name :cpp [attr lang] (str (clojure-token->cpp-variable-token (name attr)) \_))
 
+(defmulti variable-name (fn [attr lang] lang))
+(defmethod variable-name :cpp [attr lang] (clojure-token->cpp-variable-token (name attr)))
+
 (defmulti setter-argument-name (fn [attr lang] lang))
 (defmethod setter-argument-name :cpp [attr lang] (clojure-token->cpp-variable-token (name attr)))
 
@@ -75,7 +78,10 @@
             (clojure-token->cpp-enum-token (get-attribute-default-value comp-key attr-key)))))
 
 (defn make-cpp-attribute [comp-key attr-key]
-  {:raw-name (name attr-key)
+  {:key attr-key
+   :raw-type (get-attribute-type comp-key attr-key)
+   :raw-name (name attr-key)
+   :variable-name (variable-name attr-key :cpp)
    :member-name (attribute-member-name attr-key :cpp)
    :define-type (define-type comp-key attr-key :cpp)
    :getter-return-type (getter-return-type comp-key attr-key :cpp)
