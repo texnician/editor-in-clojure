@@ -75,7 +75,8 @@
             (clojure-token->cpp-enum-token (get-attribute-default-value comp-key attr-key)))))
 
 (defn make-cpp-attribute [comp-key attr-key]
-  {:member-name (attribute-member-name attr-key :cpp)
+  {:raw-name (name attr-key)
+   :member-name (attribute-member-name attr-key :cpp)
    :define-type (define-type comp-key attr-key :cpp)
    :getter-return-type (getter-return-type comp-key attr-key :cpp)
    :getter-name (cpp-getter-name attr-key)

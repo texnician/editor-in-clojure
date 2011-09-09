@@ -1,5 +1,7 @@
 (ns editor.core
-  (:use (clojure pprint)))
+  (:use (clojure pprint))
+  (:import (java.util Date))
+  (:import (java.text SimpleDateFormat)))
 
 (defn print1 [obj & writer]
   (if-let [w (first writer)]
@@ -39,3 +41,6 @@
              (pos? x))
             (:ensure
              (= (* 2 x) %))))
+
+(defn get-date []
+  (.format (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss") (Date.)))
