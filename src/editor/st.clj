@@ -128,19 +128,27 @@
 
 (def *cpp-component-factory-stg* "st/cpp/component_factory.stg")
 
-(mapcat (comp #(list ["types" (:getter-return-type %)]
-                     ["getters" (:getter-name %)]
-                     ["setters" (:setter-name %)]
-                     ["m_names" (:member-name %)]
-                     ["arg_names" (:setter-argument-name %)])
-              (partial attr-builder comp-key))
-        (component-attribute-keys comp-key))
+(defn- attribute-set-block-selector [group raw-type]
+  (let [st (cond (= :int raw-type) (.getInstanceOf group "set_int_value")
+                 (= :string raw-type) (.getInstanceOf group "set_string_value")
+                 (= :enum raw-type) (.getInstanceOf group "set_enum_value")
+                 (= :bool raw-type) (.getInstanceOf group "set_bool_value")
+                 :else (.getInstanceOf group "set_unknown_value"))]
+    st))
 
-(defn- factory-build-attributes [st attr-builder]
+(defn- attribute-set-block [st]
+  (fn [attr]
+    (doseq [op (map st-add-op (list ["attr" (:variable-name attr)]
+                                    ["setter" (:setter-name attr)]))]
+      (op st))
+    (.render st)))
+
+(defn- factory-build-attributes [st attr-builder set-block-selector]
   (fn [comp-key]
     (let [op-table (mapcat (comp #(list ["component_names" (cpp-component-name comp-key)]
-                                         ["attr_names" (:raw-name %)]
-                                         ["set_blocks" "// TODO: set it"])
+                                        ["variable_names" (:variable-name %)]
+                                        ["attr_names" (:raw-name %)]
+                                        ["set_blocks" ((attribute-set-block (set-block-selector (:raw-type %))) %)])
                                  (partial attr-builder comp-key))
                            (component-attribute-keys comp-key))]
       (doseq [op (map st-add-op op-table)]
@@ -164,13 +172,54 @@
       (op st))
     (.render st)))
 
-(defn gen-component-factory [comp-key]
+(def *component-factory-header-name* "component_factory.h")
+
+(def *component-factory-cpp-name* "component_factory.cpp")
+
+(defn- component-factory-cpp [st group]
+  (fn [comp-key-list]
+    (doseq [op (map st-add-op (list* ["file_name" *component-factory-cpp-name*]
+                                     ["date", (get-date)]
+                                     (map (fn [x]
+                                            (let [build-attributes (factory-build-attributes (.getInstanceOf group "build_attributes") make-cpp-attribute (partial attribute-set-block-selector group))
+                                                  find-component-node (factory-find-component-node (.getInstanceOf group "find_component_node"))
+                                                  define-st (component-factory-define (.getInstanceOf group "component_factory_define") find-component-node
+                                                                                      build-attributes)]
+                                              ["component_factory_defines", (define-st x)]))
+                                          comp-key-list)))]
+      (op st))
+    (.render st)))
+
+(defn- component-factory-decl [st]
+  (fn [comp-key]
+    (doseq [op (map st-add-op (list ["factory_name" (cpp-component-factory-name comp-key)]
+                                    ["interface_name" "IComponent"]))]
+      (op st))
+    (.render st)))
+
+(defn- component-factory-header [st group]
+  (fn [comp-key-list]
+    (doseq [op (map st-add-op (list* ["file_name" *component-factory-header-name*]
+                                     ["guard" "_COMPONENT_FACTORY_H_"]
+                                     ["manifest" *manifest*]
+                                     ["date" (get-date)]
+                                     (map (fn [x]
+                                            (let [decl-st (component-factory-decl (.getInstanceOf group "component_factory_decl"))]
+                                              ["factory_decls" (decl-st x)]))
+                                          comp-key-list)))]
+      (op st))
+    (.render st)))
+
+(defn gen-component-factory [comp-key-list]
   "生成一个Cpp Component类Factory"
   (let [group (STGroupFile. *cpp-component-factory-stg*)
-        build-attributes (factory-build-attributes (.getInstanceOf group "build_attributes") make-cpp-attribute)
-        find-component-node (factory-find-component-node (.getInstanceOf group "find_component_node"))
-        define-st (component-factory-define (.getInstanceOf group "component_factory_define") find-component-node
-                                            build-attributes)]
-    (spit "define.cpp" (define-st comp-key))))
+        cpp-st (component-factory-cpp (.getInstanceOf group "component_factory_cpp") group)
+        header-st (component-factory-header (.getInstanceOf group "component_factory_header") group)]
+    (spit *component-factory-header-name* (header-st comp-key-list))
+    (spit *component-factory-cpp-name* (cpp-st comp-key-list))))
+
+'(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base)
 
 ; (gen-component-factory :combat-property)
+(gen-component-factory '(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base))
+
