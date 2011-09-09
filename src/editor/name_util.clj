@@ -24,6 +24,10 @@
   "Return c++ component name"
   (format "%sComponent" (clojure-token->cpp-token comp-key)))
 
+(defn cpp-component-factory-name [comp-key]
+  "Return c++ component factory name"
+  (format "%sComponentFactory" (clojure-token->cpp-token comp-key)))
+
 (defn cpp-getter-name [attr-key]
   "Return c++ getter name"
   (format "Get%s" (clojure-token->cpp-token attr-key)))

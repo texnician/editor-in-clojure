@@ -1,6 +1,8 @@
 (ns editor.component
   (:use (editor domain)))
 
+(def *go-component-tag* :go-component)
+
 (defmacro defcomponent [name & body]
   `(register-in-domain :meta-go-component ~(keyword name)
                        {:tag :meta-go-component

@@ -156,7 +156,7 @@
 (defn make-game-object-components [obj]
   "返回最终的game object components"
   (into [] (map (fn [x]
-                  {:tag :go-component
+                  {:tag *go-component-tag*
                    :attrs {:name (name (first x))}
                    :content (make-game-object-attributes (second x))})
                 obj)))
