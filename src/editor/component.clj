@@ -1,5 +1,5 @@
 (ns editor.component
-  (:use (editor domain)))
+  (:use (editor domain enum)))
 
 (def *go-component-tag* :go-component)
 
@@ -73,22 +73,30 @@
 ;;                        :attrs {:type "string" :doc "Object的名字"}
 ;;                        :content ["(Unamed)"]}]}
 
+(def *enum-int-value-tag* :enum-int-value)
+
+(defn attribute-extend-attrs [attr-key attrs attr-val]
+  (cond (= "enum" (:type attrs)) {*enum-int-value-tag*
+                                  (enum-int-value (keyword (:in-domain attrs))
+                                                  (keyword attr-val))}
+        :else nil))
+
 (defn make-component-node [comp-key & attr-vals]
   "根据component name 生成一个component节点"
   (if-let [comp-meta (make-meta-comp comp-key)]
     (let [meta-attrs (comp-meta :attributes)]
-      {:tag :go-component
+      {:tag *go-component-tag*
        :attrs {:name (comp-meta :name) :doc (comp-meta :doc)}
        :content (apply vector (map (fn [x]
-                                     {:tag (first x)
-                                      :attrs (second x)
-                                      :content
-                                      (if-let [v ((first x) (peek attr-vals))]
-                                        [(str v)]
-                                        (if-let [default ((second x) :default)]
-                                          [(str default)]
-                                          nil))
-                                      }) meta-attrs))})))
+                                     (let [[attr-key attrs] x
+                                           attr-val (if-let [v (attr-key (peek attr-vals))]
+                                                      v
+                                                      (attrs :default))]
+                                       {:tag attr-key
+                                        :attrs (merge attrs (attribute-extend-attrs attr-key attrs attr-val)) 
+                                        :content
+                                        [(str attr-val)]}))
+                                   meta-attrs))})))
 
 (defn get-attribute-meta-info [comp-key attr-key attr-key-set]
   "返回attribute的meta info, :doc :type 等等, attr-key-set为要查询的key set, 例如#{:doc :type}"
@@ -106,6 +114,16 @@
                            (if-let [meta-attr (second x)]
                              [(-> x first name) (:doc meta-attr) (:default meta-attr) (:type meta-attr)  comp-name]))
                          attributes)))))
+
+(defn get-attribute-type [comp-key attr-key]
+  "返回一个attribute的类型"
+  (let [type-info (get-attribute-meta-info comp-key attr-key #{:type})]
+    (keyword (:type type-info))))
+
+(defn get-attribute-default-value [comp-key attr-key]
+  "返回一个attribute的default value"
+  (let [type-info (get-attribute-meta-info comp-key attr-key #{:default})]
+    (str (:default type-info))))
 
 ;; Local Variables:
 ;; coding: utf-8

@@ -1,4 +1,4 @@
-component_class(name, bases, initialize_list, attributes, getters_and_setters) ::= <<
+component_class(name, bases, initialize_list, sid, attributes, getters_and_setters) ::= <<
 class <name> <bases>
 {
     <attributes>
@@ -11,9 +11,9 @@ public:
     virtual ~<name>()
         {}
 
-    int Type() const
+    int Sid() const
         {
-            return 0;
+            return <sid>;
         }
         
     const char* Name() const
@@ -27,10 +27,14 @@ public:
 
 bases(base_list) ::= "<if(base_list)>: <base_list:{x | public <x>}; separator=\", \"><endif>"
 
+doc_lines(lines) ::= "<lines:{x|<doc_line(x)>}; separator=\"\n\">"
+
+doc_line(line) ::= "// <line>"
+
 attributes(types, names, docs) ::= "<types, names, docs:{t,n,d |<attr(t, n, d)>}; separator=\"\n\">"
 
 attr(type, name, doc) ::= <<
-// <doc>
+<doc>
 <type> <name>;
 >>
 

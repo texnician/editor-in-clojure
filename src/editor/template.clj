@@ -124,11 +124,15 @@
 ;;  {:tag :name,
 ;;   :content ["鸭梨"]}]
 
-(defn make-game-object-attributes [attrs]
+(defn make-game-object-attributes [comp-key, attrs]
   "返回game object attributes"
   (into [] (map (fn [x]
-                  {:tag (first x)
-                   :content [(str (second x))]})
+                  (let [[attr-key value] x]
+                    {:tag attr-key
+                     :attrs (attribute-extend-attrs attr-key
+                                                    (get-attribute-meta-info comp-key attr-key #{:type :in-domain})
+                                                    value)
+                   :content [(str value)]}))
                 attrs)))
 
 ;; {:base {:id 2, :name "鸭梨"},
@@ -158,7 +162,7 @@
   (into [] (map (fn [x]
                   {:tag *go-component-tag*
                    :attrs {:name (name (first x))}
-                   :content (make-game-object-attributes (second x))})
+                   :content (make-game-object-attributes (first x) (second x))})
                 obj)))
 
 (defn register-go [obj-key attr-map]
