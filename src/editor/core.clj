@@ -78,3 +78,12 @@
 ((fn [obscure-name]
    (nif 2 obscure-name
         'zero 'neg)) 'pos)
+
+(defn recursive-merge-2 [a b]
+  (merge-with (fn [x y]
+                (if (and (map? x) (map? y))
+                  (recursive-merge-2 x y)
+                  y)) a b))
+
+(defn recursive-merge [& maps]
+  (reduce recursive-merge-2 {} maps))

@@ -8,8 +8,6 @@
   (deftest-obj :id 1 :name "none")
   (xml/emit-element (:1 (get-domain :test-obj))))
 
-(merge {:base {:id 1 :name "some"}} {:cool {:id 2 :name "ya"}}) 
-
 (with-out-str (xml/emit (make-template-node :test-base-comp "测试BaseComponent" '(:base {:name "测试Component" :id 775}))))
 (deffactory-test :base {:name "TestComponentName" :id 775})
 
