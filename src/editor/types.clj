@@ -67,6 +67,31 @@
             int-value
             (clojure-token->cpp-enum-token (get-attribute-default-value comp-key attr-key)))))
 
+(defmulti attribute-test-statement (fn [comp-key attr-key lang & rest]
+                                     [(get-attribute-type comp-key attr-key) lang]))
+
+(defmethod attribute-test-statement [:int :cpp] [comp-key attr-key lang test-f value]
+  (format "%s(p->%s(), %s);" test-f (cpp-getter-name attr-key) value))
+
+(defmethod attribute-test-statement [:enum :cpp] [comp-key attr-key lang test-f value]
+  (let [int-value (enum-int-value (keyword (:in-domain (get-attribute-meta-info comp-key attr-key #{:in-domain})))
+                                  (keyword value))]
+    (format "%s(p->%s(), %s);" test-f (cpp-getter-name attr-key) int-value)))
+
+(defmethod attribute-test-statement [:string :cpp] [comp-key attr-key lang test-f value]
+  (format "%s(p->%s(), std::string(\"%s\"));" test-f (cpp-getter-name attr-key) value))
+
+(defmethod attribute-test-statement [:bool :cpp] [comp-key attr-key lang test-f value]
+  (format "%s(p->%s(), %s);" test-f (cpp-getter-name attr-key) value))
+
+(defn attribute-assert-eq [comp-key attr-key lang]
+  (fn [value]
+    (attribute-test-statement comp-key attr-key lang "ASSERT_EQ" value)))
+
+(defn attribute-assert-ne [comp-key attr-key lang]
+  (fn [value]
+    (attribute-test-statement comp-key attr-key lang "ASSERT_NE" value)))
+
 (defn make-cpp-attribute [comp-key attr-key]
   {:key attr-key
    :raw-type (get-attribute-type comp-key attr-key)
@@ -80,4 +105,6 @@
    :setter-argument-type (setter-argument-type comp-key attr-key :cpp)
    :setter-argument-name (setter-argument-name attr-key :cpp)
    :default-value (attribute-default-value comp-key attr-key :cpp)
-   :doc (:doc (get-attribute-meta-info comp-key attr-key #{:doc}))})
+   :doc (:doc (get-attribute-meta-info comp-key attr-key #{:doc}))
+   :assert-eq (attribute-assert-eq comp-key attr-key :cpp)
+   :assert-ne (attribute-assert-ne comp-key attr-key :cpp)})

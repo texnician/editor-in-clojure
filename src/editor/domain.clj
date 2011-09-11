@@ -28,12 +28,6 @@
     (do (swap! *global-domain* #(assoc % name {}))
         (get-domain name))))
 
-(defn foo [x]
-  {:tag 'a
-   :attrs 'b
-   :content (if-not (empty? x) (str x) nil)
-   })
-
 (defn translate-xml-escape-char [{tag :tag attrs :attrs content :content}]
   (letfn [(fix-xml-string [s]
             (apply str (replace {\< "&lt;",
@@ -70,3 +64,11 @@
 
 (defn reset-domain [name]
   (swap! *global-domain* #(assoc % name {})))
+
+(defn get-sub-domain [& subs]
+  (into {} (map (fn [x]
+                  (vector x (get-domain x))) subs)))
+
+(defmacro with-test-domain [domain & body]
+  `(binding [*global-domain* (atom ~domain)]
+     ~@body))

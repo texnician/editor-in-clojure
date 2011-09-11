@@ -65,7 +65,7 @@ component_factory_define(class_name, factory_name, find_component_node, build_at
     }
     else throw ComponentNodeNotFound("<class_name>", __FILE__, __LINE__);
 
-    return p;
+    return <smart_ptr("IComponent")>(p.release());
 }
 >>
 

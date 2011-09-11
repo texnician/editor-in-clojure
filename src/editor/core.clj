@@ -44,3 +44,37 @@
 
 (defn get-date []
   (.format (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss") (Date.)))
+
+(defmacro nif-buggy [expr pos zero neg]
+  `(let [~'obscure-name ~expr]
+     (cond (pos? ~'obscure-name) ~pos
+           (zero? ~'obscure-name) ~zero
+           :else ~neg)))
+
+(defmacro nif [expr pos zero neg]
+  (let [obscure-name (gensym)]
+    `(let [~obscure-name ~expr]
+     (cond (pos? ~obscure-name) ~pos
+           (zero? ~obscure-name) ~zero
+           :else ~neg))))
+
+(nif-buggy 2 (let [obscure-name 'pos]
+               obscure-name)
+           'zero
+           'neg)
+
+(let [obscure-name 'pos]
+  (nif-buggy 2 obscure-name
+             'zero 'neg))
+
+((fn [obscure-name]
+   (nif-buggy 2 obscure-name
+              'zero 'neg)) 'pos)
+
+(let [obscure-name 'pos]
+  (nif 2 obscure-name
+       'zero 'neg))
+
+((fn [obscure-name]
+   (nif 2 obscure-name
+        'zero 'neg)) 'pos)

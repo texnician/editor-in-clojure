@@ -8,7 +8,8 @@
   (:import (java.io File))
   (:import (java.util Formatter
                       Locale))
-  (:use (editor name-util core types component sid))
+  (:use (editor name-util core types component sid template))
+  (:use [clojure.xml :as xml])
   (:require [clojure.string :as string]))
 
 (def *cpp-component-stg* "st/cpp/component.stg")
@@ -222,5 +223,5 @@
 
 ; (gen-component-factory :combat-property)
 ;(gen-component-factory '(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base))
-'(doseq [c '(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base)]
+(doseq [c '(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base)]
   (gen-component c))
