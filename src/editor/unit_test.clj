@@ -3,37 +3,30 @@
   (:use [clojure.xml :as xml])
   (:require [clojure.string :as string]))
 
-(with-test-domain (get-sub-domain :meta-go-component :global-enum)
-  (deftemplate test-obj (base) (monster-property))
-  (deftest-obj :id 1 :name "none")
-  (xml/emit-element (:1 (get-domain :test-obj))))
-
-(with-out-str (xml/emit (make-template-node :test-base-comp "测试BaseComponent" '(:base {:name "测试Component" :id 775}))))
-(deffactory-test :base {:name "TestComponentName" :id 775})
+(defmacro deffactory-test [comp-key attr-map]
+  "定义一个component的test case"
+  (let [comp-sym (symbol (name comp-key))
+        attrs (merge {:id 1 :name "TestObject"} attr-map)]
+    `(with-test-domain (get-sub-domain :meta-go-component :global-enum)
+       (deftemplate ~'test-obj ~@(if (= 'base comp-sym)
+                                   (list (list 'base))
+                                   (list (list 'base) (list comp-sym))))
+       (deftest-obj ~@(mapcat (fn [[k v]]
+                                  (list k v)) attrs))
+       (component-factory-test-case ~(keyword 'test-obj) ~comp-key ~(-> attrs :id str keyword)))))
 
 (defn- make-attribute-test-statement [comp-key attr-key val]
   (let [attr-info (make-cpp-attribute comp-key attr-key)]
     ((:assert-eq attr-info) val)))
 
-(defn component-factory-test-case [comp-key attr-map]
-  (with-test-domain (get-sub-domain :meta-go-component :global-enum)
-    (deftemplate comp-key ))
-  (let [xml-node (make-template-node (keyword (format "test-%s-component" (name comp-key)))
-                                     (format "Test case for %s" (cpp-component-factory-name comp-key))
-                                     (list comp-key attr-map))
+(defn component-factory-test-case [domain comp-key id-key]
+  (let [xml-node (id-key (get-domain domain))
         kv (comp-key (node->concrete-object xml-node))]
     {:xml xml-node
-     :xml-str (with-out-str (xml/emit-element xml-node))
+     :xml-element-str (with-out-str (xml/emit-element (translate-xml-escape-char xml-node)))
+     :xml-doc-str (with-out-str (xml/emit (translate-xml-escape-char xml-node)))
      :attribute-test-statments (map (fn [[k v]]
                                       ((partial make-attribute-test-statement comp-key) k v))
                                     kv)}))
-(deftemplate test-obj
-  (:base))
-(deftest-obj
-  :name "TestComponentName" :id 775)
 
-(component-factory-test-case :base {:name "TestComponentName" :id 775})
-{:xml 
- :attribute-test-statments }
-(node->concrete-object (make-template-node :test-base-component "Test case for BaseComponentFactory" '(:base {:name "测试Component" :id 775})))
-(print (get-domain ))
+;(deffactory-test :combat-property {:attack 80 :defence 99 :speed 7 :mental 29 :dodge-rate 73 :crit-rate 1500 :magic-resistance 0x2C})
