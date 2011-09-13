@@ -6,7 +6,7 @@
   (string/split (name token) #"-"))
 
 (defn clojure-token->cpp-token [key]
-  "Convert clojure symbol name to valid c++ token"
+  "Convert clojure symbol name to valid c++ token aaa-bbb => AaaBbb"
   (let [tokens (split-clojure-token key)]
     (apply str (map #(string/capitalize %) tokens))))
 
@@ -16,7 +16,7 @@
     (string/join \_ (map #(string/upper-case %) tokens))))
 
 (defn clojure-token->cpp-variable-token [key]
-  "Convert clojure symbol name to valid c++ variable token"
+  "Convert clojure symbol name to valid c++ variable token aaa-bbb = > aaa_bbb"
   (let [tokens (split-clojure-token key)]
     (string/join \_ tokens)))
 
@@ -27,6 +27,10 @@
 (defn cpp-component-factory-name [comp-key]
   "Return c++ component factory name"
   (format "%sComponentFactory" (clojure-token->cpp-token comp-key)))
+
+(defn cpp-component-header-filename [comp-key]
+  "Return c++ component factory header filename"
+  (format "%s_component.h" (clojure-token->cpp-variable-token comp-key)))
 
 (defn cpp-getter-name [attr-key]
   "Return c++ getter name"

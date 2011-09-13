@@ -41,22 +41,24 @@
         [doc & comp-list] (if (string? (first body))
                             body
                             (conj body ""))
+        vals (gensym)
+        vals-2 (gensym)
         fvals (gensym)
         x (gensym)]
     `(do (register-in-domain :go-template ~key-name
-                         (make-template-node ~key-name ~doc
-                                             ~@(map (fn [y]
-                                                      `'~(conj (if-let [attr-vals (next y)]
-                                                                 (list (apply array-map attr-vals))
-                                                                 nil) (keyword (first y)))) comp-list)))
-         (defn ~(symbol (str "def" (str temp-name) "-fn")) [& ~'vals]
-           {:pre [(-> ~'vals count even?)
-                  (some #{:id} ~'vals)]}
-           (register-go ~key-name (apply array-map ~'vals)))
-         (defmacro ~(symbol (str "def" (str temp-name))) [& ~'vals]
+                             (make-template-node ~key-name ~doc
+                                                 ~@(map (fn [y]
+                                                          `'~(conj (if-let [attr-vals (next y)]
+                                                                     (list (apply array-map attr-vals))
+                                                                     nil) (keyword (first y)))) comp-list)))
+         (defn ~(symbol (str "def" (str temp-name) "-fn")) [& ~vals]
+           {:pre [(-> ~vals count even?)
+                  (some #{:id} ~vals)]}
+           (register-go ~key-name (apply array-map ~vals)))
+         (defmacro ~(symbol (str "def" (str temp-name))) [& ~vals-2]
            (let [~fvals (map (fn [~x]
-                              (if-not (or (keyword? ~x) (integer? ~x) (string? ~x)) (str ~x)
-                                      ~x)) ~'vals)]
+                               (if-not (or (keyword? ~x) (integer? ~x) (string? ~x)) (str ~x)
+                                       ~x)) ~vals-2)]
              `(~'~(symbol (str "def" (str temp-name) "-fn")) ~@~fvals))))))
 
 (defn- extract-attribute-key [node]
@@ -124,11 +126,15 @@
 ;;  {:tag :name,
 ;;   :content ["鸭梨"]}]
 
-(defn make-game-object-attributes [attrs]
+(defn make-game-object-attributes [comp-key, attrs]
   "返回game object attributes"
   (into [] (map (fn [x]
-                  {:tag (first x)
-                   :content [(str (second x))]})
+                  (let [[attr-key value] x]
+                    {:tag attr-key
+                     :attrs (attribute-extend-attrs attr-key
+                                                    (get-attribute-meta-info comp-key attr-key #{:type :in-domain})
+                                                    value)
+                   :content [(str value)]}))
                 attrs)))
 
 ;; {:base {:id 2, :name "鸭梨"},
@@ -158,7 +164,7 @@
   (into [] (map (fn [x]
                   {:tag *go-component-tag*
                    :attrs {:name (name (first x))}
-                   :content (make-game-object-attributes (second x))})
+                   :content (make-game-object-attributes (first x) (second x))})
                 obj)))
 
 (defn register-go [obj-key attr-map]

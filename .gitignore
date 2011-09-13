@@ -11,4 +11,5 @@ pom.xml
 *.xml
 *.h
 *.cpp
+*.orig
 
