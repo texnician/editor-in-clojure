@@ -1,7 +1,8 @@
 import "class.stg"
 
-component_header(manifest, name, body) ::= <<
+component_header(filename, date, manifest, name, body) ::= <<
 // <manifest>
+// @date: <date>
 
 #ifndef <name>
 #define <name>
@@ -13,6 +14,9 @@ component_header(manifest, name, body) ::= <<
 <body>
 
 #endif // <name>
+
+/// <filename> ends here
+
 >>
 
 

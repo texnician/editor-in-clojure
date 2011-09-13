@@ -55,3 +55,6 @@
                          (first enums) i))
               (inc i)
               (rest enums)))))
+
+(defn enum-int-value [domain enum]
+  ((fn-global-enum-map domain) enum))
