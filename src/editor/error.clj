@@ -9,14 +9,12 @@
 (defmacro deferror [error-name code fmtstr]
   (let [pattern #"<([\w-]+)>"
         fmt-args (map #(-> % second keyword) (re-seq pattern fmtstr))
-        arg-list (map #(gensym (name %)) fmt-args)]
+        arg-list (map #(gensym (str (name %) "__")) fmt-args)]
     `(swap! *error-table* (fn [t#]
                             (assoc t# ~error-name
                                    {:error-name ~error-name
                                     :code ~code
-                                    :msg-fn (fn [~(into {} (map (fn [x y]
-                                                                  [x y])
-                                                                arg-list fmt-args))]
+                                    :msg-fn (fn [~(into {} (map vector arg-list fmt-args))]
                                               (format ~(string/replace fmtstr pattern "%s")
                                                       ~@arg-list))})))))
 
