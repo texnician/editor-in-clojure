@@ -92,7 +92,7 @@
     (.render st)))
 
 (defn gen-component [comp-key]
-  "生成一个Cpp Component类头文件"
+  "鐢熸垚涓�涓狢pp Component绫诲ご鏂囦欢"
   (let [group (STGroupFile. *cpp-component-stg*)
         bases-st (.getInstanceOf group "bases")
         bases (component-bases bases-st)
@@ -214,7 +214,7 @@
     (.render st)))
 
 (defn gen-component-factory [comp-key-list]
-  "生成一个Cpp Component类Factory"
+  "鐢熸垚涓�涓狢pp Component绫籉actory"
   (let [group (STGroupFile. *cpp-component-factory-stg*)
         cpp-st (component-factory-cpp (.getInstanceOf group "component_factory_cpp") group)
         header-st (component-factory-header (.getInstanceOf group "component_factory_header") group)]

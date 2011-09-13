@@ -35,7 +35,6 @@ component_factory_cpp(file_name, date, component_headers, component_factory_defi
 #include "tinyxml.h"
 #include "factory_exception.h"
 #include "component_factory.h"
-
 <component_headers:{x|#include "<x>"}; separator="\n">
 
 <component_factory_defines:{x|<x>}; separator="\n\n">
@@ -129,4 +128,3 @@ else throw BoolValueError("<attr>", text, __FILE__, __LINE__);
 set_unknown_value(attr, setter, type) ::= <<
 throw UnkownAttributeValueType("<attr>", "<type>", __FILE__, __LINE__);
 >>
-
