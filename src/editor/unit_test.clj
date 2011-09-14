@@ -1,5 +1,5 @@
 (ns editor.unit-test
-  (:use (editor name-util core types component sid template domain))
+  (:use (editor domain template name-util core types go-enum go-component sid))
   (:use [clojure.xml :as xml])
   (:require [clojure.string :as string]))
 
@@ -11,8 +11,8 @@
        (deftemplate ~'test-obj ~@(if (= 'base comp-sym)
                                    (list (list 'base))
                                    (list (list 'base) (list comp-sym))))
-       (deftest-obj ~@(mapcat (fn [[k v]]
-                                  (list k v)) attrs))
+       (deftest-obj-fn ~@(mapcat (fn [[k# v#]]
+                                   (list k# v#)) attrs))
        (component-factory-test-case ~(keyword 'test-obj) ~comp-key ~(-> attrs :id str keyword)))))
 
 (defn- make-attribute-test-statement [comp-key attr-key val]
@@ -38,5 +38,6 @@
    :trade (deffactory-test :trade)
    :seeding (deffactory-test :seeding)
    :item-base (deffactory-test :item-base)})
+
 
 ;(deffactory-test :combat-property {:attack 80 :defence 99 :speed 7 :mental 29 :dodge-rate 73 :crit-rate 1500 :magic-resistance 0x2C})
