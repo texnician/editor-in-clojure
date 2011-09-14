@@ -4,6 +4,7 @@ test_factory_file(manifest, filename, date, comp_headers, comp_tests) ::= <<
 #include \<memory\>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "sid.h"
 <comp_headers:{x|#include "<x>"}; separator="\n">
 
 class ComponentFactoryTest : public ::testing::Test {
