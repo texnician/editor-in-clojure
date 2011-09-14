@@ -1,6 +1,7 @@
 test_factory_file(manifest, filename, date, comp_headers, comp_tests) ::= <<
 // <manifest>
-// <date>
+// @date: <date>
+
 #include \<memory\>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
