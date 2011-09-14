@@ -14,7 +14,7 @@
   "Convert clojure symbol name to valid c++ enum token"
   (let [tokens (split-clojure-token key)]
     (string/join \_ (map #(string/upper-case %) tokens))))
-
+n
 (defn clojure-token->cpp-variable-token [key]
   "Convert clojure symbol name to valid c++ variable token aaa-bbb = > aaa_bbb"
   (let [tokens (split-clojure-token key)]
@@ -44,3 +44,6 @@
   "Return c++ header guard define name"
   (let [tokens (split-clojure-token comp-key)]
     (format "_%s_COMPONENT_H_" (string/join \_ (map #(string/upper-case %) tokens)))))
+
+(defn cpp-component-factory-test-filename []
+  "component_factory_test")

@@ -3,10 +3,10 @@
   (:use [clojure.xml :as xml])
   (:require [clojure.string :as string]))
 
-(defmacro deffactory-test [comp-key attr-map]
+(defmacro deffactory-test [comp-key & attr-map]
   "定义一个component的test case"
   (let [comp-sym (symbol (name comp-key))
-        attrs (merge {:id 1 :name "TestObject"} attr-map)]
+        attrs (merge {:id 1 :name "TestObject"} (first attr-map))]
     `(with-test-domain (get-sub-domain :meta-go-component :global-enum)
        (deftemplate ~'test-obj ~@(if (= 'base comp-sym)
                                    (list (list 'base))
@@ -28,5 +28,15 @@
      :attribute-test-statments (map (fn [[k v]]
                                       ((partial make-attribute-test-statement comp-key) k v))
                                     kv)}))
+
+(def *component-factory-test-case-table*
+  {:base (deffactory-test :base {:id 1001 :name "TestObject"})
+   :combat-property (deffactory-test :combat-property)
+   :monster-property (deffactory-test :monster-property)
+   :rpg-property (deffactory-test :rpg-property)
+   :vip-item (deffactory-test :vip-item)
+   :trade (deffactory-test :trade)
+   :seeding (deffactory-test :seeding)
+   :item-base (deffactory-test :item-base)})
 
 ;(deffactory-test :combat-property {:attack 80 :defence 99 :speed 7 :mental 29 :dodge-rate 73 :crit-rate 1500 :magic-resistance 0x2C})
