@@ -33,7 +33,6 @@
                     :else (throw (Exception. (str "Unknown tag " (first con)))))))
      (list* 'f args))))
 
-
 (def doubler-contract
   (contract doubler
             [x y z]
@@ -54,9 +53,9 @@
 (defmacro nif [expr pos zero neg]
   (let [obscure-name (gensym)]
     `(let [~obscure-name ~expr]
-     (cond (pos? ~obscure-name) ~pos
-           (zero? ~obscure-name) ~zero
-           :else ~neg))))
+       (cond (pos? ~obscure-name) ~pos
+             (zero? ~obscure-name) ~zero
+             :else ~neg))))
 
 (nif-buggy 2 (let [obscure-name 'pos]
                obscure-name)
