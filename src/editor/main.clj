@@ -1,6 +1,6 @@
 (ns editor.main
   (:use (clojure pprint))
-  (:use (editor core domain go-template domain-manager inspect-util))
+  (:use (editor core domain go-template domain-manager inspect-util st))
   (:gen-class))
 
 (defn -main [& args]
