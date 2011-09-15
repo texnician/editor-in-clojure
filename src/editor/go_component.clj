@@ -31,11 +31,7 @@
 (defcomponent rpg-property
   "RPG游戏通用属性组件"
   (level :type int :default 1 :max 100 :doc "等级;战斗时暂时无用。与技能点习得与属性增加有关")
-  (exp :type int :default 0 :doc "经验;经验满，则等级提升;经验主要在战斗胜利后获得，其它途径也可获得")
-  (hp :type int :default 1 :doc "hp;战斗时最重要的可见变量;HP=0时，判定为死亡状态。死亡状态则从战场上移除，失去一切战斗功能")
-  (mp :type int :default 1
-      :doc "战斗时较重要的可见变量。技能使用都是要通过消耗MP来进行的;MP=0时，或者
-      MP<技能需要MP，则不能释放技能;有些攻击会根据MP值来进行共计数值的判定"))
+  (exp :type int :default 0 :doc "经验;经验满，则等级提升;经验主要在战斗胜利后获得，其它途径也可获得"))
 
 (defcomponent monster-property
   "怪物专有属性组件"
@@ -47,6 +43,12 @@
 
 (defcomponent combat-property
   "战斗相关属性组件"
+  (hp :type int :default 1 :doc "hp;战斗时最重要的可见变量;HP=0时，判定为死亡状态。死亡状态则从战场上移除，失去一切战斗功能")
+  (max-hp :type int :default 1 :doc "Max HP")
+  (mp :type int :default 1
+      :doc "战斗时较重要的可见变量。技能使用都是要通过消耗MP来进行的;MP=0时，或者
+      MP<技能需要MP，则不能释放技能;有些攻击会根据MP值来进行共计数值的判定")
+  (max-mp :type int :default 1 :doc "Max MP")
   (attack :type int :default 1 :doc "攻击;影响物理攻击与斩击技能")
   (defence :type int :default 1 :doc "防御;影响受到的物理攻击免伤")
   (speed :type int :default 1 :doc "速度;影响行动指令执行时的先后顺序;影响回避率")
@@ -56,4 +58,4 @@
              :doc "暴击率;每个怪物都有自己特定的暴击率;物理攻击可享受加成，但魔法
              攻击一部分没有暴击;怪物的特性会影响暴击几率;部分武器可以提高暴击
              率")
-  (magic-resistance :type int :default 0 :max 7 :doc "抗性(魔法防御);28种抗性"))
+  (magic-resistance :type int :default 0 :min 0 :max 7 :doc "抗性(魔法防御);28种抗性"))
