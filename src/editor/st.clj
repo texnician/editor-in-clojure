@@ -235,7 +235,6 @@
         (op st)))
     (.render st)))
 
-(map #(vector "xml_string" %) (string/split-lines (:xml-element-str (:base *component-factory-test-case-table*))))
 (defn- comp-test [st group]
   (fn [comp-key]
     (let [attr-test-group-fn (attr-test-group (.getInstanceOf group "attr_test_group")) 
