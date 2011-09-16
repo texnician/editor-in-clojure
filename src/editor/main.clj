@@ -42,8 +42,6 @@
     (gen-component-factory comp-list)
     (gen-component-factory-test comp-list)))
 
-(generate-cpp)
-
 (def *opt-table*
   {:-c {:func compile-xml :doc "Compile domain scripts, output xml data files."}
    :-C {:func generate-cpp :doc "Generate cpp srcs."}
