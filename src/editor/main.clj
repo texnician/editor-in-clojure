@@ -5,8 +5,8 @@
 
 (defn- compile-xml [& files]
   (doseq [f files]
-    (load-file f))
-  (all-go-domain->xml-file))
+    (load-file f)
+    (output-domian-to-xml-file (keyword (filename->domain-name f)))))
 
 (declare *opt-table*)
 
@@ -38,8 +38,11 @@
   (let [comp-list (keys (get-domain :meta-go-component))]
     (doseq [c comp-list]
       (gen-component c))
+    (gen-component-sid-initialize comp-list)
     (gen-component-factory comp-list)
     (gen-component-factory-test comp-list)))
+
+(generate-cpp)
 
 (def *opt-table*
   {:-c {:func compile-xml :doc "Compile domain scripts, output xml data files."}

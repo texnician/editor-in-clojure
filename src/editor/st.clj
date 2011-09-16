@@ -29,17 +29,18 @@
 
 (defn component-class-file [st component-class]
   (fn [comp-key]
-    (doseq [op (map st-add-op [["filename", (cpp-component-header-filename comp-key)]
+    (doseq [op (map st-add-op [["filename", (cpp-component-gen-header-filename comp-key)]
                                ["date" (get-date)]
                                ["manifest" *manifest*]
-                               ["name" (cpp-component-header-define comp-key)]
+                               ["name" (cpp-component-gen-header-define comp-key)]
                                ["body" (component-class comp-key)]])]
       (op st))
     (.render st)))
 
 (defn component-class [st component-bases initialize-list attributes getters-and-setters]
   (fn [comp-key]
-    (doseq [op (map st-add-op (list ["name" (cpp-component-name comp-key)]
+    (doseq [op (map st-add-op (list ["name" (cpp-component-gen-name comp-key)]
+                                    ["comp_name" (cpp-component-name comp-key)]
                                     ["bases" (component-bases comp-key)]
                                     ["initialize_list" (initialize-list comp-key)]
                                     ["sid" (format "%#x" (gen-sid (cpp-component-name comp-key)))]
@@ -107,7 +108,30 @@
         class-st (.getInstanceOf group "component_class")
         cls (component-class class-st bases initialize attrs gas)
         file-st (.getInstanceOf group "component_header")]
-    (spit (cpp-component-header-filename comp-key) ((component-class-file file-st cls) comp-key))))
+    (spit (cpp-component-gen-header-filename comp-key) ((component-class-file file-st cls) comp-key))))
+
+
+(defn- component-sid-initialize [st]
+  (fn [comp-key-list]
+    (let [name-lens (map #(-> % cpp-component-gen-name count) comp-key-list)
+          max-len (apply max name-lens)
+          padding-map (zipmap comp-key-list (map (comp #(apply str %) #(repeat % \space) (partial - max-len)) name-lens))]
+      (doseq [op (map st-add-op (list* ["filename" (cpp-component-sid-initialize-filename)]
+                                       ["manifest" *manifest*]
+                                       ["date" (get-date)]
+                                       (mapcat (fn [x]
+                                                 (list ["comp_gen_headers" (cpp-component-gen-header-filename x)]
+                                                       ["comps" (cpp-component-gen-name x)]
+                                                       ["paddings" (padding-map x)]
+                                                       ["sids" (format "%#x" (gen-sid (cpp-component-name x)))])) comp-key-list)))]
+        (op st)))
+    (.render st)))
+
+(defn gen-component-sid-initialize [comp-key-list]
+  "生成初始化Component sid的cpp文件"
+  (let [group (STGroupFile. *cpp-component-stg*)
+        component-sid-initialize-fn (component-sid-initialize (.getInstanceOf group "component_sid_initialize"))]
+    (spit (cpp-component-sid-initialize-filename) (component-sid-initialize-fn comp-key-list))))
 
 ;(gen-component :monster-property)
 

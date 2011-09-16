@@ -24,6 +24,9 @@
   "Return c++ component name"
   (format "%sComponent" (clojure-token->cpp-token comp-key)))
 
+(defn cpp-component-gen-name [comp-key]
+  (format "%sGen" (cpp-component-name comp-key)))
+
 (defn cpp-component-factory-name [comp-key]
   "Return c++ component factory name"
   (format "%sComponentFactory" (clojure-token->cpp-token comp-key)))
@@ -31,6 +34,9 @@
 (defn cpp-component-header-filename [comp-key]
   "Return c++ component factory header filename"
   (format "%s_component.h" (clojure-token->cpp-variable-token comp-key)))
+
+(defn cpp-component-gen-header-filename [comp-key]
+  (format "%s_component_gen.h" (clojure-token->cpp-variable-token comp-key)))
 
 (defn cpp-getter-name [attr-key]
   "Return c++ getter name"
@@ -45,5 +51,12 @@
   (let [tokens (split-clojure-token comp-key)]
     (format "_%s_COMPONENT_H_" (string/join \_ (map #(string/upper-case %) tokens)))))
 
+(defn cpp-component-gen-header-define [comp-key]
+  (let [tokens (split-clojure-token comp-key)]
+     (format "_%s_COMPONENT_GEN_H_" (string/join \_ (map #(string/upper-case %) tokens)))))
+
 (defn cpp-component-factory-test-filename []
   "component_factory_test")
+
+(defn cpp-component-sid-initialize-filename []
+  "component_gen_initialize.cpp")
