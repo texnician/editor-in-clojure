@@ -1,5 +1,6 @@
 (ns editor.domain-manager
   (:use (editor domain go-template go-component))
+  (:require [clojure.string :as string])
   (:import (java.io File)))
 
 ;;; default xml output dir
@@ -14,6 +15,11 @@
     (let [dir (File. dir-name)
           path (.getAbsolutePath dir)]
       (apply str (concat path File/separator (name name-key) "." suffix)))))
+
+(defn filename->domain-name [filename]
+  (let [f (File. filename)
+        tokens (string/split (string/replace (.getName f) #"_" "-") #"\.")]
+    (apply str (take (-> tokens count dec) tokens))))
 
 (defn output-domian-to-xml-file [domain-key]
   (let [dir (File. *xml-output-dir*)]
