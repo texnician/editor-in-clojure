@@ -6,6 +6,8 @@ test_factory_file(manifest, filename, date, comp_headers, comp_tests) ::= <<
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "sid.h"
+#include "tinyxml.h"
+#include "component_factory.h"
 <comp_headers:{x|#include "<x>"}; separator="\n">
 
 class ComponentFactoryTest : public ::testing::Test {
@@ -27,11 +29,13 @@ comp_tests(comp_names, factory_names, xml_strings, attr_test_groups) ::= "<comp_
 comp_test(comp_name, factory_name, xml_string, attr_test_group) ::= <<
 TEST_F(ComponentFactoryTest, <comp_name>)
 {
-    std::auto_ptr\<TiXmlElement\> data(new TiXmlElement("<xml_string; anchor, separator="\\\n">"));
+    std::auto_ptr\<TiXmlElement\> data(new TiXmlElement("<comp_name>"));
+
+    data->Parse("<xml_string; anchor, separator="\\\n">", 0, TIXML_ENCODING_UTF8);
 
     <factory_name> factory;
     std::auto_ptr\<<comp_name>\> p((<comp_name>*)(factory.CreateFromXML(data.get()).release()));
-    ASSERT_EQ(p-\>Sid(), sid("<comp_name>"));
+    ASSERT_EQ(p-\>Sid(), sid("<comp_name>").get_id());
     ASSERT_STREQ(p-\>Name(), "<comp_name>");
 
     <attr_test_group>

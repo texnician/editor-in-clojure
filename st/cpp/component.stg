@@ -19,4 +19,15 @@ component_header(filename, date, manifest, name, body) ::= <<
 
 >>
 
+component_sid_initialize(filename, date, manifest, comp_gen_headers, comps, paddings, sids) ::= <<
+// <manifest>
+// @date: <date>
+
+<comp_gen_headers:{x|#include "<x>"}; separator="\n">
+
+<comps, paddings, sids:{c, p, s|unsigned int <c>::sid_ <p> = <s>;}; separator="\n">
+
+/// <filename> ends here
+
+>>
 
