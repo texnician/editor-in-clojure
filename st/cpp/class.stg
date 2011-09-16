@@ -1,9 +1,11 @@
-component_class(name, bases, initialize_list, sid, attributes, getters_and_setters) ::= <<
+component_class(name, comp_name, bases, initialize_list, sid, attributes, getters_and_setters) ::= <<
 class <name> <bases>
 {
     <attributes>
 
 public:
+    static unsigned int sid_;
+    
     <name>()
         <initialize_list>
         {}
@@ -11,14 +13,14 @@ public:
     virtual ~<name>()
         {}
 
-    int Sid() const
+    unsigned int Sid() const
         {
             return <sid>;
         }
         
     const char* Name() const
         {
-            return "<name>";
+            return "<comp_name>";
         }
         
     <getters_and_setters>
