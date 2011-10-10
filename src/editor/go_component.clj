@@ -66,4 +66,5 @@
   (mr-wind-curse :type enum :default MR-NORMAL :in-domain magic-resistance-enum :doc "抗性 风咒")
   (mr-earth-curse :type enum :default MR-NORMAL :in-domain magic-resistance-enum :doc "抗性 地咒")
   (mr-kira :type enum :default MR-NORMAL :in-domain magic-resistance-enum :doc "基拉")
-  (magic-resistance :type int :default 0 :min 0 :max 7 :doc "抗性(魔法防御);28种抗性"))
+  (magic-resistance :type int*10 :default 0 :min 0 :max 7 :doc "抗性(魔法防御);28种抗性"))
+
