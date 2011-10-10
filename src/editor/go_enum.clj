@@ -14,9 +14,21 @@
   )
 
 (defenum monster-rank-enum
-  F
-  G
+  SS
+  S
   A
   B
-  S
-  SS)
+  C
+  D
+  E
+  F)
+
+(defenum magic-resistance-enum
+  MR-VULNERABLE
+  MR-NORMAL
+  MR-MITIGATE-3-4
+  MR-MITIGATE-1-2
+  MR-MITIGATE-1-4
+  MR-IMMUTABLE
+  MR-REFLECT
+  MR-ABSORB)
