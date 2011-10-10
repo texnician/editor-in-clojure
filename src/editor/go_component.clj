@@ -37,9 +37,10 @@
   "怪物专有属性组件"
   (species :type enum :default UNDEFINED-SPECIES :in-domain monster-species-enum
            :doc "物种属性;在战斗中，有专门针对某物种的攻击技能，带来附加伤害。物种属性也与怪物合成有关")
-  (monster-rank :type enum :default F :in-domain monster-rank-enum :doc "RANK;战斗中暂时无用。与怪物属性有关，最明显的怪物强弱标识")
-  (generation :type int :default 0 :max 10 :doc "怪物的后代数(合成次数)")
-  (summon-cost :type int :default 1 :max 3 :doc "召唤消耗;仅在配置阵容时有用"))
+  (monster-rank :type enum :default SS :in-domain monster-rank-enum :doc "RANK;战斗中暂时无用。与怪物属性有关，最明显的怪物强弱标识")
+  (generation :type int :default 0 :doc "RANK后的+X;X >= 0, 当为0时不显示,当为10以上时显示一个ICON;表示该怪物是融合几次后的产物(没融合一次，新生怪RANK后数字+1);若被融合怪物双方的X不同，则取较大的X+1")
+  (summon-cost :type int :default 1 :max 3 :doc "召唤消耗;仅在配置阵容时有用")
+  (monster-weapon :type int :default 0 :doc "怪物武器的id, 一个怪物可以装备的武器种类有限，并且只能装备1把"))
 
 (defcomponent combat-property
   "战斗相关属性组件"
@@ -58,4 +59,11 @@
              :doc "暴击率;每个怪物都有自己特定的暴击率;物理攻击可享受加成，但魔法
              攻击一部分没有暴击;怪物的特性会影响暴击几率;部分武器可以提高暴击
              率")
+  (hit-rate :type int :default 1 :max 10000
+            :doc "怪物命中怪物的几率，与对方回避也有关系")
+  (mr-fire-curse :type enum :default MR-NORMAL :in-domain magic-resistance-enum :doc "抗性 火咒")
+  (mr-water-curse :type enum :default MR-NORMAL :in-domain magic-resistance-enum :doc "抗性 水冰咒")
+  (mr-wind-curse :type enum :default MR-NORMAL :in-domain magic-resistance-enum :doc "抗性 风咒")
+  (mr-earth-curse :type enum :default MR-NORMAL :in-domain magic-resistance-enum :doc "抗性 地咒")
+  (mr-kira :type enum :default MR-NORMAL :in-domain magic-resistance-enum :doc "基拉")
   (magic-resistance :type int :default 0 :min 0 :max 7 :doc "抗性(魔法防御);28种抗性"))
