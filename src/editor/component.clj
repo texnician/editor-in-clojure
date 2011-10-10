@@ -1,5 +1,6 @@
 (ns editor.component
-  (:use (editor domain enum)))
+  (:use (editor domain enum))
+  (:require [clojure.string :as string]))
 
 (def *go-component-tag* :go-component)
 
@@ -11,15 +12,47 @@
                                         (first body) "No doc")}
                         :content (build-attribute-list '~(rest body))}))
 
-(defn- fix-attribute-meta-data [x]
-  (if-let [[key v] x]
-    (cond (= :type key) [key (str v)]
-          :else [key v])))
+
+(defn- array-info [s]
+  (if-let [[_, t, v] (re-matches #"(.*)\*(.*)" s)]
+    [t v]
+    nil))
+
+(defmulti get-attribute-meta-data (fn [attr-map]
+                                    (if-let [type-str (-> attr-map :type str)]
+                                      (cond (array-info type-str) :array-type
+                                            :else :atom-type))))
+
+(defmethod get-attribute-meta-data :atom-type [attr-map]
+  (fn [x]
+    (if-let [[key v] x]
+      (cond (= :type key) (list [key (str v)]) 
+            :else (list [key v])))))
+
+(defmacro eval-sym-str [str]
+  (let [sym (symbol str)]
+    ``~sym))
+
+(defmethod get-attribute-meta-data :array-type [attr-map]
+  (letfn [(array-size [s]
+            (cond (= "" s) 0
+                  (integer? (read-string s)) (read-string s)
+                  :else (eval (symbol s))))]
+    (fn [x]
+      (if-let [[key v] x]
+        (cond (= :type key) (if-let [[t s] (array-info (str v))]
+                              (list [:type t]
+                                    [:size (array-size s)]))
+              (= :default key) (if (vector? v) (list [key v]) 
+                                   (list [key (vec (repeat (-> attr-map :type str array-info second array-size) v))]))
+              :else (list [key v]))))))
 
 (defn- build-attribute [attr]
-  {:tag :go-attribute
-   :attrs (into {} (map fix-attribute-meta-data
-                        (apply array-map (list* :name (-> attr first str) (rest attr)))))})
+  (let [attr-map (apply array-map (list* :name (-> attr first str) (rest attr)))
+        f (get-attribute-meta-data attr-map)]
+    {:tag :go-attribute
+     :attrs (into {} (mapcat f
+                             attr-map))}))
 
 (defn build-attribute-list [attr-list]
   (loop [acc [] l attr-list]
