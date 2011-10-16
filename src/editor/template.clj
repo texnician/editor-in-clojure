@@ -125,16 +125,34 @@
 ;;   :content ["2"]}
 ;;  {:tag :name,
 ;;   :content ["鸭梨"]}]
+;;; or
+;;; :content [{:tag :item
+;;;            :content ["1"]}
+;;;           {:tag :item
+;;;            :content ["2"]}]
+(defn make-array-attribute-value [comp-key attr-key str-value]
+  (let [value (read-string str-value)]
+    (if (vector? value)
+      (let [meta-info (get-attribute-meta-info comp-key attr-key #{:type :in-domain})]
+        (apply vector (map (fn [x]
+                           {:tag :item
+                            :attrs (merge {:type (:type meta-info)}
+                                          (attribute-extend-attrs attr-key meta-info x)) 
+                            :content [(str x)]}) value)))
+      (emit-error :array-attribute-value-not-vector {:attr (name attr-key) :value value}))))
 
 (defn make-game-object-attributes [comp-key, attrs]
   "返回game object attributes"
   (into [] (map (fn [x]
                   (let [[attr-key value] x]
-                    {:tag attr-key
-                     :attrs (attribute-extend-attrs attr-key
-                                                    (get-attribute-meta-info comp-key attr-key #{:type :in-domain})
-                                                    value)
-                   :content [(str value)]}))
+                    (merge {:tag attr-key}
+                           (if (atom-attribute? comp-key attr-key)
+                             {:attrs (attribute-extend-attrs attr-key
+                                                             (get-attribute-meta-info comp-key attr-key #{:type :in-domain})
+                                                             value)
+                              :content [(str value)]}
+                             {:attrs (get-attribute-meta-info comp-key attr-key #{:size})
+                              :content (make-array-attribute-value comp-key attr-key value)}))))
                 attrs)))
 
 ;; {:base {:id 2, :name "鸭梨"},
