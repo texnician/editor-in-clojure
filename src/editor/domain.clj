@@ -17,7 +17,7 @@
 ;;          (in-ns '~old-ns)
 ;;          name)))
 
-(def *global-domain* (atom {}))
+(def ^:dynamic *global-domain* (atom {}))
 
 (defn init-global-domain []
   (reset! *global-domain* {}))

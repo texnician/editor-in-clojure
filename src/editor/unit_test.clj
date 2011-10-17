@@ -15,23 +15,27 @@
                                    (list k# v#)) attrs))
        (component-factory-test-case ~(keyword 'test-obj) ~comp-key ~(-> attrs :id str keyword)))))
 
-(defn- make-attribute-test-statement [comp-key attr-key val]
+(defn- make-atom-attribute-test-statement [comp-key attr-key val]
   (let [attr-info (make-cpp-attribute comp-key attr-key)]
     ((:assert-eq attr-info) val)))
 
+
 (defn component-factory-test-case [domain comp-key id-key]
   (let [xml-node (id-key (get-domain domain))
-        kv (comp-key (node->concrete-object xml-node))]
+        kv (comp-key (node->concrete-object xml-node :object-node))]
     {:xml xml-node
      :xml-element-str (with-out-str (xml/emit-element (translate-xml-escape-char xml-node)))
      :xml-doc-str (with-out-str (xml/emit (translate-xml-escape-char xml-node)))
-     :attribute-test-statments (map (fn [[k v]]
-                                      ((partial make-attribute-test-statement comp-key) k v))
-                                    kv)}))
+     :atom-attribute-test-statments (map (fn [[k v]]
+                                           ((partial make-atom-attribute-test-statement comp-key) k v))
+                                         kv)
+     :test-value-map (into {} (map (fn [[k v]]
+                                     [k (read-string v)])
+                                   kv))}))
 
 (def *component-factory-test-case-table*
   {:base (deffactory-test :base {:id 1001 :name "TestObject"})
-   :combat-property (deffactory-test :combat-property)
+   :combat-property (deffactory-test :combat-property {:magic-resistance "[1 2 3 4 5 6 7 8 9 10]"})
    :monster-property (deffactory-test :monster-property)
    :rpg-property (deffactory-test :rpg-property)
    :vip-item (deffactory-test :vip-item)
