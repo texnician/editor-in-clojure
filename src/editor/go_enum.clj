@@ -32,3 +32,6 @@
   MR-IMMUTABLE
   MR-REFLECT
   MR-ABSORB)
+
+(defenum role-class-enum
+  DEFAULT-CLASS)
