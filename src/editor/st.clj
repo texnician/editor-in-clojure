@@ -293,8 +293,6 @@
 
 '(gen-component-factory-test '(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base))
 
-(:monster :seed :fruit)
-
 (def *game-object-factory-header-name* "game_object_factory.h")
 
 (def *game-object-factory-cpp-name* "game_object_factory.cpp")
@@ -321,8 +319,6 @@
                                           go-list)))]
       (op st))
     (.render st)))
-
-((game-object-factory-header game-object-factory-header-stg group) '(:monster :seed :fruit))
 
 (defn game-object-create-component [st factory-name]
   (fn [comp-key]
@@ -359,13 +355,6 @@
       (op st))
     (.render st)))
 
-(let [group (STGroupFile. *cpp-game-object-factory-stg*)
-      game-object-factory-header-stg (.getInstanceOf group "game_object_factory_header")
-      create-component-stg (.getInstanceOf group "create_component")
-      game-object-factory-define-stg (.getInstanceOf group "game_object_factory_define")
-      ]
-  ((game-object-factory-cpp (.getInstanceOf group "game_object_factory_cpp") group) '(:monster :seed :fruit)))
-
 (defn gen-game-object-factory [go-list]
   "生成一个Cpp GameObject类Factory"
   (let [group (STGroupFile. *cpp-game-object-factory-stg*)
@@ -374,4 +363,4 @@
     (spit *game-object-factory-cpp-name* (cpp-st go-list))
     (spit *game-object-factory-header-name* (header-st go-list))))
 
-(gen-game-object-factory '(:monster :seed :fruit))
+'(gen-game-object-factory '(:monster :seed :fruit))
