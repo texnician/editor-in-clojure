@@ -158,6 +158,10 @@
   (let [type-info (get-attribute-meta-info comp-key attr-key #{:default})]
     (str (:default type-info))))
 
+(defn atom-attribute? [comp-key attr-key]
+  (let [attr-info (get-attribute-meta-info comp-key attr-key #{:size})]
+    (not (:size attr-info))))
+
 ;; Local Variables:
 ;; coding: utf-8
 ;; End:

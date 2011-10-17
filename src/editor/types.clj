@@ -1,14 +1,27 @@
 (ns editor.types
   (:use (editor core component name-util enum)))
 
+(defn- cpp-define-type [comp-key attr-key atom-type]
+  (if (atom-attribute? comp-key attr-key)
+    atom-type
+    (format "std::vector<%s>" atom-type)))
+
 (defmulti define-type (fn [comp-key attr-key lang]
                         [(get-attribute-type comp-key attr-key) lang]))
 
-(defmethod define-type [:int :cpp] [comp-key attr-key lang] "int")
-(defmethod define-type [:string :cpp] [comp-key attr-key lang] "std::string")
-(defmethod define-type [:enum :cpp] [comp-key attr-key lang] "int")
-(defmethod define-type [:bool :cpp] [comp-key attr-key lang] "bool")
+(defmethod define-type [:int :cpp] [comp-key attr-key lang]
+  (cpp-define-type comp-key attr-key "int"))
 
+(defmethod define-type [:string :cpp] [comp-key attr-key lang]
+  (cpp-define-type comp-key attr-key "std::string"))
+
+(defmethod define-type [:enum :cpp] [comp-key attr-key lang]
+  (cpp-define-type comp-key attr-key "int"))
+
+(defmethod define-type [:bool :cpp] [comp-key attr-key lang]
+  (cpp-define-type comp-key attr-key "bool"))
+
+(defn- cpp-getter-return-type )
 (defmulti getter-return-type (fn [comp-key attr-key lang]
                                [(get-attribute-type comp-key attr-key) lang]))
 

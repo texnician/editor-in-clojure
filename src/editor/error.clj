@@ -23,3 +23,4 @@
     (throw (Exception. (format "error<%d> %s" (:code etb) ((:msg-fn etb) args))))))
 
 (deferror :attribute-not-exist 1001 "属性'<attr>'不存在")
+(deferror :array-attribute-value-not-vector 1002 "属性'<attr>'的值'<value>'不是vector")
