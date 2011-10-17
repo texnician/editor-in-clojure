@@ -37,7 +37,8 @@
    :vip-item (deffactory-test :vip-item)
    :trade (deffactory-test :trade)
    :seeding (deffactory-test :seeding)
-   :item-base (deffactory-test :item-base)})
+   :item-base (deffactory-test :item-base)
+   :role-info (deffactory-test :role-info)})
 
 
 ;(deffactory-test :combat-property {:attack 80 :defence 99 :speed 7 :mental 29 :dodge-rate 73 :crit-rate 1500 :magic-resistance 0x2C})
