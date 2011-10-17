@@ -60,3 +60,6 @@
 
 (defn cpp-component-sid-initialize-filename []
   "component_gen_initialize.cpp")
+
+(defn cpp-game-object-factory-name [go-key]
+  (format "%sFactory" (clojure-token->cpp-token go-key)))

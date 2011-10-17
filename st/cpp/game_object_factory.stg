@@ -1,0 +1,86 @@
+game_object_factory_header(file_name, guard, manifest, date, factory_decls) ::= <<
+// <manifest>
+// @date: <date>
+
+#ifndef <guard>
+#define <guard>
+
+<includes()>
+
+<declares()>
+
+<factory_decls:{x|<x>}; separator="\n\n">
+
+#endif // <guard>
+
+// <file_name> ends here
+
+>>
+
+includes() ::= <<
+#include \<memory\>
+#include "define.h"
+#include "igame_object_factory.h"
+>>
+
+declares() ::= <<
+class TiXmlElement;
+class IGameObject;
+>>
+
+obj_ptr(class) ::= "SHARED_PTR\<<class>>"
+
+game_object_factory_decl(factory_name, game_object_interface) ::= <<
+class DLLAPI <factory_name> : public IGameObjectFactory
+{
+protected:
+    virtual <obj_ptr(game_object_interface)> DoCreateFromXML(const TiXmlElement* data);
+};
+>>
+
+game_object_factory_cpp(file_name, manifest, date, header, factory_defines) ::= <<
+// <manifest>
+// @date: <date>
+
+#include "game_object.h"
+#include "factory_exception.h"
+#include "component_factory.h"
+#include "hw_logger.h"
+#include "<header>"
+
+<factory_defines:{x|<x>}; separator="\n\n">
+
+// <file_name> ends here
+
+>>
+
+game_object_factory_define(factory_name, obj_interface, create_components) ::= <<
+<obj_ptr(obj_interface)> <factory_name>::DoCreateFromXML(const TiXmlElement* data)
+{
+    <obj_ptr(obj_interface)> p_object(GCC_NEW GameObject);
+
+    try
+    {
+        <create_components:{x|<x>}; separator="\n\n">
+        
+        return p_object;
+    }
+    catch (FactoryException& e) {
+        LOG(L_ERROR, "%s", e.what());
+        return NULL
+    }
+}
+>>
+
+comp_ptr(interface) ::= "SHARED_PTR\<<interface>>"
+
+create_component(factory_name, comp_interface, comp_name, comp_factory_name) ::= <<
+{
+    <comp_factory_name> factory;
+    <comp_ptr(comp_interface)> p_comp(factory.CreateFromXML(data).release());
+    if (p_object->AddComponent(p_comp) == false) {
+        LOG(L_ERROR, "'<factory_name>' AddComponent '<comp_name>' error");
+        return NULL;
+    }
+}
+>>
