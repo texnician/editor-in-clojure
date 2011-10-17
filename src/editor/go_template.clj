@@ -21,3 +21,10 @@
   (monster-property)
   (trade)
   (combat-property))
+
+(deftemplate player
+  "玩家的模板"
+  (base :name "未命名的玩家")
+  (rpg-property)
+  (role-info)
+  (currency))
