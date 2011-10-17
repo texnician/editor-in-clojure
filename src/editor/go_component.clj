@@ -6,6 +6,19 @@
   (id :type int :default 0 :doc "Domain内的唯一id")
   (name :type string :default "(unamed object)" :doc "Object的名字"))
 
+(defcomponent role-info
+  "角色信息组件"
+  (role-class :type enum :default DEFAULT-CLASS :in-domain role-class-enum :doc "人物职业")
+  (role-class-level :type enum :default 1 :doc "职业等级")
+  (role-title :type string :default "" :doc "人物称号")
+  (guild :type int :default 0 :doc "人物公会")
+  (role-logic :type int :default 1 :doc "逻辑")
+  (role-reaction :type int :default 1 :doc "反应")
+  (role-memory :type int :default 1 :doc "记忆")
+  (role-creativity :type int :default 1 :doc "创造力")
+  (role-love :type int :default 1 :doc "爱心")
+  (role-vip :type int :default 0 :doc "vip标志"))
+
 (defcomponent item-base
   "物品的基本属性"
   (max-own-num :type int :default 99999 :doc "物品的最大持有数量")
