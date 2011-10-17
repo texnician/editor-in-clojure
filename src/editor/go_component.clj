@@ -9,15 +9,21 @@
 (defcomponent role-info
   "角色信息组件"
   (role-class :type enum :default DEFAULT-CLASS :in-domain role-class-enum :doc "人物职业")
-  (role-class-level :type enum :default 1 :doc "职业等级")
-  (role-title :type string :default "" :doc "人物称号")
+  (role-class-level :type int :default 1 :doc "职业等级")
+  (role-title :type int :default 0 :doc "人物称号")
   (guild :type int :default 0 :doc "人物公会")
   (role-logic :type int :default 1 :doc "逻辑")
   (role-reaction :type int :default 1 :doc "反应")
   (role-memory :type int :default 1 :doc "记忆")
   (role-creativity :type int :default 1 :doc "创造力")
   (role-love :type int :default 1 :doc "爱心")
-  (role-vip :type int :default 0 :doc "vip标志"))
+  (role-skin-color :type int :default 0 :doc "肤色")
+  (role-face-style :type int :default 0 :doc "脸型")
+  (home-weather :type int :default 0 :doc "家园天气"))
+
+(defcomponent currency
+  "角色货币组件"
+  (currency-gold :type int :default 1 :doc "金币"))
 
 (defcomponent item-base
   "物品的基本属性"
@@ -79,5 +85,4 @@
   (mr-wind-curse :type enum :default MR-NORMAL :in-domain magic-resistance-enum :doc "抗性 风咒")
   (mr-earth-curse :type enum :default MR-NORMAL :in-domain magic-resistance-enum :doc "抗性 地咒")
   (mr-kira :type enum :default MR-NORMAL :in-domain magic-resistance-enum :doc "基拉")
-  (magic-resistance :type int*10 :default 0 :min 0 :max 7 :doc "抗性(魔法防御);28种抗性"))
-
+  (magic-resistance :type int :default 0 :min 0 :max 7 :doc "抗性(魔法防御);28种抗性"))
