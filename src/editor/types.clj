@@ -21,7 +21,6 @@
 (defmethod define-type [:bool :cpp] [comp-key attr-key lang]
   (cpp-define-type comp-key attr-key "bool"))
 
-(defn- cpp-getter-return-type )
 (defmulti getter-return-type (fn [comp-key attr-key lang]
                                [(get-attribute-type comp-key attr-key) lang]))
 
