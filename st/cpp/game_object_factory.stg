@@ -45,6 +45,7 @@ game_object_factory_cpp(file_name, manifest, date, header, factory_defines) ::= 
 #include "game_object.h"
 #include "factory_exception.h"
 #include "component_factory.h"
+#include "icomponent.h"
 #include "hw_logger.h"
 #include "<header>"
 
@@ -67,17 +68,17 @@ game_object_factory_define(factory_name, obj_interface, create_components) ::= <
     }
     catch (FactoryException& e) {
         LOG(L_ERROR, "%s", e.what());
-        return NULL
+        return NULL;
     }
 }
 >>
 
-comp_ptr(interface) ::= "SHARED_PTR\<<interface>>"
+comp_ptr(interface) ::= "std::auto_ptr\<<interface>>"
 
 create_component(factory_name, comp_interface, comp_name, comp_factory_name) ::= <<
 {
     <comp_factory_name> factory;
-    <comp_ptr(comp_interface)> p_comp(factory.CreateFromXML(data).release());
+    <comp_ptr(comp_interface)> p_comp(factory.CreateFromXML(data));
     if (p_object->AddComponent(p_comp) == false) {
         LOG(L_ERROR, "'<factory_name>' AddComponent '<comp_name>' error");
         return NULL;

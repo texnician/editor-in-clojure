@@ -35,7 +35,7 @@
 
 (def *component-factory-test-case-table*
   {:base (deffactory-test :base {:id 1001 :name "TestObject"})
-   :combat-property (deffactory-test :combat-property {:magic-resistance "[1 2 3 4 5 6 7 8 9 10]"})
+   :combat-property (deffactory-test :combat-property {:magic-resistance (str [1 2 3 4 5 6 7 8 9 10])})
    :monster-property (deffactory-test :monster-property)
    :rpg-property (deffactory-test :rpg-property)
    :vip-item (deffactory-test :vip-item)
