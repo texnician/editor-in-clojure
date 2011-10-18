@@ -64,23 +64,30 @@
 (defn- extract-attribute-key [node]
   (:tag node))
 
-(defn- extract-attribute-value [node]
-  (-> node :content first))
+(defn- extract-attribute-value [comp-key attr-key node node-type]
+  (if (= node-type :template-node)
+    (-> node :content first)
+    (if (atom-attribute? comp-key attr-key)
+      (-> node :content first)
+      (str (vec (map (fn [x]
+                       (-> x :content first read-string)) (-> node :content)))))))
 
-(defn- extract-attribute-list [attr-nodes]
+(defn- extract-attribute-list [comp-key node-type attr-nodes]
   (into {} (map (fn [c]
-                [(extract-attribute-key c) (extract-attribute-value c)]) attr-nodes)))
+                  (let [attr-key (extract-attribute-key c)]
+                    [attr-key (extract-attribute-value comp-key attr-key c node-type)])) attr-nodes)))
 
-(defn node->concrete-object [node]
+(defn node->concrete-object [node node-type]
   "Convert xml node to inernal concrete object"
   (into {} (map (fn [x]
-                  [(-> x :attrs :name keyword)
-                   (if-let [content (:content x)]
-                     (extract-attribute-list content))]) (:content node))))
+                  (let [comp-key (-> x :attrs :name keyword)]
+                    [comp-key
+                     (if-let [content (:content x)]
+                       (extract-attribute-list comp-key node-type content))])) (:content node))))
 
 (defn make-concrete-template [template-key]
   (if-let [template-node ((get-domain :go-template) template-key)]
-    (node->concrete-object template-node)))
+    (node->concrete-object template-node :template-node)))
 
 (def input-attribute-contract
   (contract input-attribute [attr-key comps]
@@ -135,10 +142,10 @@
     (if (vector? value)
       (let [meta-info (get-attribute-meta-info comp-key attr-key #{:type :in-domain})]
         (apply vector (map (fn [x]
-                           {:tag :item
-                            :attrs (merge {:type (:type meta-info)}
-                                          (attribute-extend-attrs attr-key meta-info x)) 
-                            :content [(str x)]}) value)))
+                             {:tag :item
+                              :attrs (merge {:type (:type meta-info)}
+                                            (attribute-extend-attrs attr-key meta-info x)) 
+                              :content [(str x)]}) value)))
       (emit-error :array-attribute-value-not-vector {:attr (name attr-key) :value value}))))
 
 (defn make-game-object-attributes [comp-key, attrs]
@@ -224,4 +231,4 @@
 (defn make-inspect-game-object [domain-key id]
   "返回一个符合clojure/inspect-table格式的表"
   (if-let [obj-node ((keyword (str id)) (get-domain domain-key))]
-    (make-game-object-inspect-table (node->concrete-object obj-node))))
+    (make-game-object-inspect-table (node->concrete-object obj-node :object-node))))

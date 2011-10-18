@@ -44,3 +44,11 @@ TEST_F(ComponentFactoryTest, <comp_name>)
 >>
 
 attr_test_group(statements) ::= "<statements; separator=\"\n\">"
+
+array_attr_test_block(array_type, getter, statements) ::= <<
+{
+    <array_type> vec_val = p-\><getter>();
+    <statements:{x|<x>}; separator="\n">
+}
+>>
+

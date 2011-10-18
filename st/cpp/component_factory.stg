@@ -62,7 +62,7 @@ component_factory_define(class_name, factory_name, find_component_node, build_at
     <find_component_node>
 
     if (component_node != NULL) {
-        <build_attributes>
+        <build_attributes:{x|<x>}; separator="\n\n">
     }
     else throw ComponentNodeNotFound("<class_name>", __FILE__, __LINE__);
 
@@ -85,9 +85,7 @@ for (const TiXmlElement *node = data->FirstChildElement("<go_tag>");
 }
 >>
 
-build_attributes(component_names, variable_names, attr_names, set_blocks) ::= "<component_names, variable_names, attr_names, set_blocks:{c, v, a, s|<build_attribute(c, v, a, s)>}; separator=\"\n\n\">"
-
-build_attribute(component_name, variable_name, attr_name, set_block) ::= <<
+build_atom_attribute(component_name, variable_name, attr_name, set_block) ::= <<
 const TiXmlElement *ele_<variable_name> = component_node->FirstChildElement("<attr_name>");
 if (ele_<variable_name>) {
     const char *text = ele_<variable_name>->GetText();
@@ -97,6 +95,74 @@ if (ele_<variable_name>) {
     else throw AttributeValueNotFound("<component_name>", "<variable_name>", "<attr_name>", __FILE__, __LINE__);
 }
 else throw AttributeNotFound("<component_name>", "<variable_name>", "<attr_name>", __FILE__, __LINE__);
+>>
+
+build_array_attribute(component_name, variable_name, attr_name, set_block) ::= <<
+const TiXmlElement *ele_<variable_name> = component_node->FirstChildElement("<attr_name>");
+if (ele_<variable_name>) {
+    <set_block>
+}
+else throw AttributeNotFound("<component_name>", "<variable_name>", "<attr_name>", __FILE__, __LINE__);
+>>
+
+set_int_array_value(attr, setter) ::= <<
+std::vector\<int\> val_vec;
+
+for (const TiXmlElement *item_node = ele_<attr>->FirstChildElement("item");
+     item_node; item_node = item_node->NextSiblingElement())
+{
+    const char *text = item_node->GetText();
+    val_vec.push_back(atoi(text));
+}
+
+p-><setter>(val_vec);
+>>
+
+set_string_array_value(attr, setter) ::= <<
+std::vector\<std::string\> val_vec;
+
+for (const TiXmlElement *item_node = ele_<attr>->FirstChildElement("item");
+     item_node; item_node = item_node->NextSiblingElement())
+{
+    const char *text = item_node->GetText();
+    val_vec.push_back(text);
+}
+
+p-><setter>(val_vec);
+>>
+
+set_enum_array_value(attr, setter, enum_int_val) ::= <<
+std::vector\<int\> val_vec;
+
+for (const TiXmlElement *item_node = ele_<attr>->FirstChildElement("item");
+     item_node; item_node = item_node->NextSiblingElement())
+{
+    int tmp = -1;
+    item_node->QueryIntAttribute("<enum_int_val>", &tmp);
+    if (tmp != -1) {
+       val_vec.push_back(tmp);   
+    }
+    else throw EnumAttributeValueNotFound("<attr>", __FILE__, __LINE__);
+}
+
+p-><setter>(val_vec);
+>>
+
+set_bool_array_value(attr, setter) ::= <<
+std::vector\<bool\> val_vec;
+
+for (const TiXmlElement *item_node = ele_<attr>->FirstChildElement("item");
+     item_node; item_node = item_node->NextSiblingElement())
+{
+    const char *text = item_node->GetText();
+    if (strcmp("true", text) == 0) {
+        val_vec.push_back(true);
+    } else if (strcmp("false", text)) {
+        val_vec.push_back(false);
+    } else throw BoolValueError("<attr>", text, __FILE__, __LINE__);
+}
+
+p-><setter>(val_vec);
 >>
 
 set_int_value(attr, setter) ::= <<

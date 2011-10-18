@@ -38,12 +38,13 @@
       (op st))
     (.render st)))
 
-(defn- component-class [st component-bases initialize-list attributes getters-and-setters]
+(defn- component-class [st component-bases initialize-list initialize-members attributes getters-and-setters]
   (fn [comp-key]
     (doseq [op (map st-add-op (list ["name" (cpp-component-gen-name comp-key)]
                                     ["comp_name" (cpp-component-name comp-key)]
                                     ["bases" (component-bases comp-key)]
                                     ["initialize_list" (initialize-list comp-key)]
+                                    ["initialize_members" (initialize-members comp-key)]
                                     ["sid" (format "%#x" (gen-sid (cpp-component-name comp-key)))]
                                     ["attributes" (attributes comp-key)]
                                     ["getters_and_setters" (getters-and-setters comp-key)]))]
@@ -60,9 +61,34 @@
   (fn [comp-key]
     (doseq [op (map st-add-op (mapcat (comp  #(list ["attrs" (:member-name %)] ["values" (:default-value %)])
                                              (partial attr-builder comp-key))
-                                      (component-attribute-keys comp-key)))]
+                                      (filter (fn [x]
+                                                (atom-attribute? comp-key x)) (component-attribute-keys comp-key))))]
       (op st))
     (.render st 80)))
+
+(defn- initialize-member-block [group attr-builder]
+  (fn [comp-key attr-key]
+    (assert (not (atom-attribute? comp-key attr-key)))
+    (let [attr (attr-builder comp-key attr-key)
+          array-values (:default-array-value attr)]
+      (let [st (.getInstanceOf group "initialize_vector_block")]
+        (doseq [op (map st-add-op (map (fn [x]
+                                         ["push_backs" (format "this->%s.push_back(%s);"
+                                                               (:member-name attr)
+                                                               x)])
+                                       array-values))]
+          (op st))
+        (.render st)))))
+
+(defn- initialize-members [st group attr-builder]
+  (fn [comp-key]
+    (let [attr-list (filter (fn [x]
+                              (not (atom-attribute? comp-key x)))
+                            (component-attribute-keys comp-key))]
+      (doseq [op (map st-add-op (map (fn [x]
+                                       ["blocks" ((initialize-member-block group attr-builder) comp-key x)]) attr-list))]
+        (op st))
+      (.render st))))
 
 (defn- doc-lines [st]
   (fn [attr]
@@ -88,6 +114,7 @@
     (doseq [op (map st-add-op (mapcat (comp #(list ["types" (:getter-return-type %)]
                                                    ["getters" (:getter-name %)]
                                                    ["setters" (:setter-name %)]
+                                                   ["setter_arg_types" (:setter-argument-type %)]
                                                    ["m_names" (:member-name %)]
                                                    ["arg_names" (:setter-argument-name %)])
                                              (partial attr-builder comp-key))
@@ -103,11 +130,13 @@
         attributes-st (.getInstanceOf group "attributes")
         attrs (attributes attributes-st group make-cpp-attribute)
         initialize-list-st (.getInstanceOf group "initialize_list")
-        initialize (initialize-list initialize-list-st make-cpp-attribute)
+        initialize-list-fn (initialize-list initialize-list-st make-cpp-attribute)
+        initialize-members-st (.getInstanceOf group "initialize_members")
+        initialize-members-fn (initialize-members initialize-members-st group make-cpp-attribute)
         getters-and-setters-st (.getInstanceOf group "getters_and_setters")
         gas (getters-and-setters getters-and-setters-st make-cpp-attribute)
         class-st (.getInstanceOf group "component_class")
-        cls (component-class class-st bases initialize attrs gas)
+        cls (component-class class-st bases initialize-list-fn initialize-members-fn attrs gas)
         file-st (.getInstanceOf group "component_header")]
     (spit (cpp-component-gen-header-filename comp-key) ((component-class-file file-st cls) comp-key))))
 
@@ -164,17 +193,65 @@
   (let [attrs (keys (.getAttributes st))]
     (some #{attr} attrs)))
 
-(defn- factory-build-attributes [st attr-builder set-block-selector]
-  (fn [comp-key]
-    (let [op-table (mapcat (comp #(list ["component_names" (cpp-component-name comp-key)]
-                                        ["variable_names" (:variable-name %)]
-                                        ["attr_names" (:raw-name %)]
-                                        ["set_blocks" ((set-block-selector) %)])
-                                 (partial attr-builder comp-key))
-                           (component-attribute-keys comp-key))]
+(defn- build-atom-attribute [st attr-builder set-block-selector]
+  (fn [comp-key attr-key]
+    (let [op-table ((comp #(list ["component_name" (cpp-component-name comp-key)]
+                                 ["variable_name" (:variable-name %)]
+                                 ["attr_name" (:raw-name %)]
+                                 ["set_block" ((set-block-selector) %)])
+                          (partial attr-builder comp-key)) attr-key)]
       (doseq [op (map st-add-op op-table)]
         (op st))
       (.render st))))
+
+(defn- array-attribute-set-block-selector [group]
+  (fn [attr]
+    (let [raw-type (:raw-type attr)
+          [st op-list] (cond (= :int raw-type) [(.getInstanceOf group "set_int_array_value")
+                                                (list ["setter" (:setter-name attr)]
+                                                      ["attr" (:variable-name attr)])]
+                             (= :string raw-type) [(.getInstanceOf group "set_string_array_value")
+                                                   (list ["setter" (:setter-name attr)]
+                                                         ["attr" (:variable-name attr)])]
+                             (= :enum raw-type) [(.getInstanceOf group "set_enum_array_value")
+                                                 (list ["attr" (:variable-name attr)]
+                                                       ["setter" (:setter-name attr)]
+                                                       ["enum_int_val" (name *enum-int-value-tag*)])]
+                             (= :bool raw-type) [(.getInstanceOf group "set_bool_array_value")
+                                                 (list ["attr" (:variable-name attr)]
+                                                       ["setter" (:setter-name attr)])]
+                             :else [(.getInstanceOf group "set_unknown_value")
+                                    (list ["attr" (:variable-name attr)]
+                                          ["setter" (:setter-name attr)]
+                                          ["type" (name raw-type)])])]
+      (doseq [op (map st-add-op op-list)]
+        (op st))
+      (.render st))))
+
+(defn- build-array-attribute [st attr-builder set-block-selector]
+  (fn [comp-key attr-key]
+    (let [op-table ((comp #(list ["component_name" (cpp-component-name comp-key)]
+                                 ["variable_name" (:variable-name %)]
+                                 ["attr_name" (:raw-name %)]
+                                 ["set_block" ((set-block-selector) %)])
+                                 (partial attr-builder comp-key)) attr-key)]
+      (doseq [op (map st-add-op op-table)]
+        (op st))
+      (.render st))))
+
+(defn- factory-build-attributes [group attr-builder]
+  (fn [comp-key]
+    (let [attr-list (component-attribute-keys comp-key)]
+      (map (fn [x]
+             (let [[st builder selector] (if (atom-attribute? comp-key x)
+                                           (vector (.getInstanceOf group "build_atom_attribute")
+                                                   build-atom-attribute
+                                                   (partial attribute-set-block-selector group))
+                                           (vector (.getInstanceOf group "build_array_attribute")
+                                                   build-array-attribute
+                                                   (partial array-attribute-set-block-selector group)))]
+               ((builder st attr-builder selector) comp-key x)))
+           attr-list))))
 
 (defn- factory-find-component-node [st]
   (fn [comp-key]
@@ -186,10 +263,11 @@
 
 (defn- component-factory-define [st find-component-node build-attributes]
   (fn [comp-key]
-    (doseq [op (map st-add-op (list ["class_name" (cpp-component-name comp-key)]
-                                    ["factory_name" (cpp-component-factory-name comp-key)]
-                                    ["find_component_node" (find-component-node comp-key)]
-                                    ["build_attributes" (build-attributes comp-key)]))]
+    (doseq [op (map st-add-op (list* ["class_name" (cpp-component-name comp-key)]
+                                     ["factory_name" (cpp-component-factory-name comp-key)]
+                                     ["find_component_node" (find-component-node comp-key)]
+                                     (map #(vector "build_attributes" %)
+                                          (build-attributes comp-key))))]
       (op st))
     (.render st)))
 
@@ -205,9 +283,8 @@
                                      ["date", (get-date)]
                                      (mapcat (fn [x]
                                                (let [build-attributes (factory-build-attributes
-                                                                       (.getInstanceOf group "build_attributes")
-                                                                       make-cpp-attribute
-                                                                       (partial attribute-set-block-selector group))
+                                                                       group
+                                                                       make-cpp-attribute)
                                                      find-component-node (factory-find-component-node
                                                                           (.getInstanceOf group "find_component_node"))
                                                      define-st (component-factory-define
@@ -253,16 +330,36 @@
 '(doseq [c '(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base)]
   (gen-component c))
 
-(defn- attr-test-group [st]
+(defn- array-attr-test-block [st test-values]
+  (fn [comp-key attr-key]
+    (let [attr-info (make-cpp-attribute comp-key attr-key)
+          test-fn (:array-item-test attr-info)
+          idx-seq (range (count test-values))]
+      (doseq [op (map st-add-op (list* ["array_type" (:define-type attr-info)]
+                                       ["getter" (:getter-name attr-info)]
+                                       (map (fn [i v]
+                                              (vector "statements" (test-fn "vec_val" i v)))
+                                            idx-seq test-values)))]
+        (op st))
+      (.render st))))
+
+(defn- attr-test-group [st group]
   (fn [comp-key]
-    (let [test-case (comp-key *component-factory-test-case-table*)]
-      (doseq [op (map st-add-op (map #(vector "statements" %) (:attribute-test-statments test-case)))]
+    (let [attr-list (component-attribute-keys comp-key)
+          test-case (comp-key *component-factory-test-case-table*)]
+      (doseq [op (map st-add-op (map #(vector "statements" %) (:atom-attribute-test-statments test-case)))]
+        (op st))
+      (doseq [op (map st-add-op (map (fn [x]
+                                       (let [st-fn (array-attr-test-block (.getInstanceOf group "array_attr_test_block")
+                                                                          (-> test-case :test-value-map x))]
+                                         (vector "statements" (st-fn comp-key x))))
+                                     (filter #(not (atom-attribute? comp-key %)) attr-list)))]
         (op st)))
     (.render st)))
 
 (defn- comp-test [st group]
   (fn [comp-key]
-    (let [attr-test-group-fn (attr-test-group (.getInstanceOf group "attr_test_group")) 
+    (let [attr-test-group-fn (attr-test-group (.getInstanceOf group "attr_test_group") group)
           test-case (comp-key *component-factory-test-case-table*)]
       (doseq [op (map st-add-op (list* ["comp_name" (cpp-component-name comp-key)]
                                        ["factory_name" (cpp-component-factory-name comp-key)]

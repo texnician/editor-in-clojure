@@ -18,7 +18,6 @@
   (let [enum-key (keyword enum)]
     `(fn-global-enum-map ~enum-key)))
 
-(keyword (quote ooxx))
 (defn fn-global-enum-map [enum]
   (into {} (map (fn [x]
                   (let [k (-> x :attrs :name keyword)
