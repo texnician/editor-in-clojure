@@ -223,3 +223,19 @@ int BaseComponent::GetIntAttr(sid_t attr)
       }
     }
 }
+
+
+const TiXmlElement *ele_magic_resistance = component_node->FirstChildElement("magic-resistance");
+if (ele_magic_resistance) {
+    std::vector<int> val_vec;
+    
+    for (const TiXmlElement *item_node = data->FirstChildElement("item");
+         item_node; item_node = item_node->NextSiblingElement())
+    {
+        const char *text = item_node->GetText();
+        val_vec.push_back(atoi(text));
+    }
+    
+    p->SetMagicResistance(val_vec);
+}
+else throw AttributeNotFound("CombatPropertyComponent", "magic_resistance", "magic-resistance", __FILE__, __LINE__);

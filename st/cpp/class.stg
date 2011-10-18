@@ -1,4 +1,4 @@
-component_class(name, comp_name, bases, initialize_list, sid, attributes, getters_and_setters) ::= <<
+component_class(name, comp_name, bases, initialize_list, initialize_members, sid, attributes, getters_and_setters) ::= <<
 class <name> <bases>
 {
     <attributes>
@@ -8,7 +8,9 @@ public:
     
     <name>()
         <initialize_list>
-        {}
+        {
+            <initialize_members>       
+        }
 
     virtual ~<name>()
         {}
@@ -44,15 +46,25 @@ initialize_list(attrs, values) ::= "<if(attrs)>: <attrs, values:{a, v |<initial_
 
 initial_attr(attr, value) ::= "<attr>(<value>)"
 
-getters_and_setters(types, getters, setters, m_names, arg_names) ::= "<types, getters, setters, m_names, arg_names:{t,g,s,m,a |<getter_and_setter(t, g, s, m, a)>}; separator=\"\n\n\">"
+initialize_members(blocks) ::= <<
+<blocks:{x|<x>}; separator="\n\n">
+>>
 
-getter_and_setter(type, getter, setter, m_name, arg_name) ::= <<
+initialize_vector_block(push_backs) ::= <<
+{
+    <push_backs:{x|<x>}; separator="\n">
+}
+>>
+
+getters_and_setters(types, getters, setters, setter_arg_types, m_names, arg_names) ::= "<types, getters, setters, setter_arg_types, m_names, arg_names:{t,g,s,sa,m,a |<getter_and_setter(t, g, s, sa, m, a)>}; separator=\"\n\n\">"
+
+getter_and_setter(type, getter, setter, setter_arg_type, m_name, arg_name) ::= <<
 <type> <getter>() const
     {
         return this-\><m_name>;
     }
 
-void <setter>(<type> <arg_name>)
+void <setter>(<setter_arg_type> <arg_name>)
     {
         this-\><m_name> = <arg_name>;
     }
