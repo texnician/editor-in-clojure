@@ -14,7 +14,16 @@ component_header(filename, date, manifest, name, body) ::= <<
 #include \<sstream\>
 #include "icomponent.h"
 
+#if defined(_MSC_VER)
+#pragma warning (push)
+#pragma warning (disable: 4819)
+#endif
+
 <body>
+
+#if defined(_MSC_VER)
+#pragma warning (pop)
+#endif
 
 #endif // <name>
 

@@ -3,38 +3,38 @@
   (:use (editor core domain go-template domain-manager inspect-util st))
   (:gen-class))
 
-(defn- compile-xml [& files]
+(defn compile-xml [& files]
   (doseq [f files]
     (load-file f)
     (output-domian-to-xml-file (keyword (filename->domain-name f)))))
 
 (declare *opt-table*)
 
-(defn- usage [& args]
+(defn usage [& args]
   (println "Welcome to happy world editor.")
   (println "Usage: java -c editor-x.x.x-.jar [option] [arg] ...")
   (doseq [[k v] *opt-table*]
     (println (format "   %s    %s" (name k) (:doc v)))))
 
-(defn- list-components [& args]
+(defn list-components [& args]
   (let [comp-list (keys (get-domain :meta-go-component))]
     (doseq [c comp-list]
       (-> c name println))))
 
-(defn- list-templates [& args]
+(defn list-templates [& args]
   (let [temp-list (keys (get-domain :go-template))]
     (doseq [t temp-list]
       (-> t name println))))
 
-(defn- list-domains [& args]
+(defn list-domains [& args]
   (let [domain-list (keys (deref *global-domain*))]
     (doseq [d domain-list]
       (-> d name println))))
 
-(defn- inspect-template-by-name [arg]
+(defn inspect-template-by-name [arg]
   (inspect-template-fn (keyword arg)))
 
-(defn- generate-cpp [& args]
+(defn generate-cpp [& args]
   (let [comp-list (keys (get-domain :meta-go-component))
         go-list (keys (get-domain :go-template))]
     (doseq [c comp-list]
@@ -43,7 +43,7 @@
     (gen-component-factory comp-list)
     (gen-component-factory-test comp-list)
     (gen-game-object-factory go-list)))
-(generate-cpp)
+
 (def *opt-table*
   {:-c {:func compile-xml :doc "Compile domain scripts, output xml data files."}
    :-C {:func generate-cpp :doc "Generate cpp srcs."}
