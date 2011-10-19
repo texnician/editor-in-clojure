@@ -4,6 +4,7 @@
 (defcomponent base
   "Game object基本组件"
   (id :type int :default 0 :doc "Domain内的唯一id")
+  (object-id :type int :default 0 :doc "GameObject运行时id")
   (name :type string :default "(unamed object)" :doc "Object的名字"))
 
 (defcomponent role-info
