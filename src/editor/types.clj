@@ -12,6 +12,15 @@
 (defmethod define-type [:int :cpp] [comp-key attr-key lang]
   (cpp-define-type comp-key attr-key "int"))
 
+(defmethod define-type [:uint :cpp] [comp-key attr-key lang]
+  (cpp-define-type comp-key attr-key "uint32_t"))
+
+(defmethod define-type [:int64 :cpp] [comp-key attr-key lang]
+  (cpp-define-type comp-key attr-key "int64_t"))
+
+(defmethod define-type [:uint64 :cpp] [comp-key attr-key lang]
+  (cpp-define-type comp-key attr-key "uint64_t"))
+
 (defmethod define-type [:string :cpp] [comp-key attr-key lang]
   (cpp-define-type comp-key attr-key "std::string"))
 
@@ -24,10 +33,22 @@
 (defmulti getter-return-type (fn [comp-key attr-key lang]
                                [(get-attribute-type comp-key attr-key) lang]))
 
-(defmethod getter-return-type [:int :cpp] [comp-key attr-key lang]
+(defn- cpp-int-return-type [comp-key attr-key int-type]
   (if (atom-attribute? comp-key attr-key)
-    "int"
-    "std::vector<int>"))
+    int-type
+    (format "std::vector<%s>" int-type)))
+
+(defmethod getter-return-type [:int :cpp] [comp-key attr-key lang]
+  (cpp-int-return-type comp-key attr-key "int"))
+
+(defmethod getter-return-type [:uint :cpp] [comp-key attr-key lang]
+  (cpp-int-return-type comp-key attr-key "uint32_t"))
+
+(defmethod getter-return-type [:int64 :cpp] [comp-key attr-key lang]
+  (cpp-int-return-type comp-key attr-key "int64_t"))
+
+(defmethod getter-return-type [:uint64 :cpp] [comp-key attr-key lang]
+  (cpp-int-return-type comp-key attr-key "uint64_t"))
 
 (defmethod getter-return-type [:string :cpp] [comp-key attr-key lang]
   (if (atom-attribute? comp-key attr-key)
@@ -56,10 +77,22 @@
 (defmulti setter-argument-type (fn [comp-key attr-key lang]
                                  [(get-attribute-type comp-key attr-key) lang]))
 
-(defmethod setter-argument-type [:int :cpp] [comp-key attr-key lang]
+(defn- cpp-int-setter-argument-type [comp-key attr-key int-type]
   (if (atom-attribute? comp-key attr-key)
-    "int"
-    "const std::vector<int>&"))
+    int-type
+    (format "const std::vector<%s>&" int-type)))
+
+(defmethod setter-argument-type [:int :cpp] [comp-key attr-key lang]
+  (cpp-int-setter-argument-type comp-key attr-key "int"))
+
+(defmethod setter-argument-type [:uint :cpp] [comp-key attr-key lang]
+  (cpp-int-setter-argument-type comp-key attr-key "uint32_t"))
+
+(defmethod setter-argument-type [:int64 :cpp] [comp-key attr-key lang]
+  (cpp-int-setter-argument-type comp-key attr-key "int64_t"))
+
+(defmethod setter-argument-type [:uint64 :cpp] [comp-key attr-key lang]
+  (cpp-int-setter-argument-type comp-key attr-key "uint64_t"))
 
 (defmethod setter-argument-type [:string :cpp] [comp-key attr-key lang]
   (if (atom-attribute? comp-key attr-key)
@@ -82,6 +115,15 @@
 (defmethod attribute-default-value [:int :cpp] [comp-key attr-key lang]
   (get-attribute-default-value comp-key attr-key))
 
+(defmethod attribute-default-value [:uint :cpp] [comp-key attr-key lang]
+  (get-attribute-default-value comp-key attr-key))
+
+(defmethod attribute-default-value [:int64 :cpp] [comp-key attr-key lang]
+  (get-attribute-default-value comp-key attr-key))
+
+(defmethod attribute-default-value [:uint64 :cpp] [comp-key attr-key lang]
+  (get-attribute-default-value comp-key attr-key))
+
 (defmethod attribute-default-value [:string :cpp] [comp-key attr-key lang]
   (str \" (get-attribute-default-value comp-key attr-key) \"))
 
@@ -99,6 +141,18 @@
                                           [(get-attribute-type comp-key attr-key) lang]))
 
 (defmethod attribute-default-array-value [:int :cpp] [comp-key attr-key lang]
+  (if-not (atom-attribute? comp-key attr-key)
+    (read-string (get-attribute-default-value comp-key attr-key))))
+
+(defmethod attribute-default-array-value [:uint :cpp] [comp-key attr-key lang]
+  (if-not (atom-attribute? comp-key attr-key)
+    (read-string (get-attribute-default-value comp-key attr-key))))
+
+(defmethod attribute-default-array-value [:int64 :cpp] [comp-key attr-key lang]
+  (if-not (atom-attribute? comp-key attr-key)
+    (read-string (get-attribute-default-value comp-key attr-key))))
+
+(defmethod attribute-default-array-value [:uint64 :cpp] [comp-key attr-key lang]
   (if-not (atom-attribute? comp-key attr-key)
     (read-string (get-attribute-default-value comp-key attr-key))))
 
@@ -125,6 +179,18 @@
   (if (atom-attribute? comp-key attr-key)
     (format "%s(p->%s(), %s);" test-f (cpp-getter-name attr-key) value)))
 
+(defmethod attribute-test-statement [:uint :cpp] [comp-key attr-key lang test-f value]
+  (if (atom-attribute? comp-key attr-key)
+    (format "%s(p->%s(), %s);" test-f (cpp-getter-name attr-key) value)))
+
+(defmethod attribute-test-statement [:int64 :cpp] [comp-key attr-key lang test-f value]
+  (if (atom-attribute? comp-key attr-key)
+    (format "%s(p->%s(), %s);" test-f (cpp-getter-name attr-key) value)))
+
+(defmethod attribute-test-statement [:uint64 :cpp] [comp-key attr-key lang test-f value]
+  (if (atom-attribute? comp-key attr-key)
+    (format "%s(p->%s(), %s);" test-f (cpp-getter-name attr-key) value)))
+
 (defmethod attribute-test-statement [:enum :cpp] [comp-key attr-key lang test-f value]
   (if (atom-attribute? comp-key attr-key)
     (let [int-value (enum-int-value (keyword (:in-domain (get-attribute-meta-info comp-key attr-key #{:in-domain})))
@@ -143,6 +209,18 @@
                                                 [(get-attribute-type comp-key attr-key) lang]))
 
 (defmethod array-attribute-item-test-statement [:int :cpp] [comp-key attr-key lang]
+  (fn [vec idx value]
+    (format "ASSERT_EQ(%s[%d], %d);" vec idx value)))
+
+(defmethod array-attribute-item-test-statement [:uint :cpp] [comp-key attr-key lang]
+  (fn [vec idx value]
+    (format "ASSERT_EQ(%s[%d], %d);" vec idx value)))
+
+(defmethod array-attribute-item-test-statement [:int64 :cpp] [comp-key attr-key lang]
+  (fn [vec idx value]
+    (format "ASSERT_EQ(%s[%d], %d);" vec idx value)))
+
+(defmethod array-attribute-item-test-statement [:uint64 :cpp] [comp-key attr-key lang]
   (fn [vec idx value]
     (format "ASSERT_EQ(%s[%d], %d);" vec idx value)))
 
@@ -167,6 +245,27 @@
 (defn attribute-assert-ne [comp-key attr-key lang]
   (fn [value]
     (attribute-test-statement comp-key attr-key lang "ASSERT_NE" value)))
+
+(defn int-type? [raw-type]
+  (some #(= % raw-type) [:int :int64 :uint :uint64]))
+
+(defn atoi [raw-type]
+  (if (int-type? raw-type)
+    (cond (= :int raw-type) "atoi"      ; atoi %d
+          (= :uint raw-type) "ATOUI"    ; strtoul(*, (char **)NULL, 10) %u strtoul %u
+          (= :int64 raw-type) "ATOI64"  ; atoll %ll _atoi64 %I64d
+          (= :uint64 raw-type) "ATOUI64" ; strtoull %llu _strtoui64(_, (char **)NULL, 10) %I64u
+          :else (assert (and (name raw-type) false)))
+    (throw (Exception. (format "No atoi for type %s" raw-type)))))
+
+(def *json-converter-table*
+  {:int "asInt"
+   :uint "asUInt"
+   :int64 "asInt64"
+   :uint64 "asUInt64"
+   :string "asString"
+   :enum "asInt"
+   :bool "asBool"})
 
 (defn make-cpp-attribute [comp-key attr-key]
   {:key attr-key
