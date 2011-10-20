@@ -1,5 +1,5 @@
 component_class(name, comp_name, bases, initialize_list, initialize_members, sid, attributes, getters_and_setters) ::= <<
-class <name> <bases>
+class HW_BASE_API <name> <bases>
 {
     <attributes>
 
@@ -26,6 +26,10 @@ public:
         }
         
     <getters_and_setters>
+
+    Json::Value ToJSONValue() const;
+
+    bool FromJSONValue(const Json::Value& root);
 };
 >>
 
@@ -50,9 +54,13 @@ initialize_members(blocks) ::= <<
 <blocks:{x|<x>}; separator="\n\n">
 >>
 
-initialize_vector_block(push_backs) ::= <<
+initialize_vector_block(push_backs, emplace_backs) ::= <<
 {
+#if defined(_CXX0X_)
+    <emplace_backs:{x|<x>}; separator="\n">
+#else
     <push_backs:{x|<x>}; separator="\n">
+#endif    
 }
 >>
 

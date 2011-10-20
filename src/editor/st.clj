@@ -72,11 +72,13 @@
     (let [attr (attr-builder comp-key attr-key)
           array-values (:default-array-value attr)]
       (let [st (.getInstanceOf group "initialize_vector_block")]
-        (doseq [op (map st-add-op (map (fn [x]
-                                         ["push_backs" (format "this->%s.push_back(%s);"
-                                                               (:member-name attr)
-                                                               x)])
-                                       array-values))]
+        (doseq [op (map st-add-op (mapcat (fn [x]
+                                            (list ["push_backs" (format "this->%s.push_back(%s);"
+                                                                        (:member-name attr)
+                                                                        x)]
+                                                  ["emplace_backs" (format "this->%s.emplace_back(%s);"
+                                                                           (:member-name attr) x)]))
+                                          array-values))]
           (op st))
         (.render st)))))
 
@@ -146,14 +148,10 @@
     (let [name-lens (map #(-> % cpp-component-gen-name count) comp-key-list)
           max-len (apply max name-lens)
           padding-map (zipmap comp-key-list (map (comp #(apply str %) #(repeat % \space) (partial - max-len)) name-lens))]
-      (doseq [op (map st-add-op (list* ["filename" (cpp-component-sid-initialize-filename)]
-                                       ["manifest" *manifest*]
-                                       ["date" (get-date)]
-                                       (mapcat (fn [x]
-                                                 (list ["comp_gen_headers" (cpp-component-gen-header-filename x)]
-                                                       ["comps" (cpp-component-gen-name x)]
-                                                       ["paddings" (padding-map x)]
-                                                       ["sids" (format "%#x" (gen-sid (cpp-component-name x)))])) comp-key-list)))]
+      (doseq [op (map st-add-op (mapcat (fn [x]
+                                          (list ["comps" (cpp-component-gen-name x)]
+                                                ["paddings" (padding-map x)]
+                                                ["sids" (format "%#x" (gen-sid (cpp-component-name x)))])) comp-key-list))]
         (op st)))
     (.render st)))
 
@@ -461,3 +459,90 @@
     (spit *game-object-factory-header-name* (header-st go-list))))
 
 '(gen-game-object-factory '(:monster :seed :fruit))
+
+(defn- attribute->json [group]
+  (fn [comp-key attr-key]
+    (let [info (make-cpp-attribute comp-key attr-key)]
+      (let [[st op-list] (if (atom-attribute? comp-key attr-key)
+                           [(.getInstanceOf group "atom_attribute_to_json")
+                            (list ["raw_name" (:raw-name info)]
+                                  ["attr_name" (:member-name info)])]
+                           [(.getInstanceOf group "array_attribute_to_json")
+                            (list ["raw_name" (:raw-name info)]
+                                  ["attr_name" (:member-name info)])])]
+        (doseq [op (map st-add-op op-list)]
+          (op st))
+        (.render st)))))
+
+(defn- comp-to-json [st group]
+  (fn [comp-key]
+    (let [attr-list (component-attribute-keys comp-key)]
+      (doseq [op (map st-add-op (list* ["class_name" (cpp-component-gen-name comp-key)]
+                                       (map (fn [x]
+                                              (vector "attribute_to_jsons" ((attribute->json group) comp-key x)))
+                                            attr-list)))]
+        (op st))
+      (.render st))))
+
+(def *json-converter-table*
+  {:int "asInt"
+   :string "asString"
+   :enum "asInt"
+   :bool "asBool"})
+
+(defn- json->attribute [group]
+  (fn [comp-key attr-key]
+    (let [info (make-cpp-attribute comp-key attr-key)]
+      (let [[st op-list] (if (atom-attribute? comp-key attr-key)
+                           [(.getInstanceOf group "atom_attribute_from_json")
+                            (list ["raw_name" (:raw-name info)]
+                                  ["default_value" (:default-value info)]
+                                  ["attr_name" (:member-name info)]
+                                  ["converter" ((:raw-type info) *json-converter-table*)])]
+                           [(.getInstanceOf group "array_attribute_from_json")
+                            (list ["raw_name" (:raw-name info)]
+                                  ["vec_type" (:define-type info)]
+                                  ["attr_name" (:member-name info)]
+                                  ["converter" ((:raw-type info) *json-converter-table*)])])]
+        (doseq [op (map st-add-op op-list)]
+          (op st))
+        (.render st)))))
+
+(defn- comp-from-json [st group]
+  (fn [comp-key]
+    (let [attr-list (component-attribute-keys comp-key)]
+      (doseq [op (map st-add-op (list* ["class_name" (cpp-component-gen-name comp-key)]
+                                       (map (fn [x]
+                                              (vector "attribute_from_jsons" ((json->attribute group) comp-key x)))
+                                            attr-list)))]
+        (op st))
+      (.render st))))
+
+(defn- json-function-define [st group]
+  (fn [comp-key]
+    (doseq [op (map st-add-op (list ["to_json" ((comp-to-json (.getInstanceOf group "to_json") group) comp-key)]
+                                    ["from_json" ((comp-from-json (.getInstanceOf group "from_json") group) comp-key)]))]
+      (op st))
+    (.render st)))
+
+(def *component-define-cpp* "component_gen_define.cpp")
+
+(defn- component-define-cpp [st group]
+  (fn [comp-list]
+    (doseq [op (map st-add-op (list* ["filename" *component-define-cpp*]
+                                     ["date" (get-date)]
+                                     ["manifest" *manifest*]
+                                     ["sid_initialize" ((component-sid-initialize (.getInstanceOf group "component_sid_initialize")) comp-list)] 
+                                     (mapcat (fn [x]
+                                               (list ["component_headers" (cpp-component-gen-header-filename x)]
+                                                     ["component_defines" ((json-function-define (.getInstanceOf group "json_function_define") group) x)]))
+                                             comp-list)))]
+      (op st))
+    (.render st)))
+
+(defn gen-component-define-cpp [comp-key-list]
+  (let [group (STGroupFile. *cpp-component-stg*)
+        component-cpp-st (.getInstanceOf group "component_cpp")]
+    (spit *component-define-cpp* ((component-define-cpp component-cpp-st group) comp-key-list))))
+
+'(gen-component-define-cpp '(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base))

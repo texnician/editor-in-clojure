@@ -24,6 +24,11 @@ includes() ::= <<
 
 delcares() ::= <<
 class TiXmlElement;
+
+namespace Json
+{
+    class Value;                    
+}
 >>
 
 smart_ptr(class) ::= "std::auto_ptr\<<class>>"
@@ -34,6 +39,7 @@ component_factory_cpp(file_name, date, component_headers, component_factory_defi
 
 #include "define.h"
 #include "tinyxml.h"
+#include "json/json.h"
 #include "factory_exception.h"
 #include "component_factory.h"
 <component_headers:{x|#include "<x>"}; separator="\n">
@@ -45,10 +51,12 @@ component_factory_cpp(file_name, date, component_headers, component_factory_defi
 >>
 
 component_factory_decl(factory_name, interface_name) ::= <<
-class DLLAPI <factory_name> : public IComponentFactory
+class HW_BASE_API <factory_name> : public IComponentFactory
 {
 protected:
     virtual <smart_ptr(interface_name)> DoCreateFromXML(const TiXmlElement* data);
+
+    virtual <smart_ptr(interface_name)> DoCreateFromJSON(const Json::Value& data);
 };
 >>
 
@@ -65,6 +73,17 @@ component_factory_define(class_name, factory_name, find_component_node, build_at
         <build_attributes:{x|<x>}; separator="\n\n">
     }
     else throw ComponentNodeNotFound("<class_name>", __FILE__, __LINE__);
+
+    return <smart_ptr("IComponent")>(p.release());
+}
+
+<smart_ptr("IComponent")> <factory_name>::DoCreateFromJSON(const Json::Value& data)
+{
+    <smart_ptr(class_name)> p(GCC_NEW <class_name>);
+
+    if (p->FromJSONValue(data) == false) {
+        throw FromJSONValueFailed("<class_name>", data.toStyledString().c_str(), __FILE__, __LINE__);
+    }
 
     return <smart_ptr("IComponent")>(p.release());
 }
