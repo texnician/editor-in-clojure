@@ -60,32 +60,36 @@ protected:
 };
 >>
 
-component_factory_define(class_name, factory_name, find_component_node, build_attributes) ::= <<
+component_factory_define(class_name, factory_name, raw_name, find_component_node, build_attributes) ::= <<
 <smart_ptr("IComponent")> <factory_name>::DoCreateFromXML(const TiXmlElement* data)
 {
-    <smart_ptr(class_name)> p(GCC_NEW <class_name>);
-
     const TiXmlElement *component_node = NULL;
 
     <find_component_node>
 
     if (component_node != NULL) {
+        <smart_ptr(class_name)> p(GCC_NEW <class_name>);
+        
         <build_attributes:{x|<x>}; separator="\n\n">
+
+        return <smart_ptr("IComponent")>(p.release());
     }
     else throw ComponentNodeNotFound("<class_name>", __FILE__, __LINE__);
-
-    return <smart_ptr("IComponent")>(p.release());
 }
 
 <smart_ptr("IComponent")> <factory_name>::DoCreateFromJSON(const Json::Value& data)
 {
-    <smart_ptr(class_name)> p(GCC_NEW <class_name>);
+    const Json::Value& jv = data["<raw_name>"];
+    
+    if (!jv.isNull()) {
+        <smart_ptr(class_name)> p(GCC_NEW <class_name>);
 
-    if (p->FromJSONValue(data) == false) {
-        throw FromJSONValueFailed("<class_name>", data.toStyledString().c_str(), __FILE__, __LINE__);
+        if (p->FromJSONValue(jv)) {
+            return <smart_ptr("IComponent")>(p.release());
+        }
+        else throw FromJSONValueFailed("<class_name>", jv.toStyledString().c_str(), __FILE__, __LINE__);
     }
-
-    return <smart_ptr("IComponent")>(p.release());
+    else throw JsonComponentNodeNotFound("<class_name>", data.toStyledString().c_str(), __FILE__, __LINE__);
 }
 >>
 

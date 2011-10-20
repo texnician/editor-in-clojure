@@ -27,7 +27,7 @@ protected:
 
 comp_tests(comp_names, factory_names, xml_strings, attr_test_groups) ::= "<comp_names, factory_names, xml_strings, attr_test_groups:{c, f, x, a|<comp_test(c, f, x, a)>}; separator=\"\n\n\">"
 
-comp_test(comp_name, factory_name, xml_string, attr_test_group) ::= <<
+comp_test(comp_name, factory_name, raw_name, xml_string, attr_test_group) ::= <<
 TEST_F(ComponentFactoryTest, <comp_name>)
 {
     std::auto_ptr\<TiXmlElement\> data(new TiXmlElement("<comp_name>"));
@@ -41,7 +41,8 @@ TEST_F(ComponentFactoryTest, <comp_name>)
 
     <attr_test_group>
 
-    Json::Value root = p-\>ToJSONValue();
+    Json::Value root;
+    root["<raw_name>"] = p-\>ToJSONValue();
 
     std::auto_ptr\<<comp_name>\> p1(p.release());
     

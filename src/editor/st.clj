@@ -155,6 +155,18 @@
         (op st)))
     (.render st)))
 
+(defn- component-raw-name-initialize [st]
+  (fn [comp-key-list]
+    (let [name-lens (map #(-> % cpp-component-gen-name count) comp-key-list)
+          max-len (apply max name-lens)
+          padding-map (zipmap comp-key-list (map (comp #(apply str %) #(repeat % \space) (partial - max-len)) name-lens))]
+      (doseq [op (map st-add-op (mapcat (fn [x]
+                                          (list ["comps" (cpp-component-gen-name x)]
+                                                ["paddings" (padding-map x)]
+                                                ["raw_names" (name x)])) comp-key-list))]
+        (op st)))
+    (.render st)))
+
 (defn gen-component-sid-initialize [comp-key-list]
   "生成初始化Component sid的cpp文件"
   (let [group (STGroupFile. *cpp-component-stg*)
@@ -263,6 +275,7 @@
   (fn [comp-key]
     (doseq [op (map st-add-op (list* ["class_name" (cpp-component-name comp-key)]
                                      ["factory_name" (cpp-component-factory-name comp-key)]
+                                     ["raw_name" (name comp-key)]
                                      ["find_component_node" (find-component-node comp-key)]
                                      (map #(vector "build_attributes" %)
                                           (build-attributes comp-key))))]
@@ -361,6 +374,7 @@
           test-case (comp-key *component-factory-test-case-table*)]
       (doseq [op (map st-add-op (list* ["comp_name" (cpp-component-name comp-key)]
                                        ["factory_name" (cpp-component-factory-name comp-key)]
+                                       ["raw_name" (name comp-key)]
                                        ["attr_test_group" (attr-test-group-fn comp-key)]
                                        (map #(vector "xml_string" %) (string/split-lines (:xml-element-str test-case)))
                                        ))]
@@ -424,16 +438,26 @@
       (op st))
     (.render st)))
 
+(defn- game-object-create-component-from-json [st factory-name]
+  (fn [comp-key]
+    (doseq [op (map st-add-op (list ["factory_name" factory-name]
+                                    ["comp_interface" "IComponent"]
+                                    ["comp_name" (cpp-component-name comp-key)]
+                                    ["comp_factory_name" (cpp-component-factory-name comp-key)]))]
+      (op st))
+    (.render st)))
+
 (defn- game-object-factory-define [st group]
   (fn [obj-key]
     (let [comp-list (keys (make-concrete-template obj-key))]
       (doseq [op (map st-add-op (list* ["factory_name" (cpp-game-object-factory-name obj-key)]
                                        ["obj_interface" "IGameObject"]
-                                       (map (fn [x]
-                                              (vector "create_components"
-                                                      ((game-object-create-component (.getInstanceOf group "create_component")
-                                                                                     (cpp-game-object-factory-name obj-key)) x)))
-                                            comp-list)))]
+                                       (mapcat (fn [x]
+                                                 (list ["create_components" ((game-object-create-component (.getInstanceOf group "create_component")
+                                                                                                           (cpp-game-object-factory-name obj-key)) x)]
+                                                       ["create_components_from_json" ((game-object-create-component-from-json (.getInstanceOf group "create_component_from_json")
+                                                                                                                               (cpp-game-object-factory-name obj-key)) x)]))
+                                               comp-list)))]
         (op st)))
     (.render st)))
 
@@ -532,7 +556,8 @@
     (doseq [op (map st-add-op (list* ["filename" *component-define-cpp*]
                                      ["date" (get-date)]
                                      ["manifest" *manifest*]
-                                     ["sid_initialize" ((component-sid-initialize (.getInstanceOf group "component_sid_initialize")) comp-list)] 
+                                     ["sid_initialize" ((component-sid-initialize (.getInstanceOf group "component_sid_initialize")) comp-list)]
+                                     ["raw_name_initialize" ((component-raw-name-initialize (.getInstanceOf group "component_raw_name_initialize")) comp-list)]
                                      (mapcat (fn [x]
                                                (list ["component_headers" (cpp-component-gen-header-filename x)]
                                                      ["component_defines" ((json-function-define (.getInstanceOf group "json_function_define") group) x)]))

@@ -4,7 +4,9 @@ class HW_BASE_API <name> <bases>
     <attributes>
 
 public:
-    static unsigned int sid_;
+    static const unsigned int sid_;
+
+    static const char* const raw_name_;
     
     <name>()
         <initialize_list>
@@ -23,6 +25,11 @@ public:
     const char* Name() const
         {
             return "<comp_name>";
+        }
+
+    const char* RawName() const
+        {
+            return raw_name_;
         }
         
     <getters_and_setters>
