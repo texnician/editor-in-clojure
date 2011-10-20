@@ -110,8 +110,11 @@
 
 (defn attribute-extend-attrs [attr-key attrs attr-val]
   (cond (= "enum" (:type attrs)) {*enum-int-value-tag*
-                                  (enum-int-value (keyword (:in-domain attrs))
-                                                  (keyword attr-val))}
+                                  (let [v (enum-int-value (keyword (:in-domain attrs))
+                                                                    (keyword attr-val))]
+                                    (if (integer? v) v
+                                        (do (println attr-key attrs attr-val v) "INVALID-ENUM"))
+                                    )}
         :else nil))
 
 (defn make-component-node [comp-key & attr-vals]
@@ -126,7 +129,7 @@
                                                       v
                                                       (attrs :default))]
                                        {:tag attr-key
-                                        :attrs (merge attrs (attribute-extend-attrs attr-key attrs attr-val)) 
+                                        :attrs attrs 
                                         :content
                                         [(str attr-val)]}))
                                    meta-attrs))})))
