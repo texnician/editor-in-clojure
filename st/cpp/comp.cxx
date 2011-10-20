@@ -239,3 +239,41 @@ if (ele_magic_resistance) {
     p->SetMagicResistance(val_vec);
 }
 else throw AttributeNotFound("CombatPropertyComponent", "magic_resistance", "magic-resistance", __FILE__, __LINE__);
+
+Json::Value BaseComponentGen::ToJSONValue() const
+{
+    Json::Value root;
+    
+    root["id"] = this->id_;
+    root["object-id"] = this->object_id_;
+    root["name"] = this->name_;
+
+    {
+        Json::Value& array = root["magic-resistance"];
+        ArrayToJsonValue(this->magic_resistance_, &array);
+    }
+    
+    return root;
+}
+
+bool BaseComponentGen::FromJSONValue(const Json::Value& root)
+{
+    try
+    {
+        this->id_ = root.get("id", 0).asInt();
+        this->object_id_ = root.get("object-id", 0).asInt();
+        this->name_ = root.get("name", "").asString();
+
+        {
+            const Json::Value& array = root["magic-resistance"];
+            for (int i = 0; i < array.size(); ++i) {
+                this->magic_resistance_.push_back(array[i].asInt());
+            }
+        }
+        return true;
+    }
+    catch (std::runtime_error& e) {
+        LOG(L_ERROR, "FromJSONValue error: %s", e.what().c_str());
+        return false;
+    }
+}

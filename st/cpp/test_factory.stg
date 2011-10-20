@@ -7,6 +7,7 @@ test_factory_file(manifest, filename, date, comp_headers, comp_tests) ::= <<
 #include "gmock/gmock.h"
 #include "sid.h"
 #include "tinyxml.h"
+#include "json/json.h"
 #include "component_factory.h"
 <comp_headers:{x|#include "<x>"}; separator="\n">
 
@@ -39,6 +40,16 @@ TEST_F(ComponentFactoryTest, <comp_name>)
     ASSERT_STREQ(p-\>Name(), "<comp_name>");
 
     <attr_test_group>
+
+    Json::Value root = p-\>ToJSONValue();
+
+    std::auto_ptr\<<comp_name>\> p1(p.release());
+    
+    p.reset((<comp_name>*)(factory.CreateFromJSON(root).release()));
+
+    <attr_test_group>
+
+    ASSERT_EQ(p->ToJSONValue().compare(p1->ToJSONValue()), 0);
 }
 
 >>

@@ -39,7 +39,7 @@
         go-list (keys (get-domain :go-template))]
     (doseq [c comp-list]
       (gen-component c))
-    (gen-component-sid-initialize comp-list)
+    (gen-component-define-cpp comp-list)
     (gen-component-factory comp-list)
     (gen-component-factory-test comp-list)
     (gen-game-object-factory go-list)))

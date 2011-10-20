@@ -31,7 +31,7 @@ class IGameObject;
 obj_ptr(class) ::= "SHARED_PTR\<<class>>"
 
 game_object_factory_decl(factory_name, game_object_interface) ::= <<
-class DLLAPI <factory_name> : public IGameObjectFactory
+class HW_BASE_API <factory_name> : public IGameObjectFactory
 {
 protected:
     virtual <obj_ptr(game_object_interface)> DoCreateFromXML(const TiXmlElement* data);
