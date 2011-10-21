@@ -35,6 +35,8 @@ class HW_BASE_API <factory_name> : public IGameObjectFactory
 {
 protected:
     virtual <obj_ptr(game_object_interface)> DoCreateFromXML(const TiXmlElement* data);
+
+    virtual <obj_ptr(game_object_interface)> DoCreateFromJSON(const Json::Value& data);
 };
 >>
 
@@ -55,7 +57,7 @@ game_object_factory_cpp(file_name, manifest, date, header, factory_defines) ::= 
 
 >>
 
-game_object_factory_define(factory_name, obj_interface, create_components) ::= <<
+game_object_factory_define(factory_name, obj_interface, create_components, create_components_from_json) ::= <<
 <obj_ptr(obj_interface)> <factory_name>::DoCreateFromXML(const TiXmlElement* data)
 {
     <obj_ptr(obj_interface)> p_object(GCC_NEW GameObject);
@@ -71,6 +73,22 @@ game_object_factory_define(factory_name, obj_interface, create_components) ::= <
         return NULL;
     }
 }
+
+<obj_ptr(obj_interface)> <factory_name>::DoCreateFromJSON(const Json::Value& data)
+{
+    <obj_ptr(obj_interface)> p_object(GCC_NEW GameObject);
+
+    try
+    {
+        <create_components_from_json:{x|<x>}; separator="\n\n">
+
+        return p_object;
+    }
+    catch (FactoryException& e) {
+        LOG(L_ERROR, "%s", e.what());
+        return NULL;
+    }
+}
 >>
 
 comp_ptr(interface) ::= "std::auto_ptr\<<interface>>"
@@ -79,6 +97,17 @@ create_component(factory_name, comp_interface, comp_name, comp_factory_name) ::=
 {
     <comp_factory_name> factory;
     <comp_ptr(comp_interface)> p_comp(factory.CreateFromXML(data));
+    if (p_object->AddComponent(p_comp) == false) {
+        LOG(L_ERROR, "'<factory_name>' AddComponent '<comp_name>' error");
+        return NULL;
+    }
+}
+>>
+
+create_component_from_json(factory_name, comp_interface, comp_name, comp_factory_name) ::= <<
+{
+    <comp_factory_name> factory;
+    <comp_ptr(comp_interface)> p_comp(factory.CreateFromJSON(data));
     if (p_object->AddComponent(p_comp) == false) {
         LOG(L_ERROR, "'<factory_name>' AddComponent '<comp_name>' error");
         return NULL;

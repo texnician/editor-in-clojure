@@ -33,10 +33,14 @@ component_header(filename, date, manifest, name, body) ::= <<
 >>
 
 component_sid_initialize(comps, paddings, sids) ::= <<
-<comps, paddings, sids:{c, p, s|unsigned int <c>::sid_ <p> = <s>;}; separator="\n">
+<comps, paddings, sids:{c, p, s|const unsigned int <c>::sid_ <p> = <s>;}; separator="\n">
 >>
 
-component_cpp(filename, date, manifest, sid_initialize, component_headers, component_defines) ::= <<
+component_raw_name_initialize(comps, paddings, raw_names) ::= <<
+<comps, paddings, raw_names:{c, p, r|const char* const <c>::raw_name_ <p> = "<r>";}; separator="\n">
+>>
+
+component_cpp(filename, date, manifest, sid_initialize, raw_name_initialize, component_headers, component_defines) ::= <<
 // <manifest>
 // @date: <date>
 
@@ -47,6 +51,8 @@ component_cpp(filename, date, manifest, sid_initialize, component_headers, compo
 <component_headers:{x|#include "<x>"}; separator="\n">
 
 <sid_initialize>
+
+<raw_name_initialize>
 
 <component_defines:{x|<x>}; separator="\n\n">
 
