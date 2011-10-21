@@ -116,13 +116,13 @@
   (get-attribute-default-value comp-key attr-key))
 
 (defmethod attribute-default-value [:uint :cpp] [comp-key attr-key lang]
-  (get-attribute-default-value comp-key attr-key))
+  (str (get-attribute-default-value comp-key attr-key) "U"))
 
 (defmethod attribute-default-value [:int64 :cpp] [comp-key attr-key lang]
-  (get-attribute-default-value comp-key attr-key))
+  (str (get-attribute-default-value comp-key attr-key) "LL"))
 
 (defmethod attribute-default-value [:uint64 :cpp] [comp-key attr-key lang]
-  (get-attribute-default-value comp-key attr-key))
+  (str (get-attribute-default-value comp-key attr-key) "ULL"))
 
 (defmethod attribute-default-value [:string :cpp] [comp-key attr-key lang]
   (str \" (get-attribute-default-value comp-key attr-key) \"))
@@ -144,17 +144,24 @@
   (if-not (atom-attribute? comp-key attr-key)
     (read-string (get-attribute-default-value comp-key attr-key))))
 
+
 (defmethod attribute-default-array-value [:uint :cpp] [comp-key attr-key lang]
   (if-not (atom-attribute? comp-key attr-key)
-    (read-string (get-attribute-default-value comp-key attr-key))))
+    (into [] (map (fn [x]
+                    (str x "U"))
+                  (read-string (get-attribute-default-value comp-key attr-key))))))
 
 (defmethod attribute-default-array-value [:int64 :cpp] [comp-key attr-key lang]
   (if-not (atom-attribute? comp-key attr-key)
-    (read-string (get-attribute-default-value comp-key attr-key))))
+    (into [] (map (fn [x]
+                    (str x "LL"))
+                  (read-string (get-attribute-default-value comp-key attr-key))))))
 
 (defmethod attribute-default-array-value [:uint64 :cpp] [comp-key attr-key lang]
   (if-not (atom-attribute? comp-key attr-key)
-    (read-string (get-attribute-default-value comp-key attr-key))))
+    (into [] (map (fn [x]
+                    (str x "ULL"))
+                  (read-string (get-attribute-default-value comp-key attr-key))))))
 
 (defmethod attribute-default-array-value [:enum :cpp] [comp-key attr-key lang]
   (if-not (atom-attribute? comp-key attr-key)
@@ -181,15 +188,15 @@
 
 (defmethod attribute-test-statement [:uint :cpp] [comp-key attr-key lang test-f value]
   (if (atom-attribute? comp-key attr-key)
-    (format "%s(p->%s(), %s);" test-f (cpp-getter-name attr-key) value)))
+    (format "%s(p->%s(), %sU);" test-f (cpp-getter-name attr-key) value)))
 
 (defmethod attribute-test-statement [:int64 :cpp] [comp-key attr-key lang test-f value]
   (if (atom-attribute? comp-key attr-key)
-    (format "%s(p->%s(), %s);" test-f (cpp-getter-name attr-key) value)))
+    (format "%s(p->%s(), %sLL);" test-f (cpp-getter-name attr-key) value)))
 
 (defmethod attribute-test-statement [:uint64 :cpp] [comp-key attr-key lang test-f value]
   (if (atom-attribute? comp-key attr-key)
-    (format "%s(p->%s(), %s);" test-f (cpp-getter-name attr-key) value)))
+    (format "%s(p->%s(), %sULL);" test-f (cpp-getter-name attr-key) value)))
 
 (defmethod attribute-test-statement [:enum :cpp] [comp-key attr-key lang test-f value]
   (if (atom-attribute? comp-key attr-key)
@@ -214,15 +221,15 @@
 
 (defmethod array-attribute-item-test-statement [:uint :cpp] [comp-key attr-key lang]
   (fn [vec idx value]
-    (format "ASSERT_EQ(%s[%d], %d);" vec idx value)))
+    (format "ASSERT_EQ(%s[%d], %dU);" vec idx value)))
 
 (defmethod array-attribute-item-test-statement [:int64 :cpp] [comp-key attr-key lang]
   (fn [vec idx value]
-    (format "ASSERT_EQ(%s[%d], %d);" vec idx value)))
+    (format "ASSERT_EQ(%s[%d], %dLL);" vec idx value)))
 
 (defmethod array-attribute-item-test-statement [:uint64 :cpp] [comp-key attr-key lang]
   (fn [vec idx value]
-    (format "ASSERT_EQ(%s[%d], %d);" vec idx value)))
+    (format "ASSERT_EQ(%s[%d], %dULL);" vec idx value)))
 
 (defmethod array-attribute-item-test-statement [:enum :cpp] [comp-key attr-key lang]
   (fn [vec idx value]
