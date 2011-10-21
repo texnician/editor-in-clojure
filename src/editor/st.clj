@@ -175,12 +175,15 @@
 
 ;(gen-component :monster-property)
 
+
 (defn- attribute-set-block-selector [group]
   (fn [attr]
     (let [raw-type (:raw-type attr)
-          [st op-list] (cond (= :int raw-type) [(.getInstanceOf group "set_int_value")
-                                                (list ["attr" (:variable-name attr)]
-                                                      ["setter" (:setter-name attr)])]  
+          [st op-list] (cond (int-type? raw-type) [(.getInstanceOf group "set_int_value")
+                                                   (list ["attr" (:variable-name attr)]
+                                                         ["setter" (:setter-name attr)]
+                                                         ["int_type" (:define-type attr)]
+                                                         ["atoi" (atoi raw-type)])]
                              (= :string raw-type) [(.getInstanceOf group "set_string_value")
                                                    (list ["attr" (:variable-name attr)]
                                                          ["setter" (:setter-name attr)])] 
@@ -191,10 +194,7 @@
                              (= :bool raw-type) [(.getInstanceOf group "set_bool_value")
                                                  (list ["attr" (:variable-name attr)]
                                                        ["setter" (:setter-name attr)])]
-                             :else [(.getInstanceOf group "set_unknown_value")
-                                    (list ["attr" (:variable-name attr)]
-                                          ["setter" (:setter-name attr)]
-                                          ["type" (name raw-type)])])]
+                             :else (throw (Exception. (format "unknown type %s" raw-type))))]
       (doseq [op (map st-add-op op-list)]
         (op st))
       (.render st))))
@@ -217,9 +217,11 @@
 (defn- array-attribute-set-block-selector [group]
   (fn [attr]
     (let [raw-type (:raw-type attr)
-          [st op-list] (cond (= :int raw-type) [(.getInstanceOf group "set_int_array_value")
-                                                (list ["setter" (:setter-name attr)]
-                                                      ["attr" (:variable-name attr)])]
+          [st op-list] (cond (int-type? raw-type) [(.getInstanceOf group "set_int_array_value")
+                                                   (list ["setter" (:setter-name attr)]
+                                                         ["attr" (:variable-name attr)]
+                                                         ["array_type" (:define-type attr)]
+                                                         ["atoi" (atoi raw-type)])]
                              (= :string raw-type) [(.getInstanceOf group "set_string_array_value")
                                                    (list ["setter" (:setter-name attr)]
                                                          ["attr" (:variable-name attr)])]
@@ -507,12 +509,6 @@
                                             attr-list)))]
         (op st))
       (.render st))))
-
-(def *json-converter-table*
-  {:int "asInt"
-   :string "asString"
-   :enum "asInt"
-   :bool "asBool"})
 
 (defn- json->attribute [group]
   (fn [comp-key attr-key]

@@ -128,14 +128,14 @@ if (ele_<variable_name>) {
 else throw AttributeNotFound("<component_name>", "<variable_name>", "<attr_name>", __FILE__, __LINE__);
 >>
 
-set_int_array_value(attr, setter) ::= <<
-std::vector\<int\> val_vec;
+set_int_array_value(attr, setter, array_type, atoi) ::= <<
+<array_type> val_vec;
 
 for (const TiXmlElement *item_node = ele_<attr>->FirstChildElement("item");
      item_node; item_node = item_node->NextSiblingElement())
 {
     const char *text = item_node->GetText();
-    val_vec.push_back(atoi(text));
+    val_vec.push_back(<atoi>(text));
 }
 
 p-><setter>(val_vec);
@@ -188,8 +188,8 @@ for (const TiXmlElement *item_node = ele_<attr>->FirstChildElement("item");
 p-><setter>(val_vec);
 >>
 
-set_int_value(attr, setter) ::= <<
-int <attr> = atoi(text);
+set_int_value(attr, setter, int_type, atoi) ::= <<
+<int_type> <attr> = <atoi>(text);
 p-><setter>(<attr>);
 >>
 
