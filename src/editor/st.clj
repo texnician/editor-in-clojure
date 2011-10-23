@@ -29,6 +29,20 @@
   (fn [st]
     (.render st l)))
 
+(defn- render-st [st seq & opt]
+  (doseq [op (map st-add-op seq)]
+    (op st))
+  (if opt
+    (.render st (first opt))
+    (.render st)))
+
+(defn- inspect-st [st seq & opt]
+  (doseq [op (map st-add-op seq)]
+    (op st))
+  (if opt
+    (.inspect st (first opt))
+    (.inspect st)))
+
 (defn- component-class-file [st component-class]
   (fn [comp-key]
     (doseq [op (map st-add-op [["filename", (cpp-component-gen-header-filename comp-key)]
@@ -280,8 +294,9 @@
                                      ["factory_name" (cpp-component-factory-name comp-key)]
                                      ["raw_name" (name comp-key)]
                                      ["find_component_node" (find-component-node comp-key)]
-                                     (map #(vector "build_attributes" %)
-                                          (build-attributes comp-key))))]
+                                     (concat (map #(vector "build_attributes" %)
+                                                  (build-attributes comp-key))
+                                             (list ["attributes_from_record_set" "// TODO:"]))))]
       (op st))
     (.render st)))
 
@@ -695,16 +710,3 @@
         game-object-db-define-fn (game-object-db-define (.getInstanceOf group "game_object_db_define") group)]
     (spit *game-object-db-header* (game-object-db-header-fn go-list))
     (spit *game-object-db-define-cpp* (game-object-db-define-fn go-list))))
-
-(let [group (STGroupFile. *cpp-game-object-db-stg*)
-      load-all-signature-fn (db-load-all-signature (.getInstanceOf group "load_all_signature"))
-      load-game-object-component-fn (load-game-object-component (.getInstanceOf group "load_game_object_component"))
-      db-init-game-object-sql-command-fn (db-init-game-object-sql-command (.getInstanceOf group "init_game_object_sql_command"))
-      db-load-all-define-fn (db-load-all-define (.getInstanceOf group "load_all_define") group)
-      sql-cmd-class (.getInstanceOf group "sql_cmd_class")
-      game-object-db-header-fn (game-object-db-header (.getInstanceOf group "game_object_db_header") group)
-      game-object-db-define-fn (game-object-db-define (.getInstanceOf group "game_object_db_define") group)
-      db-sql-cmd-class-define-fn (db-sql-cmd-class-define (.getInstanceOf group "sql_cmd_class_define") group)
-      ]
-  (game-object-db-header-fn '(:monster :player))
-  (game-object-db-define-fn '(:monster :player)))
