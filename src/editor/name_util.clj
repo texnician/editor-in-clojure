@@ -63,3 +63,6 @@
 
 (defn cpp-game-object-factory-name [go-key]
   (format "%sFactory" (clojure-token->cpp-token go-key)))
+
+(defn cpp-game-object-sql-cmd-name [go-key]
+  (format "%sSQLCmd" (clojure-token->cpp-token go-key)))

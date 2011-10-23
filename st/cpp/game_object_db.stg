@@ -1,0 +1,112 @@
+game_object_db_header(file_name, guard, manifest, date, sql_cmd_classes) ::= <<
+// <manifest>
+// @date: <date>
+
+#ifndef <guard>
+#define <guard>
+
+#include "define.h"
+#include "hw_db.h"
+
+namespace Json
+{
+class Value;
+}
+
+<sql_cmd_classes:{x|<x>}; separator="\n\n">
+
+#endif // <guard>
+
+// <file_name> ends here
+
+>>
+
+sql_cmd_class(class_name, load_all_signature) ::= <<
+class HW_BASE_API <class_name> : public HWSQLCmd
+{
+public:
+    <class_name>() {}
+
+    <load_all_signature>;
+}
+>>
+
+load_all_signature(sqls) ::= <<
+Json::Value LoadAll(<arg_list(sqls)>)
+>>
+
+arg_list(sqls) ::= <<
+IHWDBEnv* p_env, <sqls:{x|<char_arg(x)>}; wrap, anchor, separator=", ">
+>>
+
+char_arg(x) ::= "const char* <x>"
+
+game_object_db_define(file_name, manifest, date, game_object_db_header, sql_cmd_class_defines) ::= <<
+// <manifest>
+// @date: <date>
+
+#include "json/json.h"
+#include "<game_object_db_header>"
+
+<sql_cmd_class_defines:{x|<x>}; separator="\n\n">
+
+// <file_name> ends here
+
+>>
+
+sql_cmd_class_define(class_name, load_all_define) ::= <<
+<class_name>::<class_name>()
+{}
+
+<load_all_define>
+>>
+
+load_all_define(class_name, go_name, arg_list, init_sql_command, rs, load_game_object_components) ::= <<
+Json::Value <class_name>::LoadAll(<arg_list>)
+{
+    try
+    {
+        // Init SQL Command
+        <init_sql_command>
+
+        // Execute sql
+        <execute_sql_rs(rs)>
+
+        if (!<rs>.HasError() && !<rs>.IsEmpty()) {
+            Json::Value jv;
+
+            // Duplicated GameObject record set is not allowed
+            IHWDBCursorPtr root_cursor_ptr = <rs>.GetCursor();
+            if (root_cursor_ptr && root_cursor_ptr->GetRecordCount() > 1)
+                throw DBDuplicatedGameObjectRecordSet("<go_name>", this->DumpSQL(<rs>).c_str(), __FILE__, __LINE__);
+
+            <load_game_object_components:{x|<x>}; separator="\n\n">
+        }
+        else if (!<rs>.HasError() && <rs>.IsEmpty()) {
+            return Json::Value;
+        }
+        else throw DBSQLError("<go_name>", this->DumpSQL(<rs>).c_str());
+    }
+    catch (FactoryException& e) {
+        LOG(L_ERROR, "%s", e.what());
+        return Json::Value;
+    }
+}
+>>
+
+execute_sql_rs(rs) ::= "HWDBRecordSet <rs> = this->ExecuteRs(p_env);"
+
+init_game_object_sql_command(attrs, sqls) ::= <<
+this->SetSQL(root)<attrs, sqls:{a, s|<set_sub_cmd(a, s)>}; separator="\n">;
+>>
+
+set_sub_cmd(attr, sql) ::= <<
+.SetSubCmd("<attr>", HWSQLCmd(<sql>))
+>>
+
+load_game_object_component(factory_name, jv, rs, comp_name) ::= <<
+{
+    <factory_name> factory;
+    <jv>["<comp_name>"] = factory.CreateJSONFromRecordSet(<rs>, *this);
+}
+>>

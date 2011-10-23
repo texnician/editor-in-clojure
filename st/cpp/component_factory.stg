@@ -29,6 +29,10 @@ namespace Json
 {
     class Value;                    
 }
+
+class HWDBRecordSet;
+
+class HWSQLCmd;
 >>
 
 smart_ptr(class) ::= "std::auto_ptr\<<class>>"
@@ -57,6 +61,8 @@ protected:
     virtual <smart_ptr(interface_name)> DoCreateFromXML(const TiXmlElement* data);
 
     virtual <smart_ptr(interface_name)> DoCreateFromJSON(const Json::Value& data);
+
+    virtual Json::Value DoCreateJSONFromRecordSet(const HWDBRecordSet& data, const HWSQLCmd& cmd);
 };
 >>
 
