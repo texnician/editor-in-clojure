@@ -25,10 +25,10 @@ sql_cmd_class(class_name, load_all_signature) ::= <<
 class HW_BASE_API <class_name> : public HWSQLCmd
 {
 public:
-    <class_name>() {}
+    <class_name>();
 
     <load_all_signature>;
-}
+};
 >>
 
 load_all_signature(sqls) ::= <<
@@ -45,8 +45,11 @@ game_object_db_define(file_name, manifest, date, game_object_db_header, sql_cmd_
 // <manifest>
 // @date: <date>
 
-#include "json/json.h"
 #include "<game_object_db_header>"
+#include "component_factory.h"
+#include "factory_exception.h"
+#include "hw_logger.h"
+#include "json/json.h"
 
 <sql_cmd_class_defines:{x|<x>}; separator="\n\n">
 
@@ -81,15 +84,17 @@ Json::Value <class_name>::LoadAll(<arg_list>)
                 throw DBDuplicatedGameObjectRecordSet("<go_name>", this->DumpSQL(<rs>).c_str(), __FILE__, __LINE__);
 
             <load_game_object_components:{x|<x>}; separator="\n\n">
+
+            return jv;
         }
         else if (!<rs>.HasError() && <rs>.IsEmpty()) {
-            return Json::Value;
+            return Json::Value();
         }
-        else throw DBSQLError("<go_name>", this->DumpSQL(<rs>).c_str());
+        else throw DBSQLError("<go_name>", this->DumpSQL(<rs>).c_str(), __FILE__, __LINE__);
     }
     catch (FactoryException& e) {
         LOG(L_ERROR, "%s", e.what());
-        return Json::Value;
+        return Json::Value();
     }
 }
 >>
@@ -105,8 +110,5 @@ set_sub_cmd(attr, sql) ::= <<
 >>
 
 load_game_object_component(factory_name, jv, rs, comp_name) ::= <<
-{
-    <factory_name> factory;
-    <jv>["<comp_name>"] = factory.CreateJSONFromRecordSet(<rs>, *this);
-}
+<jv>["<comp_name>"] = <factory_name>().CreateJSONFromRecordSet(<rs>, *this);
 >>
