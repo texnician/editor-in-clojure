@@ -502,28 +502,36 @@
                                                       ["var_name" (:variable-name attr-info)]))]))
            array-attr-list))))
 
-(defn- expect_mock_cursors [group]
-  (fn [comp-key]
-    (let [attr-list (component-attribute-keys comp-key)
-          test-case (comp-key *component-factory-test-case-table*)]
-      (mapcat (fn [x]
-                (let [attr-info (make-cpp-attribute comp-key x)]
-                  (println x)
-                  (println (str (-> test-case :test-value-map x)))
-                  (if (atom-attribute? comp-key x)
-                    (let [st (.getInstanceOf group "expect_mock_cursor")]
-                      ["expect_mock_cursor" (render-st st (list ["cursor_name" "root"]
-                                                                ["has_record" "true"]
-                                                                ["field_name" (:variable-name attr-info)]
-                                                                ["value" (str (-> test-case :test-value-map x))]))])
-                    (map (fn [v]
-                           (let [st (.getInstanceOf group "expect_mock_cursor")]
-                             ["expect_mock_cursor" (render-st st (list ["cursor_name" (:variable-name attr-info)]
-                                                                       ["has_record" "true"]
-                                                                       ["field_name" "item"]
-                                                                       ["value" (str v)]))]))
-                         (-> test-case :test-value-map x)))))
-              attr-list))))
+(defn- expect-mock-cursors [group]
+  (letfn [(flat [l]
+            (if (nil? l)
+              nil
+              (let [car (first l)]
+                (if (vector? car)
+                  (cons car (flat (next l)))
+                  (concat car (flat (next l)))))))]
+    (fn [comp-key]
+      (let [attr-list (component-attribute-keys comp-key)
+            test-case (comp-key *component-factory-test-case-table*)]
+        (flat (map (fn [x]
+                     (let [attr-info (make-cpp-attribute comp-key x)]
+                       (if (atom-attribute? comp-key x)
+                         (let [st (.getInstanceOf group "expect_mock_cursor")]
+                           ["expect_mock_cursors" (render-st st (list ["cursor_name" "root"]
+                                                                      ["has_record" "true"]
+                                                                      ["field_name" (:variable-name attr-info)]
+                                                                      ["value" (str \" (db-string-value (:raw-type attr-info)
+                                                                                                        comp-key x
+                                                                                                        (-> test-case :test-value-map x)) \")]))])
+                         (map (fn [v]
+                                (let [st (.getInstanceOf group "expect_mock_cursor")]
+                                  ["expect_mock_cursors" (render-st st (list ["cursor_name" (:variable-name attr-info)]
+                                                                             ["has_record" "true"]
+                                                                             ["field_name" "item"]
+                                                                             ["value" (str \" (db-string-value (:raw-type attr-info)
+                                                                                                               comp-key x v) \")]))]))
+                              (-> test-case :test-value-map x)))))
+                   attr-list))))))
 
 (defn- final-sub-cursors [group]
   (fn [comp-key]
@@ -541,7 +549,7 @@
           attr-list (component-attribute-keys comp-key)]
       (render-st st (concat ((define-sub-cursors group) comp-key)
                             ((set-sub-cursors group) comp-key) 
-                            ((expect_mock_cursors group) comp-key)
+                            ((expect-mock-cursors group) comp-key)
                             ((final-sub-cursors group) comp-key))))))
 
 (defn- comp-test [st group]
@@ -551,7 +559,7 @@
       (doseq [op (map st-add-op (list* ["comp_name" (cpp-component-name comp-key)]
                                        ["factory_name" (cpp-component-factory-name comp-key)]
                                        ["raw_name" (name comp-key)]
-                                       ["mock_cursor_block"] ((mock-cursor-block group) comp-key) 
+                                       ["mock_cursor_block" ((mock-cursor-block group) comp-key)] 
                                        ["attr_test_group" (attr-test-group-fn comp-key)]
                                        (map #(vector "xml_string" %) (string/split-lines (:xml-element-str test-case)))
                                        ))]

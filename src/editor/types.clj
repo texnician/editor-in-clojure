@@ -256,6 +256,7 @@
 (defn int-type? [raw-type]
   (some #(= % raw-type) [:int :int64 :uint :uint64]))
 
+
 (defn atoi [raw-type]
   (if (int-type? raw-type)
     (cond (= :int raw-type) "atoi"      ; atoi %d
@@ -273,6 +274,12 @@
    :string "asString"
    :enum "asInt"
    :bool "asBool"})
+
+(defn db-string-value [type comp-key attr-key value]
+  (cond (= type :bool) (if value 1 0)
+        (= type :enum) (enum-int-value (keyword (:in-domain (get-attribute-meta-info comp-key attr-key #{:in-domain})))
+                                       (keyword value))
+        :else value))
 
 (defn make-cpp-attribute [comp-key attr-key]
   {:key attr-key
