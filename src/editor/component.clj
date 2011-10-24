@@ -165,6 +165,11 @@
   (let [attr-info (get-attribute-meta-info comp-key attr-key #{:size})]
     (not (:size attr-info))))
 
+(defn filter-component-attributes [pred comp]
+  "返回一个component中符合pred的所有attribute"
+  (let [attr-list (component-attribute-keys comp)]
+    (filter pred attr-list)))
+
 ;; Local Variables:
 ;; coding: utf-8
 ;; End:

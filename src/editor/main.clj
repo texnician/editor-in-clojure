@@ -42,7 +42,8 @@
     (gen-component-define-cpp comp-list)
     (gen-component-factory comp-list)
     (gen-component-factory-test comp-list)
-    (gen-game-object-factory go-list)))
+    (gen-game-object-factory go-list)
+    (gen-game-object-db go-list)))
 
 (def *opt-table*
   {:-c {:func compile-xml :doc "Compile domain scripts, output xml data files."}

@@ -277,3 +277,210 @@ bool BaseComponentGen::FromJSONValue(const Json::Value& root)
         return false;
     }
 }
+
+Json::Value FromRecordSet(const RecordSet* rs);
+
+RecordSet = ExecuteSql(sql);
+
+Json::Value RecordSetToJson(const RecordSet* rs);
+{
+    Json::Value jv;
+    jv["id"] = rs->GetFieldValueByName("id");
+    jv["name"] = rs->GetAttributeByName("name");
+}
+
+class ISQLCmd
+{
+public:
+    virtual ~ISQLCmd()
+        {}
+
+    virtual bool AddSubCmd(int task_id, const char* key) = 0;
+
+    virtual const ISQLCmd& GetSubCmd(int task_id) = 0;
+    
+    virtual RecordSetPtr Execute() const = 0;
+};
+
+class NullSQLCmd : public ISQLCmd
+{
+public:
+    virtual ~NullSQLCmd()
+        {}
+
+    virtual AddSubCmd(int task_id, const char* key) = 0;
+
+    virtual const ISQLCmd& GetSubCmd(int task_id) = 0;
+    
+    virtual RecordSetPtr Execute() const = 0;
+};
+
+class MySqlGroup : public IMySqlGroup
+{
+public:
+    MySqlGroup(SqlCon* con);
+
+    virtual void Add(const char* cmd, const char* sql);
+    
+    virtual RecordSetPtr ExecuteSql(const char* key);
+    
+private:
+    SqlCon* con_;
+};
+
+Json::Value BaseComponentFactory::DoCreateJSONFromRecordSet(const HWDBRecordSet& rs, const HWSQLCmd& cmd)
+{
+    Json::Value jv_base;
+
+    // Get "(base :id)"
+    int field_id = 0;
+    GetIntFieldFromCursor(root_cursor_ptr, "id", &field_id)
+        ? jv_base["id"] = field_id
+        : throw DBFieldNotFound("base", "id", "id", cmd.DumpSQL(rs).c_str(), __FILE__, __LINE__);
+
+    // Get "(base :nick-name)"
+    const char* field_nick_name = NULL;
+    GetStringFieldFromCursor(root_cursor_ptr, "nick_name", &field_nick_name)
+        ? jv_base["nick-name"] = field_nick_name
+        : throw DBFieldNotFound("base[\"nick-name\"]", "nick_name", cmd.DumpSQL(rs).c_str(), __FILE__, __LINE__);
+                    
+    // Get "(base :friend-list)"
+    {
+        IHWDBCursorPtr sub_cursor_ptr = rs.GetSubRecordSet("friend-list").GetCursor();
+        if (sub_cursor_ptr) {
+            std::vector<int> vec_val(sub_cursor_ptr->GetRecordCount());
+            for (int i = 0; sub_cursor_ptr->GetRecord(); ++i) {
+                if (!GetIntFieldFromCursor(sub_cursor_ptr, "item", &vec_val[i]))
+                    throw DBFieldNotFound("base[\"friend-list\"]", "friend-list", "item", cmd.GetSubCmd("friend-list").DumpSQL(rs.GetSubRecordSet("friend-list")).c_str(), __FILE__, __LINE__);
+            }
+            Json::Value& jv_friend_list = jv_base["friend-list"];
+            ArrayToJSONValue(vec_val, &jv_friend_list);
+        }
+    }
+
+    return jv_base;
+}
+
+class PlayerSQLCmd : public HWSQLCmd
+{
+public:
+    PlayerSQLCmd();
+
+    Json::Value LoadAll(IHWDBEnv* p_env, const char* root, const char* inventory_items,
+                        const char* friend_list)
+        {
+            try
+            {
+                // Init SQL Command
+                this->SetSQL(root)
+                    .SetSubCmd("inventory-items", HWSQLCmd(inventory_items))
+                    .SetSubCmd("friend-list", HWSQLCmd(friend_list));
+
+                // Execute sql
+                HWDBRecordSet rs = this->ExecuteRs(p_env);
+            
+                if (!rs.HasError() && !rs.Empty()) {
+                    Json::Value jv;
+
+                    // Get root record set
+                    IHWDBCursorPtr root_cursor_ptr = rs.GetCursor();
+
+                    // Duplicated GameObject record set is not allowed
+                    if (root_cursor_ptr->GetRecordCount() > 1)
+                        throw DBDuplicatedGameObjectRecordSet("player", this->DumpSQL(rs).c_str(), __FILE__, __LINE__);
+
+                    // Load base component
+                    {
+                        BaseComponentFactory factory;
+                        jv["base"] = factory.CreateJSONFromRecordSet(rs, *this);
+                    }
+
+                    // Load inventory component
+                    {
+                        InventoryComponentFactory factory;
+                        jv["inventory"] = factory.CreateJSONFromRecordSet(rs, *this);
+                    }
+                }
+                else if (!rs.HasError() && rs.IsEmpty()) {
+                    return Json::Value;
+                }
+                else throw DBSQLError("player", this->DumpSQL(rs).c_str());
+            }
+            catch (FactoryException& e) {
+                LOG(L_ERROR, "%s", e.what());
+                return Json::Value;
+            }
+        }
+    
+    
+    Json::Value LoadAComponent(IHWDBEnv* p_env, const char* root, const char* array_a);
+
+    Json::Value LoadBComponent(IHWDBEnv* p_env, const char* root);
+
+    Json::Value LoadCComponent(IHWDBEnv* p_env, const char* root);
+};
+
+Json::Value LoadBaseComponent(IHWDBEnv* p_env,
+                              const char* root, const char* friend_list,
+                              const char* monster_talbe);
+
+Json::Value MonsterSQLCmd::LoadAll(IHWDBEnv* p_env, const char* root, const char* marks, const char* uint64_id_vec, 
+                                   const char* uint_id_vec, const char* magic_resistance, const char* mrs, 
+                                   const char* long_id_vec)
+{
+    try
+    {
+        // Init SQL Command
+        this->SetSQL(root).SetSubCmd("marks", HWSQLCmd(marks))
+        .SetSubCmd("uint64-id-vec", HWSQLCmd(uint64_id_vec))
+        .SetSubCmd("uint-id-vec", HWSQLCmd(uint_id_vec))
+        .SetSubCmd("magic-resistance", HWSQLCmd(magic_resistance))
+        .SetSubCmd("mrs", HWSQLCmd(mrs))
+        .SetSubCmd("long-id-vec", HWSQLCmd(long_id_vec));
+
+        // Execute sql
+        HWDBRecordSet rs = this->ExecuteRs(p_env);
+
+        if (!rs.HasError() && !rs.IsEmpty()) {
+            Json::Value jv;
+
+            // Duplicated GameObject record set is not allowed
+            IHWDBCursorPtr root_cursor_ptr = rs.GetCursor();
+            if (root_cursor_ptr && root_cursor_ptr->GetRecordCount() > 1)
+                throw DBDuplicatedGameObjectRecordSet("monster", this->DumpSQL(rs).c_str(), __FILE__, __LINE__);
+
+            {
+                BaseComponentFactory factory;
+                jv["base"] = factory.CreateJSONFromRecordSet(rs, *this);
+            }
+
+            {
+                RpgPropertyComponentFactory factory;
+                jv["rpg-property"] = factory.CreateJSONFromRecordSet(rs, *this);
+            }
+
+            {
+                MonsterPropertyComponentFactory factory;
+                jv["monster-property"] = factory.CreateJSONFromRecordSet(rs, *this);
+            }
+
+            {
+                TradeComponentFactory factory;
+                jv["trade"] = factory.CreateJSONFromRecordSet(rs, *this);
+            }
+
+            {
+                CombatPropertyComponentFactory factory;
+                jv["combat-property"] = factory.CreateJSONFromRecordSet(rs, *this);
+            }
+        }
+        else if (!rs.HasError() && rs.IsEmpty()) {
+            return Json::Value;
+        }
+        else throw DBSQLError("monster", this->DumpSQL(rs).c_str());
+    }
+    catch (FactoryException& e) {
+        LOG(L_ERROR, "%s", e.what());
+        return Json::Value;
+    }
+}
