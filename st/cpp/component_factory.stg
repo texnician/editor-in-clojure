@@ -44,6 +44,7 @@ component_factory_cpp(file_name, date, component_headers, component_factory_defi
 #include "define.h"
 #include "tinyxml.h"
 #include "json/json.h"
+#include "hw_db.h"
 #include "factory_exception.h"
 #include "component_factory.h"
 <component_headers:{x|#include "<x>"}; separator="\n">
