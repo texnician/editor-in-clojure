@@ -301,6 +301,85 @@
                ((builder st attr-builder selector) comp-key x)))
            attr-list))))
 
+(defn- atom-attr-json-from-record-set-selector [group comp-key]
+  (fn [attr-info]
+    (let [raw-type (:raw-type attr-info)]
+      (let [[st op-list] (cond (int-type? raw-type) [(.getInstanceOf group "set_int_from_record_set")
+                                                     (list ["int_type" (:define-type attr-info)]
+                                                           ["variable_name" (:variable-name attr-info)]
+                                                           ["cursor_value_getter" "GetPODFieldFromCursor"]
+                                                           ["field_name" (:variable-name attr-info)]
+                                                           ["comp_name" (name comp-key)]
+                                                           ["attr_name" (:raw-name attr-info)])]
+                               (= :string raw-type) [(.getInstanceOf group "set_string_from_record_set")
+                                                     (list ["variable_name" (:variable-name attr-info)]
+                                                           ["field_name" (:variable-name attr-info)]
+                                                           ["attr_name" (:raw-name attr-info)]
+                                                           ["comp_name" (name comp-key)])]
+                               (= :enum raw-type) [(.getInstanceOf group "set_enum_from_record_set")
+                                                   (list ["variable_name" (:variable-name attr-info)]
+                                                         ["field_name" (:variable-name attr-info)]
+                                                         ["attr_name" (:raw-name attr-info)]
+                                                         ["comp_name" (name comp-key)])]
+                               (= :bool raw-type) [(.getInstanceOf group "set_bool_from_record_set")
+                                                   (list ["variable_name" (:variable-name attr-info)]
+                                                         ["field_name" (:variable-name attr-info)]
+                                                         ["attr_name" (:raw-name attr-info)]
+                                                         ["comp_name" (name comp-key)])]
+                               :else  [(.getInstanceOf group "set_unknown_value")
+                                       (list ["attr" (:variable-name attr-info)]
+                                             ["setter" (:setter-name attr-info)]
+                                             ["type" (name raw-type)])])]
+        (render-st (.getInstanceOf group "atom_attribute_from_record_set")
+                   (list ["comp_name" (name comp-key)]
+                         ["attr_name" (:raw-name attr-info)]
+                         ["set_block" (render-st st op-list)]))))))
+
+(defn- array-attr-json-from-record-set-selector [group comp-key]
+  (fn [attr-info]
+    (let [raw-type (:raw-type attr-info)]
+      (let [[st op-list] (cond (int-type? raw-type) [(.getInstanceOf group "set_int_array_from_record_set")
+                                                     (list ["int_type" (:define-type attr-info)]
+                                                           ["cursor_value_getter" "GetPODFieldFromCursor"]
+                                                           ["field_name" (:variable-name attr-info)]
+                                                           ["comp_name" (name comp-key)]
+                                                           ["attr_name" (:raw-name attr-info)])]
+                               (= :string raw-type) [(.getInstanceOf group "set_string_array_from_record_set")
+                                                     (list ["field_name" (:variable-name attr-info)]
+                                                           ["attr_name" (:raw-name attr-info)]
+                                                           ["comp_name" (name comp-key)])]
+                               (= :enum raw-type) [(.getInstanceOf group "set_enum_array_from_record_set")
+                                                   (list ["field_name" (:variable-name attr-info)]
+                                                         ["attr_name" (:raw-name attr-info)]
+                                                         ["comp_name" (name comp-key)])]
+                               (= :bool raw-type) [(.getInstanceOf group "set_bool_array_from_record_set")
+                                                   (list ["field_name" (:variable-name attr-info)]
+                                                         ["attr_name" (:raw-name attr-info)]
+                                                         ["comp_name" (name comp-key)])]
+                               :else  [(.getInstanceOf group "set_unknown_value")
+                                       (list ["attr" (:variable-name attr-info)]
+                                             ["setter" (:setter-name attr-info)]
+                                             ["type" (name raw-type)])])]
+        (render-st (.getInstanceOf group "array_attribute_from_record_set")
+                   (list ["comp_name" (name comp-key)]
+                         ["attr_name" (:raw-name attr-info)]
+                         ["set_block" (render-st st op-list)]))))))
+
+(defn- attr-json-from-record-set [group comp-key]
+  (fn [attr-key]
+    (let [attr-info (make-cpp-attribute comp-key attr-key)
+          selector-fn (if (atom-attribute? comp-key attr-key)
+                        (atom-attr-json-from-record-set-selector group comp-key)
+                        (array-attr-json-from-record-set-selector group comp-key))]
+      (selector-fn attr-info))))
+
+(defn- comp-attr-json-from-record-set [group]
+  (fn [comp-key]
+    (let [attr-list (component-attribute-keys comp-key)
+          f (attr-json-from-record-set group comp-key)]
+      (map (fn [x]
+             ["attributes_from_record_set" (f x)]) attr-list))))
+
 (defn- factory-find-component-node [st]
   (fn [comp-key]
     (doseq [op (map st-add-op (list ["go_tag" (name *go-component-tag*)]
@@ -309,7 +388,7 @@
       (op st))
     (.render st)))
 
-(defn- component-factory-define [st find-component-node build-attributes]
+(defn- component-factory-define [st find-component-node build-attributes json-from-record-set]
   (fn [comp-key]
     (doseq [op (map st-add-op (list* ["class_name" (cpp-component-name comp-key)]
                                      ["factory_name" (cpp-component-factory-name comp-key)]
@@ -317,7 +396,7 @@
                                      ["find_component_node" (find-component-node comp-key)]
                                      (concat (map #(vector "build_attributes" %)
                                                   (build-attributes comp-key))
-                                             (list ["attributes_from_record_set" "// TODO:"]))))]
+                                             (json-from-record-set comp-key))))]
       (op st))
     (.render st)))
 
@@ -331,12 +410,15 @@
                                                                        make-cpp-attribute)
                                                      find-component-node (factory-find-component-node
                                                                           (.getInstanceOf group "find_component_node"))
+                                                     json-from-record-set (comp-attr-json-from-record-set group)
                                                      define-st (component-factory-define
                                                                 (.getInstanceOf group "component_factory_define") find-component-node
-                                                                build-attributes)]
+                                                                build-attributes
+                                                                json-from-record-set)]
                                                  (list ["component_headers", (cpp-component-header-filename x)]
                                                        ["component_factory_defines", (define-st x)])))
-                                             comp-key-list)))]
+                                             comp-key-list)
+                                     ))]
       (op st))
     (.render st)))
 
