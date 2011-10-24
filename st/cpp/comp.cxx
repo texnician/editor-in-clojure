@@ -484,3 +484,38 @@ Json::Value MonsterSQLCmd::LoadAll(IHWDBEnv* p_env, const char* root, const char
         return Json::Value;
     }
 }
+
+JSONToMockRecordSet(const Json::Value&)
+{
+    MockIHWDBCursor root_cursor;
+
+    EXPECT_CALL(root_cursor, GetRecord)
+        .WillOnce(Return(true))
+        .WillOnce(Return(true))
+        .WillOnce(Return(true))
+        .WillOnce(Return(true))
+        .WillOnce(Return(true))
+        .WillRepeatedly(Return(false));
+    EXPECT_CALL(cursor, GetAttributeByName(StrEq("id")))
+        .WillOnce(Return("0"));
+    
+    MockIHWDBCursor mr_cursor;
+    EXPECT_CALL(mr, GetRecord)
+        .WillOnce(Return(true))
+        .WillOnce(Return(true))
+        .WillOnce(Return(true))
+        .WillOnce(Return(true))
+        .WillRepeatedly(Return(false));
+    EXPECT_CALL(mr, GetAttributeByName(StrEq("item")))
+        .WillOnce(Return("a"))
+        .WillOnce(Return("b"))
+        .WillOnce(Return("c"))
+        .WillOnce(Return("d"));
+
+    HWDBRecordSet root;
+    rs.SetCursor(root_cursor);
+    
+    HWDBRecordSet mr;
+    mr.SetCursor(mr_cursor);
+    rs.SetSubRecordSet("mr", mr);
+}
