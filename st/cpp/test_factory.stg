@@ -9,6 +9,7 @@ test_factory_file(manifest, filename, date, comp_headers, comp_tests) ::= <<
 #include "tinyxml.h"
 #include "json/json.h"
 #include "component_factory.h"
+#include "hw_db.h"
 <comp_headers:{x|#include "<x>"}; separator="\n">
 
 class ComponentFactoryTest : public ::testing::Test {
@@ -77,7 +78,7 @@ array_attr_test_block(array_type, getter, statements) ::= <<
 >>
 
 mock_cursors(define_sub_cursors, set_sub_cursors, expect_mock_cursors, final_sub_cursors) ::= <<
-SHARED_PTR<MockIHWDBCursor> root_cursor_ptr(new MockIHWDBCursor);
+SHARED_PTR\<MockIHWDBCursor\> root_cursor_ptr(new MockIHWDBCursor);
 <define_sub_cursors:{x|<x>}; separator="\n">
 
 rs.SetCursor(root_cursor);
@@ -90,7 +91,7 @@ rs.SetCursor(root_cursor);
 >>
 
 define_sub_cursor(var_name) ::= <<
-SHARED_PTR<MockIHWDBCursor> <var_name>_cursor_ptr(new MockIHWDBCursor);
+SHARED_PTR\<MockIHWDBCursor\> <var_name>_cursor_ptr(new MockIHWDBCursor);
 >>
 
 set_sub_cursor(attr_name, var_name) ::= <<
@@ -103,13 +104,13 @@ expect_mock_cursor(cursor_name, has_record, field_name, value) ::= <<
 >>
 
 expect_call_get_record(cursor_name, value) ::= <<
-EXPECT_CALL(<cursor_name>_cursor_ptr, GetRecord)
-    will_once_return(<value>);
+EXPECT_CALL(*<cursor_name>_cursor_ptr, GetRecord)
+    <will_once_return(value)>;
 >>
 
 expect_call_get_attribute(cursor_name, field_name, value) ::= <<
-EXPECT_CALL(<cursor_name>_cursor_ptr, GetAttributeByName(StrEq("<field_name>")))
-    will_once_return("<value>");
+EXPECT_CALL(*<cursor_name>_cursor_ptr, GetAttributeByName(StrEq("<field_name>")))
+    <will_once_return(value)>;
 >>
 
 will_once_return(v) ::= <<
