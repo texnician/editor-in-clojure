@@ -341,19 +341,19 @@
       (let [[st op-list] (cond (int-type? raw-type) [(.getInstanceOf group "set_int_array_from_record_set")
                                                      (list ["int_type" (:define-type attr-info)]
                                                            ["cursor_value_getter" "GetPODFieldFromCursor"]
-                                                           ["field_name" (:variable-name attr-info)]
+                                                           ["field_name" "item"]
                                                            ["comp_name" (name comp-key)]
                                                            ["attr_name" (:raw-name attr-info)])]
                                (= :string raw-type) [(.getInstanceOf group "set_string_array_from_record_set")
-                                                     (list ["field_name" (:variable-name attr-info)]
+                                                     (list ["field_name" "item"]
                                                            ["attr_name" (:raw-name attr-info)]
                                                            ["comp_name" (name comp-key)])]
                                (= :enum raw-type) [(.getInstanceOf group "set_enum_array_from_record_set")
-                                                   (list ["field_name" (:variable-name attr-info)]
+                                                   (list ["field_name" "item"]
                                                          ["attr_name" (:raw-name attr-info)]
                                                          ["comp_name" (name comp-key)])]
                                (= :bool raw-type) [(.getInstanceOf group "set_bool_array_from_record_set")
-                                                   (list ["field_name" (:variable-name attr-info)]
+                                                   (list ["field_name" "item"]
                                                          ["attr_name" (:raw-name attr-info)]
                                                          ["comp_name" (name comp-key)])]
                                :else  [(.getInstanceOf group "set_unknown_value")
@@ -516,21 +516,24 @@
         (flat (map (fn [x]
                      (let [attr-info (make-cpp-attribute comp-key x)]
                        (if (atom-attribute? comp-key x)
-                         (let [st (.getInstanceOf group "expect_mock_cursor")]
+                         (let [st (.getInstanceOf group "expect_root_mock_cursor")]
                            ["expect_mock_cursors" (render-st st (list ["cursor_name" "root"]
-                                                                      ["has_record" "true"]
                                                                       ["field_name" (:variable-name attr-info)]
                                                                       ["value" (str \" (db-string-value (:raw-type attr-info)
                                                                                                         comp-key x
                                                                                                         (-> test-case :test-value-map x)) \")]))])
-                         (map (fn [v]
-                                (let [st (.getInstanceOf group "expect_mock_cursor")]
-                                  ["expect_mock_cursors" (render-st st (list ["cursor_name" (:variable-name attr-info)]
-                                                                             ["has_record" "true"]
-                                                                             ["field_name" "item"]
-                                                                             ["value" (str \" (db-string-value (:raw-type attr-info)
-                                                                                                               comp-key x v) \")]))]))
-                              (-> test-case :test-value-map x)))))
+                         (let [st (.getInstanceOf group "expect_sub_mock_cursor")
+                               value-vec (-> test-case :test-value-map x)
+                               op-list (list* ["cursor_name" (:variable-name attr-info)]
+                                              ["field_name" "item"]
+                                              ["count" (count value-vec)]
+                                              (mapcat (fn [v]
+                                                        (list 
+                                                         ["has_records" "true"]
+                                                         ["values" (str \" (db-string-value (:raw-type attr-info)
+                                                                                            comp-key x v) \")]))
+                                                      value-vec))]
+                           ["expect_mock_cursors" (render-st st op-list)]))))
                    attr-list))))))
 
 (defn- final-sub-cursors [group]

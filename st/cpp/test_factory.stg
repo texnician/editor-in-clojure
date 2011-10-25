@@ -10,7 +10,13 @@ test_factory_file(manifest, filename, date, comp_headers, comp_tests) ::= <<
 #include "json/json.h"
 #include "component_factory.h"
 #include "hw_db.h"
+#include "mock_hw_db.h"
 <comp_headers:{x|#include "<x>"}; separator="\n">
+
+using ::testing::_;
+using ::testing::Return;
+using ::testing::StrEq;
+using ::testing::AtMost;
 
 class ComponentFactoryTest : public ::testing::Test {
 protected:
@@ -81,13 +87,10 @@ mock_cursors(define_sub_cursors, set_sub_cursors, expect_mock_cursors, final_sub
 SHARED_PTR\<MockIHWDBCursor\> root_cursor_ptr(new MockIHWDBCursor);
 <define_sub_cursors:{x|<x>}; separator="\n">
 
-rs.SetCursor(root_cursor);
+rs.SetCursor(root_cursor_ptr);
 <set_sub_cursors:{x|<x>}; separator="\n">
 
 <expect_mock_cursors:{x|<x>}; separator="\n">
-
-<expect_call_get_record("root", "false")>
-<final_sub_cursors:{x|<x>}; separator="\n">
 >>
 
 define_sub_cursor(var_name) ::= <<
@@ -103,13 +106,32 @@ expect_mock_cursor(cursor_name, has_record, field_name, value) ::= <<
 <expect_call_get_attribute(cursor_name, field_name, value)>
 >>
 
+expect_root_mock_cursor(cursor_name, field_name, value) ::= <<
+<expect_call_get_attribute(cursor_name, field_name, value)>
+>>
+
+expect_sub_mock_cursor(cursor_name, field_name, count, has_records, values) ::= <<
+<expect_sub_mock_cursor_count(cursor_name, count)>
+EXPECT_CALL(*<cursor_name>_cursor_ptr, GetRecord())
+    <has_records:{x|<will_once_return(x)>}; separator="\n">
+    <will_once_return("false")>;
+EXPECT_CALL(*<cursor_name>_cursor_ptr, GetFieldValueByName(StrEq("<field_name>")))
+    .Times(AtMost(<count>))
+    <values:{v|<will_once_return(v)>}; separator="\n">;
+>>
+
+expect_sub_mock_cursor_count(cursor_name, count) ::= <<
+EXPECT_CALL(*<cursor_name>_cursor_ptr, GetRecordCount())
+    <will_once_return(count)>;
+>>
+
 expect_call_get_record(cursor_name, value) ::= <<
-EXPECT_CALL(*<cursor_name>_cursor_ptr, GetRecord)
+EXPECT_CALL(*<cursor_name>_cursor_ptr, GetRecord())
     <will_once_return(value)>;
 >>
 
 expect_call_get_attribute(cursor_name, field_name, value) ::= <<
-EXPECT_CALL(*<cursor_name>_cursor_ptr, GetAttributeByName(StrEq("<field_name>")))
+EXPECT_CALL(*<cursor_name>_cursor_ptr, GetFieldValueByName(StrEq("<field_name>")))
     <will_once_return(value)>;
 >>
 
