@@ -25,9 +25,9 @@ protected:
 
 >>
 
-comp_tests(comp_names, factory_names, xml_strings, attr_test_groups) ::= "<comp_names, factory_names, xml_strings, attr_test_groups:{c, f, x, a|<comp_test(c, f, x, a)>}; separator=\"\n\n\">"
+comp_tests(comp_names, factory_names, xml_strings, attr_test_groups, mock_cursor_block) ::= "<comp_names, factory_names, xml_strings, attr_test_groups, mock_cursor_block:{c, f, x, a, m|<comp_test(c, f, x, a, m)>}; separator=\"\n\n\">"
 
-comp_test(comp_name, factory_name, raw_name, xml_string, attr_test_group) ::= <<
+comp_test(comp_name, factory_name, raw_name, xml_string, attr_test_group, mock_cursor_block) ::= <<
 TEST_F(ComponentFactoryTest, <comp_name>)
 {
     std::auto_ptr\<TiXmlElement\> data(new TiXmlElement("<comp_name>"));
@@ -51,6 +51,18 @@ TEST_F(ComponentFactoryTest, <comp_name>)
     <attr_test_group>
 
     ASSERT_EQ(p->ToJSONValue().compare(p1->ToJSONValue()), 0);
+
+    HWDBRecordSet rs;
+
+    <mock_cursor_block>
+    
+    Json::Value jvrs;
+    jvrs["<raw_name>"] = factory.CreateJSONFromRecordSet(rs, HWSQLCmd());
+    p.reset((<comp_name>*)(factory.CreateFromJSON(jvrs).release()));
+
+    <attr_test_group>
+
+    ASSERT_EQ(jvrs["<raw_name>"].compare(root["<raw_name>"]), 0);
 }
 
 >>
@@ -62,5 +74,45 @@ array_attr_test_block(array_type, getter, statements) ::= <<
     <array_type> vec_val = p-\><getter>();
     <statements:{x|<x>}; separator="\n">
 }
+>>
+
+mock_cursors(define_sub_cursors, set_sub_cursors, expect_mock_cursors, final_sub_cursors) ::= <<
+SHARED_PTR<MockIHWDBCursor> root_cursor_ptr(new MockIHWDBCursor);
+<define_sub_cursors:{x|<x>}; separator="\n">
+
+rs.SetCursor(root_cursor);
+<set_sub_cursors:{x|<x>}; separator="\n">
+
+<expect_mock_cursors:{x|<x>}; separator="\n">
+
+<expect_call_get_record("root", "false")>
+<final_sub_cursors:{x|<x>}; separator="\n">
+>>
+
+define_sub_cursor(var_name) ::= <<
+SHARED_PTR<MockIHWDBCursor> <var_name>_cursor_ptr(new MockIHWDBCursor);
+>>
+
+set_sub_cursor(attr_name, var_name) ::= <<
+rs.GetSubRecordSet("<attr_name>").SetCursor(<var_name>_cursor_ptr);
+>>
+
+expect_mock_cursor(cursor_name, has_record, field_name, value) ::= <<
+<expect_call_get_record(cursor_name, has_record)>
+<expect_call_get_attribute(cursor_name, field_name, value)>
+>>
+
+expect_call_get_record(cursor_name, value) ::= <<
+EXPECT_CALL(<cursor_name>_cursor_ptr, GetRecord)
+    will_once_return(<value>);
+>>
+
+expect_call_get_attribute(cursor_name, field_name, value) ::= <<
+EXPECT_CALL(<cursor_name>_cursor_ptr, GetAttributeByName(StrEq("<field_name>")))
+    will_once_return("<value>");
+>>
+
+will_once_return(v) ::= <<
+.WillOnce(Return(<v>))
 >>
 
