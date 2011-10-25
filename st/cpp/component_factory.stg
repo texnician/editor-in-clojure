@@ -44,6 +44,7 @@ component_factory_cpp(file_name, date, component_headers, component_factory_defi
 #include "define.h"
 #include "tinyxml.h"
 #include "json/json.h"
+#include "json/json_util.h"
 #include "hw_db.h"
 #include "factory_exception.h"
 #include "component_factory.h"
@@ -258,21 +259,21 @@ set_int_from_record_set(int_type, variable_name, cursor_value_getter, field_name
 
 set_string_from_record_set(variable_name, field_name, attr_name, comp_name) ::= <<
 const char* field_<variable_name> = NULL;
-GetStringFieldFromCursor(root_cursor_ptr, "<field_name>", &field_<varialbe_name>)
+GetPODFieldFromCursor(root_cursor_ptr, "<field_name>", &field_<variable_name>)
     ? jv["<attr_name>"] = field_<variable_name>
     : <throw_field_not_found(comp_name, attr_name, field_name, "string")>
 >>
 
 set_enum_from_record_set(variable_name, field_name, attr_name, comp_name) ::= <<
 int field_<variable_name> = 0;
-GetIntFieldFromCursor(root_cursor_ptr, "<field_name>", &field_<variable_name>)
+GetPODFieldFromCursor(root_cursor_ptr, "<field_name>", &field_<variable_name>)
     ? jv["<attr_name>"] = field_<variable_name>
     : <throw_field_not_found(comp_name, attr_name, field_name, "enum")>
 >>
 
 set_bool_from_record_set(variable_name, field_name, attr_name, comp_name) ::= <<
 bool field_<variable_name> = false;
-GetBoolFieldFromCursor(root_cursor_ptr, "<field_name>", &field_<variable_name>)
+GetPODFieldFromCursor(root_cursor_ptr, "<field_name>", &field_<variable_name>)
     ? jv["<attr_name>"] = field_<variable_name>
     : <throw_field_not_found(comp_name, attr_name, field_name, "bool")>
 >>
@@ -280,13 +281,13 @@ GetBoolFieldFromCursor(root_cursor_ptr, "<field_name>", &field_<variable_name>)
 set_int_array_from_record_set(attr_name, int_type, cursor_value_getter, field_name, comp_name) ::= <<
 IHWDBCursorPtr sub_cursor_ptr = rs.GetSubRecordSet("<attr_name>").GetCursor();
 if (sub_cursor_ptr) {
-    std::vector\<<int_type>\> vec_val(sub_cursor_ptr->GetRecordCount());
+    <int_type> vec_val(sub_cursor_ptr->GetRecordCount());
     for (int i = 0; sub_cursor_ptr->GetRecord(); ++i) {
         if (!<cursor_value_getter>(sub_cursor_ptr, "<field_name>", &vec_val[i]))
             <throw_array_field_not_found(comp_name, attr_name, field_name, int_type)>
     }
     Json::Value& jv_items = jv["<attr_name>"];
-    ArrayToJSONValue(vec_val, &jv_items);
+    ArrayToJsonValue(vec_val, &jv_items);
 }
 >>
 
@@ -296,21 +297,21 @@ if (sub_cursor_ptr) {
     std::vector\<std::string\> vec_val(sub_cursor_ptr->GetRecordCount());
     for (int i = 0; sub_cursor_ptr->GetRecord(); ++i) {
         const char* tmp = NULL;
-        GetStringFieldFromCursor(sub_cursor_ptr, "<field_name>", &tmp)
+        GetPODFieldFromCursor(sub_cursor_ptr, "<field_name>", &tmp)
             ? vec_val[i] = tmp
             : <throw_array_field_not_found(comp_name, attr_name, field_name, "string")>
     }
     Json::Value& jv_items = jv["<attr_name>"];
-    ArrayToJSONValue(vec_val, &jv_items);
+    ArrayToJsonValue(vec_val, &jv_items);
 }
 >>
 
 set_enum_array_from_record_set(attr_name, field_name, comp_name) ::= <<
-<set_int_array_from_record_set(attr_name, "int", "GetIntValueFromCursor", field_name, comp_name)>
+<set_int_array_from_record_set(attr_name, "std::vector<int>", "GetPODFieldFromCursor", field_name, comp_name)>
 >>
 
 set_bool_array_from_record_set(attr_name, field_name, comp_name) ::= <<
-<set_int_array_from_record_set(attr_name, "bool", "GetBoolValueFromCursor", field_name, comp_name)>
+<set_int_array_from_record_set(attr_name, "std::vector<bool>", "GetPODFieldFromCursor", field_name, comp_name)>
 >>
 
 throw_field_not_found(comp_name, attr_name, field_name, type) ::= <<
