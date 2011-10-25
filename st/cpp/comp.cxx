@@ -519,3 +519,8 @@ JSONToMockRecordSet(const Json::Value&)
     mr.SetCursor(mr_cursor);
     rs.SetSubRecordSet("mr", mr);
 }
+
+int CreateRole(const char* dest, size_t n, const Json::Value& player, const char* table)
+{
+    
+}
