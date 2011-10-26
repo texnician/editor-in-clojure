@@ -10,13 +10,15 @@
     (zipmap (map #(-> % second keyword) spec-seq)
             (map first spec-seq))))
 
-
 (defn- process-sql-seq [f sql-seq]
   (loop [acc () x sql-seq]
     (if (nil? x)
       acc
       (recur (cons (f (first x)) acc) (next x)))))
 
+(re-seq #"[-\w]+" "INSERT into, a-b_")
+(string/split "INSERT into" #"\W")
+(re-matches #"\w" "INSERT into")
 (defn- translate-token [token]
   (if (symbol? token)
     (symbol (cpp-variable-token->clojure-token token))
@@ -25,6 +27,21 @@
 (defn- translate-newline [token]
   (if (string? token)
     (string/replace token "\n" " ")
+    token))
+
+(declare *mysql-keyword-talbe*)
+
+(defn- translate-keyword [token]
+  (if (string? token)
+    (let [word-seq (re-seq #"\w+" token)]
+      (loop [acc token, w word-seq]
+        (if (empty? w)
+          acc
+          (let [h (first w)]
+            (if (contains? *mysql-keyword-talbe* (-> h string/upper-case symbol))
+              (recur (string/replace acc h (string/upper-case h)) (next w))
+              (recur acc (next w))))
+          )))
     token))
 
 (defn- translate-separator [token]
@@ -86,7 +103,6 @@
 
 (defmethod sql-placeholder->fmt-string :clojure [lang]
   (fn [arg-table sym]
-    (println (*java-sql-string-fmt-table* (arg-fmt-type arg-table sym)))
     (*java-sql-string-fmt-table* (arg-fmt-type arg-table sym))))
 
 (defn- translate-fmt-string [lang arg-table]
@@ -152,21 +168,12 @@
      :arg-spec arg-spec
      :func-name (name func-name)}))
 
-
-
-(let [[doc sql-seq] (list "" '["SELECT"])] 
-     (apply list sql-seq))
-(let [[doc sql-seq] '("" ["SELECT"])]
-     (apply list sql-seq))
-
 (defmacro defsql [func-name raw-arg-spec & body]
   (let [doc (if (-> body first string?) (first body) "")
         sql-seq (if (-> body first string?) (second body) (apply list (first body)))
-        sql-template (map (comp translate-token translate-newline translate-separator) sql-seq)
+        sql-template (map (comp translate-token translate-keyword translate-newline translate-separator) sql-seq)
         arg-spec (vec (map translate-token raw-arg-spec))
         arg-table (build-arg-table (parse-arg-spec arg-spec) (filter-args sql-template))]
-    (println doc)
-    (println body)
     `(do (defn ~func-name ~(vec (filter symbol? arg-spec))
            (format ~(make-full-sql-fmt-string :clojure arg-table sql-template) 
                    ~@(make-target-arg-list :clojure arg-table sql-template)))

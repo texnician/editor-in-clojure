@@ -1,0 +1,43 @@
+sql_class_header(manifest date filename sql_func_decls) ::= <<
+// <manifest>
+// @date <date>
+
+#include "define.h"
+
+class HW_BASE_API GameSQL
+{
+public:
+    <sql_func_delcs:{x|<x>}; separator="\n\n">
+};
+
+/// <filename> ends here
+
+>>
+
+sql_func_decl(doc func_name args) ::= <<
+// <doc>
+static int <func_name>(<sql_func_args(args)>);
+>>
+
+sql_func_args(args) ::= <<
+char* dest, int size<if(args)>:, <args:{x|<x>}; separator=", "><endif>
+>>
+
+sql_class_define(manifest date header_file filename sql_func_defines) ::= <<
+// <manifest>
+// @date <date>
+
+#include "<header_file>"
+
+<sql_func_defines:{x|<x>}; separator="\n\n"
+
+// <filename> ends here
+>>
+
+sql_func_define(func_name args fmt_str fmt_arg_list) ::= <<
+int GameSQL::<func_name>(<sql_func_args(args)>)
+{
+    return SNPRINTF(dest, n,
+    <fmt_str><if(fmt_arg_list)>:, <fmt_arg_list:{x|<x>}; wrap, anchor, separator=", "><endif>);
+}
+>>

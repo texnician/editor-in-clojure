@@ -1,6 +1,6 @@
 (ns editor.main
   (:use (clojure pprint))
-  (:use (editor core domain go-template domain-manager inspect-util st))
+  (:use (editor core domain go-template domain-manager inspect-util st game-sql))
   (:gen-class))
 
 (defn compile-xml [& files]
