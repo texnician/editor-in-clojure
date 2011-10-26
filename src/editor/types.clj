@@ -302,6 +302,17 @@
    :enum " %d "
    :bool " %d "})
 
+(def *c-sql-func-arg-decl-table*
+  {:int "int"
+   :uint "uint32_t"
+   :int64 "int64_t"
+   :uint64 "uint64_t"
+   :string "const char*"
+   :enum "int"
+   :bool "int8_t"
+   :go "const Json::Value&"
+   :co "const Json::Value&"})
+
 (defn db-string-value [type comp-key attr-key value]
   (cond (= type :bool) (if value 1 0)
         (= type :enum) (enum-int-value (keyword (:in-domain (get-attribute-meta-info comp-key attr-key #{:in-domain})))

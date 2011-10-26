@@ -36,14 +36,16 @@
 
 (defn generate-cpp [& args]
   (let [comp-list (keys (get-domain :meta-go-component))
-        go-list (keys (get-domain :go-template))]
+        go-list (keys (get-domain :go-template))
+        sql-list (keys (get-domain :sql))]
     (doseq [c comp-list]
       (gen-component c))
     (gen-component-define-cpp comp-list)
     (gen-component-factory comp-list)
     (gen-component-factory-test comp-list)
     (gen-game-object-factory go-list)
-    (gen-game-object-db go-list)))
+    (gen-game-object-db go-list)
+    (gen-sql-class sql-list)))
 
 (def *opt-table*
   {:-c {:func compile-xml :doc "Compile domain scripts, output xml data files."}
