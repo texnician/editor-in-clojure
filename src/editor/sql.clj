@@ -43,7 +43,7 @@
 '{:player {:access-from :go :type :go :attrs [:name :status :ptid :digit-id]}
   :table {:type :string}}'
  的函数"
-  (if (nil? obj-list)
+  (if (empty? obj-list)
     {}
     (let [acc (build-arg-table arg-spec (next obj-list))]
       (if-let [[_, obj, attr] (split-object-token (-> obj-list first name))]
@@ -152,24 +152,30 @@
      :arg-spec arg-spec
      :func-name (name func-name)}))
 
-(defmacro defsql [func-name raw-arg-spec & sql-seq]
-  (let [sql-template (map (comp translate-token translate-newline translate-separator) sql-seq)
+
+
+(let [[doc sql-seq] (list "" '["SELECT"])] 
+     (apply list sql-seq))
+(let [[doc sql-seq] '("" ["SELECT"])]
+     (apply list sql-seq))
+
+(defmacro defsql [func-name raw-arg-spec & body]
+  (let [doc (if (-> body first string?) (first body) "")
+        sql-seq (if (-> body first string?) (second body) (apply list (first body)))
+        sql-template (map (comp translate-token translate-newline translate-separator) sql-seq)
         arg-spec (vec (map translate-token raw-arg-spec))
         arg-table (build-arg-table (parse-arg-spec arg-spec) (filter-args sql-template))]
-    `(defn ~(symbol (str "sql-" (name func-name))) ~(vec (filter symbol? arg-spec))
-       (format ~(make-full-sql-fmt-string :clojure arg-table sql-template) 
-               ~@(make-target-arg-list :clojure arg-table sql-template)))))
-
-(defsql create-role [:go player, :string table]
-  "INSERT into" table "(role_name, role_status, ptid, digit_id,
- scence_id, pos_x, pos_y, career, sex, dir, face, face_color,
- hair_type, hair_color, grade, level, create_time, update_time,
-extra_state, role_deleted) 
-VALUES(3, " player.name | player.id | player.role-title | player.long-id |
-  player.level | player.role-logic ", 1, 0, now(), now(), 1, 0) WHERE size between" "and")
-
-'(sql-create-role {:name "hahaha" :id 10 :role-title 99 :long-id 13818293630 :level 7
-                  :role-logic 90} "hw")
+    (println doc)
+    (println body)
+    `(do (defn ~func-name ~(vec (filter symbol? arg-spec))
+           (format ~(make-full-sql-fmt-string :clojure arg-table sql-template) 
+                   ~@(make-target-arg-list :clojure arg-table sql-template)))
+         (register-in-domain :sql ~(keyword func-name)
+                             {:fmt-str ~(make-full-sql-fmt-string :c arg-table sql-template)
+                              :arg-list '~(make-target-arg-list :c arg-table sql-template)
+                              :arg-spec ~(parse-arg-spec arg-spec)
+                              :func-name ~(name func-name)
+                              :doc ~doc}))))
 
 (def *mysql-keyword-talbe*
   '#{ACCESSIBLE ADD ALL ALTER ANALYZE AND AS ASC ASENSITIVE
