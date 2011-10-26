@@ -228,18 +228,8 @@
         maker (target-arg-list-maker lang arg-table)]
     (map maker arg-sym-list)))
 
-;;; player["role-title"].asCstring()
-'(defn create-sql [func-name arg-spec sql-seq]
-  (let [sql-template (map (comp translate-token translate-newline translate-separator) sql-seq)
-        arg-table (build-arg-table arg-spec (filter-args sql-template))
-        fn-args ]
-    {:fmt-str (make-full-sql-fmt-string :clojure arg-table sql-template)
-     :arg-list (make-target-arg-list :clojure arg-table sql-template)
-     :arg-spec arg-spec
-     :func-name (name func-name)}))
-
 (defmacro defsql [func-name raw-arg-spec & body]
-  (let [doc (if (-> body first string?) (first body) "")
+  (let [doc (if (-> body first string?) (first body) "This function was created by a lazy man(woman).")
         sql-seq (if (-> body first string?) (second body) (apply list (first body)))
         sql-template (map (comp translate-token translate-keyword translate-newline translate-separator) sql-seq)
         arg-spec (vec (map translate-token raw-arg-spec))
