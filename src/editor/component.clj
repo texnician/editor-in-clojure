@@ -161,6 +161,10 @@
   (let [type-info (get-attribute-meta-info comp-key attr-key #{:default})]
     (str (:default type-info))))
 
+(defn get-attribute-in-domain [comp-key attr-key]
+  (let [type-info (get-attribute-meta-info comp-key attr-key #{:in-domain})]
+    (keyword (:in-domain type-info))))
+
 (defn atom-attribute? [comp-key attr-key]
   (let [attr-info (get-attribute-meta-info comp-key attr-key #{:size})]
     (not (:size attr-info))))

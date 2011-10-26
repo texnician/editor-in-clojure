@@ -1,5 +1,5 @@
 (ns editor.sql
-  (:use (editor name-util core types component sid template domain error))
+  (:use (editor name-util core types component sid template domain error enum))
   (:require [clojure.string :as string]))
 
 (def *mysql-keyword-talbe*
@@ -249,3 +249,24 @@
 
 (defn sql-func-arg-decl [[t sym]]
   (format "%s %s" (*c-sql-func-arg-decl-table* t) (-> sym name (clojure-token->cpp-variable-token))))
+
+(defn- get-attribute-clojure-value [comp-key attr-key]
+  (let [attr-type (get-attribute-type comp-key attr-key)
+        value-str (get-attribute-default-value comp-key attr-key)]
+    (cond (= attr-type :string) value-str
+          (= attr-type :enum) (enum-int-value (get-attribute-in-domain comp-key attr-key) (keyword value-str))
+          :else (read-string value-str))))
+
+(defn go [go-key & attr-map]
+  (let [attr-list (get-template-attribute-list go-key)]
+    (merge (into {} (map (fn [x]
+                    (let [comp (find-attribute-component x (keys (make-concrete-template go-key)))]
+                      [x (get-attribute-clojure-value comp x)])) attr-list))
+           (first attr-map))))
+
+(defn co [co-key & attr-map]
+  (let [attr-list (component-attribute-keys co-key)]
+    (merge (into {} (map (fn [x]
+                           [x (get-attribute-clojure-value co-key x)])
+                         attr-list))
+           (first attr-map))))

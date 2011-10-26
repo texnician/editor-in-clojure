@@ -223,6 +223,11 @@
                                (x obj))))
                  comps))))
 
+(defn get-template-attribute-list [temp-key]
+  (let [comp-list (keys (make-concrete-template temp-key))]
+    (mapcat (fn [x]
+              (component-attribute-keys x)) comp-list)))
+
 (defn make-inspect-template [temp-key]
   "返回一个符合clojure/inspect-table格式的表"
   (if-let [obj (make-concrete-template temp-key)]
