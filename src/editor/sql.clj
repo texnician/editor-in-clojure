@@ -5,9 +5,6 @@
 (declare create-sql)
 (declare parse-arg-spec)
 
-(defmacro defsql [func-name arg-spec & body]
-  `(create-sql '~func-name ~(parse-arg-spec arg-spec) '~body))
-
 (defn- parse-arg-spec [arg-spec]
   (let [spec-seq (partition 2 arg-spec)]
     (zipmap (map #(-> % second keyword) spec-seq)
@@ -75,14 +72,22 @@
 (defmulti sql-placeholder->fmt-string (fn [lang]
                                         lang))
 
-(defmethod sql-placeholder->fmt-string :c [lang]
-  (fn [arg-table sym]
-    (*c-sql-string-fmt-table* (if-let [[_, obj, attr] (split-object-token (-> sym name))]
+(defn- arg-fmt-type [arg-table sym]
+  (if-let [[_, obj, attr] (split-object-token (-> sym name))]
                                 (let [obj-key (keyword obj)
                                       attr-key (keyword attr)]
                                   (attr-type attr-key))
                                 (let [atom-key (-> sym keyword)]
-                                  (arg-type atom-key arg-table))))))
+                                  (arg-type atom-key arg-table))))
+
+(defmethod sql-placeholder->fmt-string :c [lang]
+  (fn [arg-table sym]
+    (*c-sql-string-fmt-table* (arg-fmt-type arg-table sym))))
+
+(defmethod sql-placeholder->fmt-string :clojure [lang]
+  (fn [arg-table sym]
+    (println (*java-sql-string-fmt-table* (arg-fmt-type arg-table sym)))
+    (*java-sql-string-fmt-table* (arg-fmt-type arg-table sym))))
 
 (defn- translate-fmt-string [lang arg-table]
   (fn [token]
@@ -92,7 +97,7 @@
 
 (defn- make-full-sql-fmt-string [lang arg-table sql-template]
   (string/replace (string/replace (string/join \space (map (translate-fmt-string lang arg-table) sql-template))
-                                  #"  +" " ") #"\s," ","))
+                                  #"\s\s+" " ") #"\s," ","))
 
 (defmulti target-arg-list-maker (fn [lang arg-table]
                                   lang))
@@ -125,24 +130,35 @@
           (make-co-json-value-statement obj-key attr-key)))
       (make-atom-c-arg-statement sym))))
 
+(defmethod target-arg-list-maker :clojure [lang arg-type]
+  (fn [sym]
+    (if-let [[_, obj, attr] (split-object-token (name sym))]
+      (let [attr-key (keyword attr)]
+        (list (symbol obj) attr-key))
+      sym)))
+
 (defn- make-target-arg-list [lang arg-table sql-template]
   (let [arg-sym-list (filter-args sql-template)
         maker (target-arg-list-maker lang arg-table)]
     (map maker arg-sym-list)))
 
 ;;; player["role-title"].asCstring()
-(defn create-sql [func-name arg-spec sql-seq]
+'(defn create-sql [func-name arg-spec sql-seq]
   (let [sql-template (map (comp translate-token translate-newline translate-separator) sql-seq)
-        arg-table (build-arg-table arg-spec (filter-args sql-template))]
-    {:fmt-str (make-full-sql-fmt-string :c arg-table sql-template)
-     :arg-list (make-target-arg-list :c arg-table sql-template)}))
+        arg-table (build-arg-table arg-spec (filter-args sql-template))
+        fn-args ]
+    {:fmt-str (make-full-sql-fmt-string :clojure arg-table sql-template)
+     :arg-list (make-target-arg-list :clojure arg-table sql-template)
+     :arg-spec arg-spec
+     :func-name (name func-name)}))
 
-(defn test-create-role [player table]
-  (format "%s" (player :name)
-          table
-          (player :id)
-          (player :role-title)
-          (player :long-id)))
+(defmacro defsql [func-name raw-arg-spec & sql-seq]
+  (let [sql-template (map (comp translate-token translate-newline translate-separator) sql-seq)
+        arg-spec (vec (map translate-token raw-arg-spec))
+        arg-table (build-arg-table (parse-arg-spec arg-spec) (filter-args sql-template))]
+    `(defn ~(symbol (str "sql-" (name func-name))) ~(vec (filter symbol? arg-spec))
+       (format ~(make-full-sql-fmt-string :clojure arg-table sql-template) 
+               ~@(make-target-arg-list :clojure arg-table sql-template)))))
 
 (defsql create-role [:go player, :string table]
   "INSERT into" table "(role_name, role_status, ptid, digit_id,
@@ -150,7 +166,10 @@
  hair_type, hair_color, grade, level, create_time, update_time,
 extra_state, role_deleted) 
 VALUES(3, " player.name | player.id | player.role-title | player.long-id |
-player.level | player.role-logic ", 1, 0, now(), now(), 1, 0) WHERE size between" "and")
+  player.level | player.role-logic ", 1, 0, now(), now(), 1, 0) WHERE size between" "and")
+
+'(sql-create-role {:name "hahaha" :id 10 :role-title 99 :long-id 13818293630 :level 7
+                  :role-logic 90} "hw")
 
 (def *mysql-keyword-talbe*
   '#{ACCESSIBLE ADD ALL ALTER ANALYZE AND AS ASC ASENSITIVE
