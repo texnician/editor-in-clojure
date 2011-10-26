@@ -20,6 +20,10 @@
   (let [tokens (split-clojure-token key)]
     (string/join \_ tokens)))
 
+(defn cpp-variable-token->clojure-token [token]
+  (let [token-segs (string/split (name token) #"_")]
+    (string/join \- token-segs)))
+
 (defn cpp-component-name [comp-key]
   "Return c++ component name"
   (format "%sComponent" (clojure-token->cpp-token comp-key)))

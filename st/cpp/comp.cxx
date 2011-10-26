@@ -524,3 +524,5 @@ int CreateRole(const char* dest, size_t n, const Json::Value& player, const char
 {
     
 }
+printf("a "_FMTI64_" some %s", a, b)
+printf("a "_FMTI64_" some %s", a, b)

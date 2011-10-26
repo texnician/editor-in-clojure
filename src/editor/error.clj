@@ -24,3 +24,4 @@
 
 (deferror :attribute-not-exist 1001 "属性'<attr>'不存在")
 (deferror :array-attribute-value-not-vector 1002 "属性'<attr>'的值'<value>'不是vector")
+(deferror :cant-find-attribute-in-sql-command 2001 "SQL语句中属性'<attr>'不存在")

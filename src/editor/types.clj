@@ -275,6 +275,33 @@
    :enum "asInt"
    :bool "asBool"})
 
+(def *json-printf-sql-converter-table*
+  {:int "asInt()"
+   :uint "asUInt()"
+   :int64 "asInt64()"
+   :uint64 "asUInt64()"
+   :string "asCString()"
+   :enum "asInt()"
+   :bool "asBool() ? 1 : 0"})
+
+(def *c-sql-string-fmt-table*
+  {:int " %d "
+   :uint " %u "
+   :int64 " \"_FMTI64_\" "
+   :uint64 " \"_FMTU64_\" "
+   :string " '%s' "
+   :enum " %d "
+   :bool " %d "})
+
+(def *java-sql-string-fmt-table*
+  {:int " %d "
+   :uint " %d "
+   :int64 " %d "
+   :uint64 " %d "
+   :string " '%s' "
+   :enum " %d "
+   :bool " %d "})
+
 (defn db-string-value [type comp-key attr-key value]
   (cond (= type :bool) (if value 1 0)
         (= type :enum) (enum-int-value (keyword (:in-domain (get-attribute-meta-info comp-key attr-key #{:in-domain})))
