@@ -4,7 +4,11 @@ sql_class_header(manifest, date, filename, sql_func_decls) ::= <<
 
 #include "define.h"
 
-class HW_BASE_API GameSQL
+namespace Json {
+class Value;
+}
+
+class GameSQL
 {
 public:
     <sql_func_decls:{x|<x>}; separator="\n\n">

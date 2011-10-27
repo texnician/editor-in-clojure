@@ -34,6 +34,9 @@ component_header(filename, date, manifest, name, body) ::= <<
 
 component_sid_initialize(comps, paddings, sids) ::= <<
 <comps, paddings, sids:{c, p, s|const unsigned int <c>::sid_ <p> = <s>;}; separator="\n">
+
+// Detect hash conflict, compiler would emit 're-defined variable' error on conflict.
+<comps, sids:{c, s|static const char* const __<s> = "<c>";}; separator="\n">
 >>
 
 component_raw_name_initialize(comps, paddings, raw_names) ::= <<
