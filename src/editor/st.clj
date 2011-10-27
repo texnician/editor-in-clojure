@@ -892,12 +892,14 @@
     (if-let [func-info (sql-func-info func-key)]
       (let [st (.getInstanceOf group "sql_func_define")]
         (render-st st (list* ["func_name" (-> func-info :func-name clojure-token->cpp-token)]
-                             ["fmt_str" (-> func-info :fmt-str)]
                              ["args" "char* __dest"]
                              ["args" "int __n"]
                              (concat (map (fn [x]
                                             ["args" (sql-func-arg-decl x)])
                                           (partition 2 (:arg-spec func-info)))
+                                     (map (fn [x]
+                                            ["fmt_str" x])
+                                          (string/split (:fmt-str func-info) #"@"))
                                      (map (fn [x]
                                             ["fmt_arg_list" x])
                                           (:arg-list func-info)))) 80)))))

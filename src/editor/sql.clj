@@ -1,5 +1,5 @@
 (ns editor.sql
-  (:use (editor name-util core types component sid template domain error enum))
+  (:use (editor core domain error enum name-util sid types component template))
   (:require [clojure.string :as string]))
 
 (def *mysql-keyword-talbe*
@@ -96,7 +96,7 @@
 
 (defn- translate-newline [token]
   (if (string? token)
-    (string/replace token "\n" " ")
+    (string/replace token "\n" "@ ")
     token))
 
 (declare *mysql-keyword-talbe*)
@@ -181,9 +181,20 @@
       ((sql-placeholder->fmt-string lang) arg-table token)
       token)))
 
+(defmulti full-sql-fmt-string-line-break (fn [lang s]
+                                           lang))
+
+(defmethod full-sql-fmt-string-line-break :c [lang s]
+  (let [a (string/replace s #"\s\s+" " ")]
+    (let [b (string/replace a #"\s," ",")]
+      (let [c (string/replace b #"@\s*" "@")]
+        c))))
+
+(defmethod full-sql-fmt-string-line-break :clojure [lang s]
+  (string/replace (string/replace (string/replace s #"\s\s+" " ") #"\s," ",") #"@\s*" " "))
+
 (defn- make-full-sql-fmt-string [lang arg-table sql-template]
-  (string/replace (string/replace (string/join \space (map (translate-fmt-string lang arg-table) sql-template))
-                                  #"\s\s+" " ") #"\s," ","))
+  (full-sql-fmt-string-line-break lang (string/join \space (map (translate-fmt-string lang arg-table) sql-template))))
 
 (defmulti target-arg-list-maker (fn [lang arg-table]
                                   lang))

@@ -43,7 +43,7 @@ sql_func_define(func_name, args, fmt_str, fmt_arg_list) ::= <<
 int GameSQL::<func_name>(<sql_func_args(args)>)
 {
     return SNPRINTF(__dest, __n, "\
-<fmt_str>"<if(fmt_arg_list)>,
+<fmt_str:{x|<x>}; separator=" \\\n">"<if(fmt_arg_list)>,
 <fmt_arg_list:{x|<x>}; wrap, anchor, separator=",\n"><endif>
                    );
 }

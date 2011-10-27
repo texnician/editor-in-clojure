@@ -1,6 +1,6 @@
 (ns editor.main
   (:use (clojure pprint))
-  (:use (editor core domain go-template domain-manager inspect-util st game-sql))
+  (:use (editor core domain go-component go-template domain-manager inspect-util st game-sql))
   (:gen-class))
 
 (defn compile-xml [& files]
@@ -35,6 +35,10 @@
   (inspect-template-fn (keyword arg)))
 
 (defn generate-cpp [& args]
+  (load-file "src/editor/go_enum.clj")
+  (load-file "src/editor/go_component.clj")
+  (load-file "src/editor/go_template.clj")
+  (load-file "src/editor/game_sql.clj")
   (let [comp-list (keys (get-domain :meta-go-component))
         go-list (keys (get-domain :go-template))
         sql-list (keys (get-domain :sql))]
