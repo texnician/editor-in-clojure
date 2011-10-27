@@ -68,43 +68,44 @@
     (.inspect st (first opt))
     (.inspect st)))
 
+(def *st-group* nil)
+
+(defn- inst-st [st-name]
+  (.getInstanceOf *st-group* st-name))
+
+(defmacro with-stg [stg & body]
+  `(binding [*st-group* (STGroupFile. ~stg)]
+     ~@body))
+
 (defn- component-class-file [st component-class]
   (fn [comp-key]
-    (doseq [op (map st-add-op [["filename", (cpp-component-gen-header-filename comp-key)]
-                               ["date" (get-date)]
-                               ["manifest" *manifest*]
-                               ["name" (cpp-component-gen-header-define comp-key)]
-                               ["body" (component-class comp-key)]])]
-      (op st))
-    (.render st)))
+    (render-st st (list ["filename", (cpp-component-gen-header-filename comp-key)]
+                        ["date" (get-date)]
+                        ["manifest" *manifest*]
+                        ["name" (cpp-component-gen-header-define comp-key)]
+                        ["body" (component-class comp-key)]))))
 
 (defn- component-class [st component-bases initialize-list initialize-members attributes getters-and-setters]
   (fn [comp-key]
-    (doseq [op (map st-add-op (list ["name" (cpp-component-gen-name comp-key)]
-                                    ["comp_name" (cpp-component-name comp-key)]
-                                    ["bases" (component-bases comp-key)]
-                                    ["initialize_list" (initialize-list comp-key)]
-                                    ["initialize_members" (initialize-members comp-key)]
-                                    ["sid" (format "%#x" (gen-sid (cpp-component-name comp-key)))]
-                                    ["attributes" (attributes comp-key)]
-                                    ["getters_and_setters" (getters-and-setters comp-key)]))]
-      (op st))
-    (.render st)))
+    (render-st st (list ["name" (cpp-component-gen-name comp-key)]
+                        ["comp_name" (cpp-component-name comp-key)]
+                        ["bases" (component-bases comp-key)]
+                        ["initialize_list" (initialize-list comp-key)]
+                        ["initialize_members" (initialize-members comp-key)]
+                        ["sid" (format "%#x" (gen-sid (cpp-component-name comp-key)))]
+                        ["attributes" (attributes comp-key)]
+                        ["getters_and_setters" (getters-and-setters comp-key)]))))
 
 (defn- component-bases [st]
   (fn [comp-key]
-    (doseq [op (map st-add-op '(["base_list" "IComponent"]))]
-      (op st))
-    (.render st)))
+    (render-st st '(["base_list" "IComponent"]))))
 
 (defn- initialize-list [st attr-builder]
   (fn [comp-key]
-    (doseq [op (map st-add-op (mapcat (comp  #(list ["attrs" (:member-name %)] ["values" (:default-value %)])
-                                             (partial attr-builder comp-key))
-                                      (filter (fn [x]
-                                                (atom-attribute? comp-key x)) (component-attribute-keys comp-key))))]
-      (op st))
-    (.render st 80)))
+    (render-st st (mapcat (comp  #(list ["attrs" (:member-name %)] ["values" (:default-value %)])
+                                 (partial attr-builder comp-key))
+                          (filter (fn [x]
+                                    (atom-attribute? comp-key x)) (component-attribute-keys comp-key))) 80)))
 
 (defn- initialize-member-block [group attr-builder]
   (fn [comp-key attr-key]
@@ -112,76 +113,67 @@
     (let [attr (attr-builder comp-key attr-key)
           array-values (:default-array-value attr)]
       (let [st (.getInstanceOf group "initialize_vector_block")]
-        (doseq [op (map st-add-op (mapcat (fn [x]
-                                            (list ["push_backs" (format "this->%s.push_back(%s);"
-                                                                        (:member-name attr)
-                                                                        x)]
-                                                  ["emplace_backs" (format "this->%s.emplace_back(%s);"
-                                                                           (:member-name attr) x)]))
-                                          array-values))]
-          (op st))
-        (.render st)))))
+        (render-st st (mapcat (fn [x]
+                                (list ["push_backs" (format "this->%s.push_back(%s);"
+                                                            (:member-name attr)
+                                                            x)]
+                                      ["emplace_backs" (format "this->%s.emplace_back(%s);"
+                                                               (:member-name attr) x)]))
+                              array-values))))))
 
 (defn- initialize-members [st group attr-builder]
   (fn [comp-key]
     (let [attr-list (filter (fn [x]
                               (not (atom-attribute? comp-key x)))
                             (component-attribute-keys comp-key))]
-      (doseq [op (map st-add-op (map (fn [x]
-                                       ["blocks" ((initialize-member-block group attr-builder) comp-key x)]) attr-list))]
-        (op st))
-      (.render st))))
+      (render-st st (map (fn [x]
+                           ["blocks" ((initialize-member-block group attr-builder) comp-key x)]) attr-list)))))
 
 (defn- doc-lines [st]
   (fn [attr]
     (let [lines (mapcat #(string/split % #";") (map #(string/replace % #"^\s+" "") (string/split (:doc attr) #"\n")))]
-      (doseq [op (map st-add-op (map (fn [x]
-                                       ["lines" x])
-                                      lines))]
-        (op st))
-      (.render st))))
+      (render-st st (map (fn [x]
+                           ["lines" x])
+                         lines)))))
 
 (defn- attributes [st group attr-builder]
   (fn [comp-key]
-    (doseq [op (map st-add-op (mapcat (comp #(list ["types" (:define-type %)]
-                                                   ["names" (:member-name %)]
-                                                   ["docs" ((doc-lines (.getInstanceOf group "doc_lines")) %)])
-                                             (partial attr-builder comp-key))
-                                       (component-attribute-keys comp-key)))]
-      (op st))
-    (.render st)))
+    (render-st st (mapcat (comp #(list ["types" (:define-type %)]
+                                       ["names" (:member-name %)]
+                                       ["docs" ((doc-lines (.getInstanceOf group "doc_lines")) %)])
+                                (partial attr-builder comp-key))
+                          (component-attribute-keys comp-key)))))
 
 (defn- getters-and-setters [st attr-builder]
   (fn [comp-key]
-    (doseq [op (map st-add-op (mapcat (comp #(list ["types" (:getter-return-type %)]
-                                                   ["getters" (:getter-name %)]
-                                                   ["setters" (:setter-name %)]
-                                                   ["setter_arg_types" (:setter-argument-type %)]
-                                                   ["m_names" (:member-name %)]
-                                                   ["arg_names" (:setter-argument-name %)])
-                                             (partial attr-builder comp-key))
-                                       (component-attribute-keys comp-key)))]
-      (op st))
-    (.render st)))
+    (render-st st (mapcat (comp #(list ["types" (:getter-return-type %)]
+                                       ["getters" (:getter-name %)]
+                                       ["setters" (:setter-name %)]
+                                       ["setter_arg_types" (:setter-argument-type %)]
+                                       ["m_names" (:member-name %)]
+                                       ["arg_names" (:setter-argument-name %)])
+                                (partial attr-builder comp-key))
+                          (component-attribute-keys comp-key)))))
 
 (defn gen-component [comp-key]
   "生成一个Cpp Component类头文件"
-  (let [group (STGroupFile. *cpp-component-stg*)
-        bases-st (.getInstanceOf group "bases")
-        bases (component-bases bases-st)
-        attributes-st (.getInstanceOf group "attributes")
-        attrs (attributes attributes-st group make-cpp-attribute)
-        initialize-list-st (.getInstanceOf group "initialize_list")
-        initialize-list-fn (initialize-list initialize-list-st make-cpp-attribute)
-        initialize-members-st (.getInstanceOf group "initialize_members")
-        initialize-members-fn (initialize-members initialize-members-st group make-cpp-attribute)
-        getters-and-setters-st (.getInstanceOf group "getters_and_setters")
-        gas (getters-and-setters getters-and-setters-st make-cpp-attribute)
-        class-st (.getInstanceOf group "component_class")
-        cls (component-class class-st bases initialize-list-fn initialize-members-fn attrs gas)
-        file-st (.getInstanceOf group "component_header")]
-    (spit (in-dir *component-gen-dir* (cpp-component-gen-header-filename comp-key)) 
-          ((component-class-file file-st cls) comp-key))))
+  (with-stg *cpp-component-stg*
+    (let [group (STGroupFile. *cpp-component-stg*)
+          bases-st (inst-st "bases")
+          bases (component-bases bases-st)
+          attributes-st (.getInstanceOf group "attributes")
+          attrs (attributes attributes-st group make-cpp-attribute)
+          initialize-list-st (.getInstanceOf group "initialize_list")
+          initialize-list-fn (initialize-list initialize-list-st make-cpp-attribute)
+          initialize-members-st (.getInstanceOf group "initialize_members")
+          initialize-members-fn (initialize-members initialize-members-st group make-cpp-attribute)
+          getters-and-setters-st (.getInstanceOf group "getters_and_setters")
+          gas (getters-and-setters getters-and-setters-st make-cpp-attribute)
+          class-st (.getInstanceOf group "component_class")
+          cls (component-class class-st bases initialize-list-fn initialize-members-fn attrs gas)
+          file-st (.getInstanceOf group "component_header")]
+      (spit (in-dir *component-gen-dir* (cpp-component-gen-header-filename comp-key)) 
+            ((component-class-file file-st cls) comp-key)))))
 
 
 (defn- component-sid-initialize [st]
@@ -189,33 +181,20 @@
     (let [name-lens (map #(-> % cpp-component-gen-name count) comp-key-list)
           max-len (apply max name-lens)
           padding-map (zipmap comp-key-list (map (comp #(apply str %) #(repeat % \space) (partial - max-len)) name-lens))]
-      (doseq [op (map st-add-op (mapcat (fn [x]
-                                          (list ["comps" (cpp-component-gen-name x)]
-                                                ["paddings" (padding-map x)]
-                                                ["sids" (format "%#x" (gen-sid (cpp-component-name x)))])) comp-key-list))]
-        (op st)))
-    (.render st)))
+      (render-st st (mapcat (fn [x]
+                              (list ["comps" (cpp-component-gen-name x)]
+                                    ["paddings" (padding-map x)]
+                                    ["sids" (format "%#x" (gen-sid (cpp-component-name x)))])) comp-key-list)))))
 
 (defn- component-raw-name-initialize [st]
   (fn [comp-key-list]
     (let [name-lens (map #(-> % cpp-component-gen-name count) comp-key-list)
           max-len (apply max name-lens)
           padding-map (zipmap comp-key-list (map (comp #(apply str %) #(repeat % \space) (partial - max-len)) name-lens))]
-      (doseq [op (map st-add-op (mapcat (fn [x]
-                                          (list ["comps" (cpp-component-gen-name x)]
-                                                ["paddings" (padding-map x)]
-                                                ["raw_names" (name x)])) comp-key-list))]
-        (op st)))
-    (.render st)))
-
-(defn gen-component-sid-initialize [comp-key-list]
-  "生成初始化Component sid的cpp文件"
-  (let [group (STGroupFile. *cpp-component-stg*)
-        component-sid-initialize-fn (component-sid-initialize (.getInstanceOf group "component_sid_initialize"))]
-    (spit (cpp-component-sid-initialize-filename) (component-sid-initialize-fn comp-key-list))))
-
-;(gen-component :monster-property)
-
+      (render-st st (mapcat (fn [x]
+                              (list ["comps" (cpp-component-gen-name x)]
+                                    ["paddings" (padding-map x)]
+                                    ["raw_names" (name x)])) comp-key-list)))))
 
 (defn- attribute-set-block-selector [group]
   (fn [attr]
@@ -236,9 +215,7 @@
                                                  (list ["attr" (:variable-name attr)]
                                                        ["setter" (:setter-name attr)])]
                              :else (throw (Exception. (format "unknown type %s" raw-type))))]
-      (doseq [op (map st-add-op op-list)]
-        (op st))
-      (.render st))))
+      (render-st st op-list))))
 
 (defn- st-has-attribute? [st attr]
   (let [attrs (keys (.getAttributes st))]
@@ -251,9 +228,7 @@
                                  ["attr_name" (:raw-name %)]
                                  ["set_block" ((set-block-selector) %)])
                           (partial attr-builder comp-key)) attr-key)]
-      (doseq [op (map st-add-op op-table)]
-        (op st))
-      (.render st))))
+      (render-st st op-table))))
 
 (defn- array-attribute-set-block-selector [group]
   (fn [attr]
@@ -277,9 +252,7 @@
                                     (list ["attr" (:variable-name attr)]
                                           ["setter" (:setter-name attr)]
                                           ["type" (name raw-type)])])]
-      (doseq [op (map st-add-op op-list)]
-        (op st))
-      (.render st))))
+      (render-st st op-list))))
 
 (defn- build-array-attribute [st attr-builder set-block-selector]
   (fn [comp-key attr-key]
@@ -287,10 +260,8 @@
                                  ["variable_name" (:variable-name %)]
                                  ["attr_name" (:raw-name %)]
                                  ["set_block" ((set-block-selector) %)])
-                                 (partial attr-builder comp-key)) attr-key)]
-      (doseq [op (map st-add-op op-table)]
-        (op st))
-      (.render st))))
+                          (partial attr-builder comp-key)) attr-key)]
+      (render-st st op-table))))
 
 (defn- factory-build-attributes [group attr-builder]
   (fn [comp-key]
@@ -387,66 +358,56 @@
 
 (defn- factory-find-component-node [st]
   (fn [comp-key]
-    (doseq [op (map st-add-op (list ["go_tag" (name *go-component-tag*)]
-                                    ["raw_name" (name comp-key)]
-                                    ["class_name" (cpp-component-name comp-key)]))]
-      (op st))
-    (.render st)))
+    (render-st st (list ["go_tag" (name *go-component-tag*)]
+                        ["raw_name" (name comp-key)]
+                        ["class_name" (cpp-component-name comp-key)]))))
 
 (defn- component-factory-define [st find-component-node build-attributes json-from-record-set]
   (fn [comp-key]
-    (doseq [op (map st-add-op (list* ["class_name" (cpp-component-name comp-key)]
-                                     ["factory_name" (cpp-component-factory-name comp-key)]
-                                     ["raw_name" (name comp-key)]
-                                     ["find_component_node" (find-component-node comp-key)]
-                                     (concat (map #(vector "build_attributes" %)
-                                                  (build-attributes comp-key))
-                                             (json-from-record-set comp-key))))]
-      (op st))
-    (.render st)))
+    (render-st st (list* ["class_name" (cpp-component-name comp-key)]
+                         ["factory_name" (cpp-component-factory-name comp-key)]
+                         ["raw_name" (name comp-key)]
+                         ["find_component_node" (find-component-node comp-key)]
+                         (concat (map #(vector "build_attributes" %)
+                                      (build-attributes comp-key))
+                                 (json-from-record-set comp-key))))))
 
 (defn- component-factory-cpp [st group]
   (fn [comp-key-list]
-    (doseq [op (map st-add-op (list* ["file_name" *component-factory-cpp-name*]
-                                     ["date", (get-date)]
-                                     (mapcat (fn [x]
-                                               (let [build-attributes (factory-build-attributes
-                                                                       group
-                                                                       make-cpp-attribute)
-                                                     find-component-node (factory-find-component-node
-                                                                          (.getInstanceOf group "find_component_node"))
-                                                     json-from-record-set (comp-attr-json-from-record-set group)
-                                                     define-st (component-factory-define
-                                                                (.getInstanceOf group "component_factory_define") find-component-node
-                                                                build-attributes
-                                                                json-from-record-set)]
-                                                 (list ["component_headers", (cpp-component-header-filename x)]
-                                                       ["component_factory_defines", (define-st x)])))
-                                             comp-key-list)
-                                     ))]
-      (op st))
-    (.render st)))
+    (render-st st (list* ["file_name" *component-factory-cpp-name*]
+                         ["date", (get-date)]
+                         (mapcat (fn [x]
+                                   (let [build-attributes (factory-build-attributes
+                                                           group
+                                                           make-cpp-attribute)
+                                         find-component-node (factory-find-component-node
+                                                              (.getInstanceOf group "find_component_node"))
+                                         json-from-record-set (comp-attr-json-from-record-set group)
+                                         define-st (component-factory-define
+                                                    (.getInstanceOf group "component_factory_define") find-component-node
+                                                    build-attributes
+                                                    json-from-record-set)]
+                                     (list ["component_headers", (cpp-component-header-filename x)]
+                                           ["component_factory_defines", (define-st x)])))
+                                 comp-key-list)
+                         ))))
 
 (defn- component-factory-decl [st]
   (fn [comp-key]
-    (doseq [op (map st-add-op (list ["factory_name" (cpp-component-factory-name comp-key)]
-                                    ["interface_name" "IComponent"]))]
-      (op st))
-    (.render st)))
+    (render-st st (list ["factory_name" (cpp-component-factory-name comp-key)]
+                        ["interface_name" "IComponent"]))))
 
 (defn- component-factory-header [st group]
   (fn [comp-key-list]
-    (doseq [op (map st-add-op (list* ["file_name" *component-factory-header-name*]
-                                     ["guard" "_COMPONENT_FACTORY_H_"]
-                                     ["manifest" *manifest*]
-                                     ["date" (get-date)]
-                                     (map (fn [x]
-                                            (let [decl-st (component-factory-decl
-                                                           (.getInstanceOf group "component_factory_decl"))]
-                                              ["factory_decls" (decl-st x)]))
-                                          comp-key-list)))]
-      (op st))
-    (.render st)))
+    (render-st st (list* ["file_name" *component-factory-header-name*]
+                         ["guard" "_COMPONENT_FACTORY_H_"]
+                         ["manifest" *manifest*]
+                         ["date" (get-date)]
+                         (map (fn [x]
+                                (let [decl-st (component-factory-decl
+                                               (.getInstanceOf group "component_factory_decl"))]
+                                  ["factory_decls" (decl-st x)]))
+                              comp-key-list)))))
 
 (defn gen-component-factory [comp-key-list]
   "生成一个Cpp Component类Factory"
@@ -456,37 +417,27 @@
     (spit (in-dir *cpp-include-dir* *component-factory-header-name*) (header-st comp-key-list))
     (spit (in-dir *cpp-src-dir* *component-factory-cpp-name*) (cpp-st comp-key-list))))
 
-; (gen-component-factory :combat-property)
-'(gen-component-factory '(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base))
-'(doseq [c '(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base)]
-  (gen-component c))
-
 (defn- array-attr-test-block [st test-values]
   (fn [comp-key attr-key]
     (let [attr-info (make-cpp-attribute comp-key attr-key)
           test-fn (:array-item-test attr-info)
           idx-seq (range (count test-values))]
-      (doseq [op (map st-add-op (list* ["array_type" (:define-type attr-info)]
-                                       ["getter" (:getter-name attr-info)]
-                                       (map (fn [i v]
-                                              (vector "statements" (test-fn "vec_val" i v)))
-                                            idx-seq test-values)))]
-        (op st))
-      (.render st))))
+      (render-st st (list* ["array_type" (:define-type attr-info)]
+                           ["getter" (:getter-name attr-info)]
+                           (map (fn [i v]
+                                  (vector "statements" (test-fn "vec_val" i v)))
+                                idx-seq test-values))))))
 
 (defn- attr-test-group [st group]
   (fn [comp-key]
     (let [attr-list (component-attribute-keys comp-key)
           test-case (comp-key *component-factory-test-case-table*)]
-      (doseq [op (map st-add-op (map #(vector "statements" %) (:atom-attribute-test-statments test-case)))]
-        (op st))
-      (doseq [op (map st-add-op (map (fn [x]
-                                       (let [st-fn (array-attr-test-block (.getInstanceOf group "array_attr_test_block")
-                                                                          (-> test-case :test-value-map x))]
-                                         (vector "statements" (st-fn comp-key x))))
-                                     (filter #(not (atom-attribute? comp-key %)) attr-list)))]
-        (op st)))
-    (.render st)))
+      (render-st st (concat (map #(vector "statements" %) (:atom-attribute-test-statments test-case))
+                            (map (fn [x]
+                                   (let [st-fn (array-attr-test-block (.getInstanceOf group "array_attr_test_block")
+                                                                      (-> test-case :test-value-map x))]
+                                     (vector "statements" (st-fn comp-key x))))
+                                 (filter #(not (atom-attribute? comp-key %)) attr-list)))))))
 
 (defn- define-sub-cursors [group]
   (fn [comp-key]
@@ -564,27 +515,23 @@
   (fn [comp-key]
     (let [attr-test-group-fn (attr-test-group (.getInstanceOf group "attr_test_group") group)
           test-case (comp-key *component-factory-test-case-table*)]
-      (doseq [op (map st-add-op (list* ["comp_name" (cpp-component-name comp-key)]
-                                       ["factory_name" (cpp-component-factory-name comp-key)]
-                                       ["raw_name" (name comp-key)]
-                                       ["mock_cursor_block" ((mock-cursor-block group) comp-key)] 
-                                       ["attr_test_group" (attr-test-group-fn comp-key)]
-                                       (map #(vector "xml_string" %) (string/split-lines (:xml-element-str test-case)))
-                                       ))]
-        (op st))
-      (.render st))))
+      (render-st st (list* ["comp_name" (cpp-component-name comp-key)]
+                           ["factory_name" (cpp-component-factory-name comp-key)]
+                           ["raw_name" (name comp-key)]
+                           ["mock_cursor_block" ((mock-cursor-block group) comp-key)] 
+                           ["attr_test_group" (attr-test-group-fn comp-key)]
+                           (map #(vector "xml_string" %) (string/split-lines (:xml-element-str test-case)))
+                           )))))
 
 (defn- component-factory-test-file [st group]
   (fn [comp-key-list]
-    (doseq [op (map st-add-op (list* ["manifest" *manifest*]
-                                     ["filename" (cpp-component-factory-test-filename)]
-                                     ["date" (get-date)]
-                                     (concat (map #(vector "comp_headers" (cpp-component-header-filename %))
-                                                  comp-key-list)
-                                             (map #(vector "comp_tests" ((comp-test (.getInstanceOf group "comp_test") group) %))
-                                                  comp-key-list))))]
-      (op st))
-    (.render st)))
+    (render-st st (list* ["manifest" *manifest*]
+                         ["filename" (cpp-component-factory-test-filename)]
+                         ["date" (get-date)]
+                         (concat (map #(vector "comp_headers" (cpp-component-header-filename %))
+                                      comp-key-list)
+                                 (map #(vector "comp_tests" ((comp-test (.getInstanceOf group "comp_test") group) %))
+                                      comp-key-list))))))
 
 (defn gen-component-factory-test [comp-key-list]
   "生成cpp Component Factory的单元测试代码"
@@ -597,69 +544,58 @@
 
 (defn- game-object-decl [st]
   (fn [go-key]
-    (doseq [op (map st-add-op (list ["factory_name" (cpp-game-object-factory-name go-key)]
-                                    ["game_object_interface" "IGameObject"]))]
-      (op st))
-    (.render st)))
+    (render-st st (list ["factory_name" (cpp-game-object-factory-name go-key)]
+                        ["game_object_interface" "IGameObject"]))))
 
 (defn- game-object-factory-header [st group]
   (fn [go-list]
-    (doseq [op (map st-add-op (list* ["file_name" *game-object-factory-header-name*]
-                                     ["guard" "_GAME_OBJECT_FACTORY_H_"]
-                                     ["manifest" *manifest*]
-                                     ["date" (get-date)]
-                                     (map (fn [x]
-                                            (let [decl-fn (game-object-decl
-                                                           (.getInstanceOf group "game_object_factory_decl"))]
-                                              (vector "factory_decls" (decl-fn x))))
-                                          go-list)))]
-      (op st))
-    (.render st)))
+    (render-st st (list* ["file_name" *game-object-factory-header-name*]
+                         ["guard" "_GAME_OBJECT_FACTORY_H_"]
+                         ["manifest" *manifest*]
+                         ["date" (get-date)]
+                         (map (fn [x]
+                                (let [decl-fn (game-object-decl
+                                               (.getInstanceOf group "game_object_factory_decl"))]
+                                  (vector "factory_decls" (decl-fn x))))
+                              go-list)))))
 
 (defn- game-object-create-component [st factory-name]
   (fn [comp-key]
-    (doseq [op (map st-add-op (list ["factory_name" factory-name]
-                                    ["comp_interface" "IComponent"]
-                                    ["comp_name" (cpp-component-name comp-key)]
-                                    ["comp_factory_name" (cpp-component-factory-name comp-key)]))]
-      (op st))
-    (.render st)))
+    (render-st st (list ["factory_name" factory-name]
+                        ["comp_interface" "IComponent"]
+                        ["comp_name" (cpp-component-name comp-key)]
+                        ["comp_factory_name" (cpp-component-factory-name comp-key)]))))
 
 (defn- game-object-create-component-from-json [st factory-name]
   (fn [comp-key]
-    (doseq [op (map st-add-op (list ["factory_name" factory-name]
-                                    ["comp_interface" "IComponent"]
-                                    ["comp_name" (cpp-component-name comp-key)]
-                                    ["comp_factory_name" (cpp-component-factory-name comp-key)]))]
-      (op st))
-    (.render st)))
+    (render-st st (list ["factory_name" factory-name]
+                        ["comp_interface" "IComponent"]
+                        ["comp_name" (cpp-component-name comp-key)]
+                        ["comp_factory_name" (cpp-component-factory-name comp-key)]))))
 
 (defn- game-object-factory-define [st group]
   (fn [obj-key]
     (let [comp-list (keys (make-concrete-template obj-key))]
-      (doseq [op (map st-add-op (list* ["factory_name" (cpp-game-object-factory-name obj-key)]
-                                       ["obj_interface" "IGameObject"]
-                                       (mapcat (fn [x]
-                                                 (list ["create_components" ((game-object-create-component (.getInstanceOf group "create_component")
-                                                                                                           (cpp-game-object-factory-name obj-key)) x)]
-                                                       ["create_components_from_json" ((game-object-create-component-from-json (.getInstanceOf group "create_component_from_json")
-                                                                                                                               (cpp-game-object-factory-name obj-key)) x)]))
-                                               comp-list)))]
-        (op st)))
-    (.render st)))
+      (render-st st (list* ["factory_name" (cpp-game-object-factory-name obj-key)]
+                           ["obj_interface" "IGameObject"]
+                           (mapcat (fn [x]
+                                     (list ["create_components" ((game-object-create-component (.getInstanceOf group "create_component")
+                                                                                               (cpp-game-object-factory-name obj-key)) x)]
+                                           ["create_components_from_json" ((game-object-create-component-from-json (.getInstanceOf group "create_component_from_json")
+                                                                                                                   (cpp-game-object-factory-name obj-key)) x)]))
+                                   comp-list)))
+      )))
 
 (defn- game-object-factory-cpp [st group]
   (fn [go-list]
-    (doseq [op (map st-add-op (list* ["file_name" *game-object-factory-cpp-name*]
-                                     ["manifest" *manifest*]
-                                     ["date" (get-date)]
-                                     ["header" *game-object-factory-header-name*]
-                                     (map (fn [x]
-                                            (vector "factory_defines"
-                                                    ((game-object-factory-define (.getInstanceOf group "game_object_factory_define") group) x)))
-                                          go-list)))]
-      (op st))
-    (.render st)))
+    (render-st st (list* ["file_name" *game-object-factory-cpp-name*]
+                         ["manifest" *manifest*]
+                         ["date" (get-date)]
+                         ["header" *game-object-factory-header-name*]
+                         (map (fn [x]
+                                (vector "factory_defines"
+                                        ((game-object-factory-define (.getInstanceOf group "game_object_factory_define") group) x)))
+                              go-list)))))
 
 (defn gen-game-object-factory [go-list]
   "生成一个Cpp GameObject类Factory"
@@ -668,8 +604,6 @@
         header-st (game-object-factory-header (.getInstanceOf group "game_object_factory_header") group)]
     (spit (in-dir *cpp-src-dir* *game-object-factory-cpp-name*) (cpp-st go-list))
     (spit (in-dir *cpp-include-dir* *game-object-factory-header-name*) (header-st go-list))))
-
-'(gen-game-object-factory '(:monster :seed :fruit))
 
 (defn- attribute->json [group]
   (fn [comp-key attr-key]
@@ -681,19 +615,15 @@
                            [(.getInstanceOf group "array_attribute_to_json")
                             (list ["raw_name" (:raw-name info)]
                                   ["attr_name" (:member-name info)])])]
-        (doseq [op (map st-add-op op-list)]
-          (op st))
-        (.render st)))))
+        (render-st st op-list)))))
 
 (defn- comp-to-json [st group]
   (fn [comp-key]
     (let [attr-list (component-attribute-keys comp-key)]
-      (doseq [op (map st-add-op (list* ["class_name" (cpp-component-gen-name comp-key)]
-                                       (map (fn [x]
-                                              (vector "attribute_to_jsons" ((attribute->json group) comp-key x)))
-                                            attr-list)))]
-        (op st))
-      (.render st))))
+      (render-st st (list* ["class_name" (cpp-component-gen-name comp-key)]
+                           (map (fn [x]
+                                  (vector "attribute_to_jsons" ((attribute->json group) comp-key x)))
+                                attr-list))))))
 
 (defn- json->attribute [group]
   (fn [comp-key attr-key]
@@ -709,60 +639,48 @@
                                   ["vec_type" (:define-type info)]
                                   ["attr_name" (:member-name info)]
                                   ["converter" ((:raw-type info) *json-converter-table*)])])]
-        (doseq [op (map st-add-op op-list)]
-          (op st))
-        (.render st)))))
+        (render-st st op-list)))))
 
 (defn- comp-from-json [st group]
   (fn [comp-key]
     (let [attr-list (component-attribute-keys comp-key)]
-      (doseq [op (map st-add-op (list* ["class_name" (cpp-component-gen-name comp-key)]
-                                       (map (fn [x]
-                                              (vector "attribute_from_jsons" ((json->attribute group) comp-key x)))
-                                            attr-list)))]
-        (op st))
-      (.render st))))
+      (render-st st (list* ["class_name" (cpp-component-gen-name comp-key)]
+                           (map (fn [x]
+                                  (vector "attribute_from_jsons" ((json->attribute group) comp-key x)))
+                                attr-list))))))
 
 (defn- json-function-define [st group]
   (fn [comp-key]
-    (doseq [op (map st-add-op (list ["to_json" ((comp-to-json (.getInstanceOf group "to_json") group) comp-key)]
-                                    ["from_json" ((comp-from-json (.getInstanceOf group "from_json") group) comp-key)]))]
-      (op st))
-    (.render st)))
+    (render-st st (list ["to_json" ((comp-to-json (.getInstanceOf group "to_json") group) comp-key)]
+                        ["from_json" ((comp-from-json (.getInstanceOf group "from_json") group) comp-key)]))))
 
 (defn- component-define-cpp [st group]
   (fn [comp-list]
-    (doseq [op (map st-add-op (list* ["filename" *component-define-cpp*]
-                                     ["date" (get-date)]
-                                     ["manifest" *manifest*]
-                                     ["sid_initialize" ((component-sid-initialize (.getInstanceOf group "component_sid_initialize")) comp-list)]
-                                     ["raw_name_initialize" ((component-raw-name-initialize (.getInstanceOf group "component_raw_name_initialize")) comp-list)]
-                                     (mapcat (fn [x]
-                                               (list ["component_headers" (cpp-component-gen-header-filename x)]
-                                                     ["component_defines" ((json-function-define (.getInstanceOf group "json_function_define") group) x)]))
-                                             comp-list)))]
-      (op st))
-    (.render st)))
+    (render-st st (list* ["filename" *component-define-cpp*]
+                         ["date" (get-date)]
+                         ["manifest" *manifest*]
+                         ["sid_initialize" ((component-sid-initialize (.getInstanceOf group "component_sid_initialize")) comp-list)]
+                         ["raw_name_initialize" ((component-raw-name-initialize (.getInstanceOf group "component_raw_name_initialize")) comp-list)]
+                         (mapcat (fn [x]
+                                   (list ["component_headers" (cpp-component-gen-header-filename x)]
+                                         ["component_defines" ((json-function-define (.getInstanceOf group "json_function_define") group) x)]))
+                                 comp-list)))))
 
 (defn gen-component-define-cpp [comp-key-list]
   (let [group (STGroupFile. *cpp-component-stg*)
         component-cpp-st (.getInstanceOf group "component_cpp")]
     (spit (in-dir *cpp-src-dir* *component-define-cpp*) ((component-define-cpp component-cpp-st group) comp-key-list))))
 
-'(gen-component-define-cpp '(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base))
-
 (defn- db-load-component-signature [st]
   (fn [comp-key]
     (let [attr-list (filter (fn [x]
                               (not (atom-attribute? comp-key x)))
                             (component-attribute-keys comp-key))]
-      (doseq [op (map st-add-op (list* ["comp_name" (cpp-component-name comp-key)]
-                                       ["sqls" "root"]
-                                       (map (fn [x]
-                                              (vector "sqls" (:variable-name (make-cpp-attribute comp-key x))))
-                                            attr-list)))]
-        (op st))
-      (.render st 80))))
+      (render-st st (list* ["comp_name" (cpp-component-name comp-key)]
+                           ["sqls" "root"]
+                           (map (fn [x]
+                                  (vector "sqls" (:variable-name (make-cpp-attribute comp-key x))))
+                                attr-list)) 80))))
 
 (defn- db-load-all-signature [st]
   (fn [obj-key]
@@ -771,19 +689,15 @@
                                   (map (fn [y]
                                          (:variable-name (make-cpp-attribute x y)))
                                        (filter-component-attributes (comp not (partial atom-attribute? x)) x))) comp-list)]
-      (doseq [op (map st-add-op (list* ["sqls" "root"]
-                                       (map #(vector "sqls" %) all-attr-list)))]
-        (op st))
-      (.render st 80))))
+      (render-st st (list* ["sqls" "root"]
+                           (map #(vector "sqls" %) all-attr-list)) 80))))
 
 (defn- db-load-game-object-component [st]
   (fn [comp-key]
-    (doseq [op (map st-add-op (list ["factory_name" (cpp-component-factory-name comp-key)]
-                                    ["jv" "jv"]
-                                    ["rs" "rs"]
-                                    ["comp_name" (name comp-key)]))]
-      (op st))
-    (.render st)))
+    (render-st st (list ["factory_name" (cpp-component-factory-name comp-key)]
+                        ["jv" "jv"]
+                        ["rs" "rs"]
+                        ["comp_name" (name comp-key)]))))
 
 (defn- db-init-game-object-sql-command [st]
   (fn [obj-key]
@@ -792,11 +706,9 @@
                                           (map (fn [y]
                                                  [y (:variable-name (make-cpp-attribute x y))])
                                                (filter-component-attributes (comp not (partial atom-attribute? x)) x))) comp-list))]
-      (doseq [op (map st-add-op (mapcat (fn [[attr sql]]
-                                          (list ["attrs" (name attr)]
-                                                ["sqls" sql])) all-attr-map))]
-        (op st))
-      (.render st))))
+      (render-st st (mapcat (fn [[attr sql]]
+                              (list ["attrs" (name attr)]
+                                    ["sqls" sql])) all-attr-map)))))
 
 (defn- db-load-all-arg-list [st]
   (fn [obj-key]
@@ -805,68 +717,56 @@
                                   (map (fn [y]
                                          (:variable-name (make-cpp-attribute x y)))
                                        (filter-component-attributes (comp not (partial atom-attribute? x)) x))) comp-list)]
-      (doseq [op (map st-add-op (list* ["sqls" "root"]
-                                       (map #(vector "sqls" %) all-attr-list)))]
-        (op st))
-      (.render st 80))))
+      (render-st st (list* ["sqls" "root"]
+                           (map #(vector "sqls" %) all-attr-list)) 80))))
 
 (defn- db-load-all-define [st group]
   (fn [obj-key]
     (let [comp-list (keys (make-concrete-template obj-key))
           init-sql-command-fn (db-init-game-object-sql-command (.getInstanceOf group "init_game_object_sql_command"))
           db-load-all-arg-list-fn (db-load-all-arg-list (.getInstanceOf group "arg_list"))]
-      (doseq [op (map st-add-op (list* ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
-                                       ["go_name" (name obj-key)]
-                                       ["arg_list" (db-load-all-arg-list-fn obj-key)]
-                                       ["init_sql_command" (init-sql-command-fn obj-key)]
-                                       ["rs" "rs"]
-                                       (map (fn [x]
-                                              (let [f (db-load-game-object-component
-                                                       (.getInstanceOf group "load_game_object_component"))]
-                                                ["load_game_object_components" (f x)])) comp-list)))]
-        (op st))
-      (.render st))))
+      (render-st st (list* ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
+                           ["go_name" (name obj-key)]
+                           ["arg_list" (db-load-all-arg-list-fn obj-key)]
+                           ["init_sql_command" (init-sql-command-fn obj-key)]
+                           ["rs" "rs"]
+                           (map (fn [x]
+                                  (let [f (db-load-game-object-component
+                                           (.getInstanceOf group "load_game_object_component"))]
+                                    ["load_game_object_components" (f x)])) comp-list))))))
 
 (defn- db-sql-cmd-class-define [st group]
   (fn [obj-key]
-    (doseq [op (map st-add-op (list ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
-                                    ["load_all_define" ((db-load-all-define
-                                                          (.getInstanceOf group "load_all_define") group) obj-key)]))]
-      (op st))
-    (.render st)))
+    (render-st st (list ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
+                        ["load_all_define" ((db-load-all-define
+                                             (.getInstanceOf group "load_all_define") group) obj-key)]))))
 
 (defn- game-object-db-define [st group]
   (fn [go-list]
-    (doseq [op (map st-add-op (list* ["file_name" *game-object-db-define-cpp*]
-                                     ["manifest" *manifest*]
-                                     ["date" (get-date)]
-                                     ["game_object_db_header" *game-object-db-header*]
-                                     (map (fn [x]
-                                            ["sql_cmd_class_defines" ((db-sql-cmd-class-define
-                                                                       (.getInstanceOf group "sql_cmd_class_define") group) x)]) go-list)))]
-      (op st))
-    (.render st)))
+    (render-st st (list* ["file_name" *game-object-db-define-cpp*]
+                         ["manifest" *manifest*]
+                         ["date" (get-date)]
+                         ["game_object_db_header" *game-object-db-header*]
+                         (map (fn [x]
+                                ["sql_cmd_class_defines" ((db-sql-cmd-class-define
+                                                           (.getInstanceOf group "sql_cmd_class_define") group) x)]) go-list)))))
 
 (defn- db-sql-cmd-class [st group]
   (fn [obj-key]
-    (doseq [op (map st-add-op (list ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
-                                    ["load_all_signature" ((db-load-all-signature
-                                                            (.getInstanceOf group "load_all_signature")) obj-key)]))]
-      (op st))
-    (.render st)))
+    (render-st st (list ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
+                        ["load_all_signature" ((db-load-all-signature
+                                                (.getInstanceOf group "load_all_signature")) obj-key)]))))
 
 (defn- game-object-db-header [st group]
   (fn [go-list]
-    (doseq [op (map st-add-op (list* ["file_name" *game-object-db-header*]
-                                     ["guard" "_GAME_OBJECT_DB_H_"]
-                                     ["manifest" *manifest*]
-                                     ["date" (get-date)]
-                                     (map (fn [x]
-                                            ["sql_cmd_classes" ((db-sql-cmd-class
-                                                                 (.getInstanceOf group "sql_cmd_class") group) x)])
-                                          go-list)))]
-      (op st))
-    (.render st)))
+    (render-st st (list* ["file_name" *game-object-db-header*]
+                         ["guard" "_GAME_OBJECT_DB_H_"]
+                         ["manifest" *manifest*]
+                         ["date" (get-date)]
+                         (map (fn [x]
+                                ["sql_cmd_classes" ((db-sql-cmd-class
+                                                     (.getInstanceOf group "sql_cmd_class") group) x)])
+                              go-list)))))
 
 (defn gen-game-object-db [go-list]
   (let [group (STGroupFile. *cpp-game-object-db-stg*)
