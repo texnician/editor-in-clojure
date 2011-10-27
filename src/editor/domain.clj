@@ -60,7 +60,10 @@
 
 (defn register-in-domain [name key val]
   (if-let [domain (get-domain name)]
-    (swap! *global-domain* #(assoc % name (assoc domain key val)))))
+    (do
+      (swap! *global-domain* #(assoc % name (assoc domain key val)))
+      'ok)
+    'register-in-domain-error))
 
 (defn reset-domain [name]
   (swap! *global-domain* #(assoc % name {})))
