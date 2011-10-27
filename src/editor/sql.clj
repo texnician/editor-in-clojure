@@ -1,5 +1,5 @@
 (ns editor.sql
-  (:use (editor name-util core types component sid template domain error enum))
+  (:use (editor core domain error enum name-util sid types component template))
   (:require [clojure.string :as string]))
 
 (def *mysql-keyword-talbe*
@@ -96,7 +96,7 @@
 
 (defn- translate-newline [token]
   (if (string? token)
-    (string/replace token "\n" " ")
+    (string/replace token "\n" "@ ")
     token))
 
 (declare *mysql-keyword-talbe*)
@@ -181,9 +181,20 @@
       ((sql-placeholder->fmt-string lang) arg-table token)
       token)))
 
+(defmulti full-sql-fmt-string-line-break (fn [lang s]
+                                           lang))
+
+(defmethod full-sql-fmt-string-line-break :c [lang s]
+  (let [a (string/replace s #"\s\s+" " ")]
+    (let [b (string/replace a #"\s," ",")]
+      (let [c (string/replace b #"@\s*" "@")]
+        c))))
+
+(defmethod full-sql-fmt-string-line-break :clojure [lang s]
+  (string/replace (string/replace (string/replace s #"\s\s+" " ") #"\s," ",") #"@\s*" " "))
+
 (defn- make-full-sql-fmt-string [lang arg-table sql-template]
-  (string/replace (string/replace (string/join \space (map (translate-fmt-string lang arg-table) sql-template))
-                                  #"\s\s+" " ") #"\s," ","))
+  (full-sql-fmt-string-line-break lang (string/join \space (map (translate-fmt-string lang arg-table) sql-template))))
 
 (defmulti target-arg-list-maker (fn [lang arg-table]
                                   lang))
@@ -250,23 +261,24 @@
 (defn sql-func-arg-decl [[t sym]]
   (format "%s %s" (*c-sql-func-arg-decl-table* t) (-> sym name (clojure-token->cpp-variable-token))))
 
-(defn- get-attribute-clojure-value [comp-key attr-key]
+(defn- get-attribute-sql-value [comp-key attr-key]
   (let [attr-type (get-attribute-type comp-key attr-key)
         value-str (get-attribute-default-value comp-key attr-key)]
-    (cond (= attr-type :string) value-str
+    (cond (and (= attr-type :string) (atom-attribute? comp-key attr-key)) value-str
           (= attr-type :enum) (enum-int-value (get-attribute-in-domain comp-key attr-key) (keyword value-str))
+          (= attr-type :bool) (if (read-string value-str) 1 0)
           :else (read-string value-str))))
 
 (defn go [go-key & attr-map]
   (let [attr-list (get-template-attribute-list go-key)]
     (merge (into {} (map (fn [x]
                     (let [comp (find-attribute-component x (keys (make-concrete-template go-key)))]
-                      [x (get-attribute-clojure-value comp x)])) attr-list))
+                      [x (get-attribute-sql-value comp x)])) attr-list))
            (first attr-map))))
 
 (defn co [co-key & attr-map]
   (let [attr-list (component-attribute-keys co-key)]
     (merge (into {} (map (fn [x]
-                           [x (get-attribute-clojure-value co-key x)])
+                           [x (get-attribute-sql-value co-key x)])
                          attr-list))
            (first attr-map))))
