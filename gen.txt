@@ -1,0 +1,4 @@
+(use '(editor sql game-sql main))
+(generate-cpp)
+(editor.main/generate-cpp)
+(create-role (go :player {:id 10 :name "xxx"}) "test_table" (go :monster))
