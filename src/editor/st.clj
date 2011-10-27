@@ -54,12 +54,14 @@
   (fn [st]
     (.render st l)))
 
-(defn- render-st [st seq & opt]
-  (doseq [op (map st-add-op seq)]
-    (op st))
-  (if opt
-    (.render st (first opt))
-    (.render st)))
+(defn- render-st [st & args]
+  (let [opt (if (-> args first number?) (first args) nil)
+        seq (if opt (next args) args)]
+    (doseq [op (map st-add-op (flatten-op-list seq))]
+      (op st))
+    (if opt
+      (.render st opt)
+      (.render st))))
 
 (defn- inspect-st [st seq & opt]
   (doseq [op (map st-add-op seq)]
@@ -69,7 +71,7 @@
     (.inspect st)))
 
 (defn- op-pair? [p]
-  (and (vector? p) (= (count p) 2) (string? (first p)) (string? (second p))))
+  (and (vector? p) (= (count p) 2) (string? (first p))))
 
 (defn- flatten-op-list [op-list]
   (if (empty? op-list)
@@ -89,33 +91,35 @@
 
 (defn- component-class-file [st component-class]
   (fn [comp-key]
-    (render-st st (list ["filename", (cpp-component-gen-header-filename comp-key)]
-                        ["date" (get-date)]
-                        ["manifest" *manifest*]
-                        ["name" (cpp-component-gen-header-define comp-key)]
-                        ["body" (component-class comp-key)]))))
+    (render-st st
+               ["filename", (cpp-component-gen-header-filename comp-key)]
+               ["date" (get-date)]
+               ["manifest" *manifest*]
+               ["name" (cpp-component-gen-header-define comp-key)]
+               ["body" (component-class comp-key)])))
 
 (defn- component-class [st component-bases initialize-list initialize-members attributes getters-and-setters]
   (fn [comp-key]
-    (render-st st (list ["name" (cpp-component-gen-name comp-key)]
-                        ["comp_name" (cpp-component-name comp-key)]
-                        ["bases" (component-bases comp-key)]
-                        ["initialize_list" (initialize-list comp-key)]
-                        ["initialize_members" (initialize-members comp-key)]
-                        ["sid" (format "%#x" (gen-sid (cpp-component-name comp-key)))]
-                        ["attributes" (attributes comp-key)]
-                        ["getters_and_setters" (getters-and-setters comp-key)]))))
+    (render-st st
+               ["name" (cpp-component-gen-name comp-key)]
+               ["comp_name" (cpp-component-name comp-key)]
+               ["bases" (component-bases comp-key)]
+               ["initialize_list" (initialize-list comp-key)]
+               ["initialize_members" (initialize-members comp-key)]
+               ["sid" (format "%#x" (gen-sid (cpp-component-name comp-key)))]
+               ["attributes" (attributes comp-key)]
+               ["getters_and_setters" (getters-and-setters comp-key)])))
 
 (defn- component-bases [st]
   (fn [comp-key]
-    (render-st st '(["base_list" "IComponent"]))))
+    (render-st st ["base_list" "IComponent"])))
 
 (defn- initialize-list [st attr-builder]
   (fn [comp-key]
-    (render-st st (mapcat (comp  #(list ["attrs" (:member-name %)] ["values" (:default-value %)])
+    (render-st st 80 (map (comp  #(list ["attrs" (:member-name %)] ["values" (:default-value %)])
                                  (partial attr-builder comp-key))
                           (filter (fn [x]
-                                    (atom-attribute? comp-key x)) (component-attribute-keys comp-key))) 80)))
+                                    (atom-attribute? comp-key x)) (component-attribute-keys comp-key))))))
 
 (defn- initialize-member-block [attr-builder]
   (fn [comp-key attr-key]
@@ -123,13 +127,13 @@
     (let [attr (attr-builder comp-key attr-key)
           array-values (:default-array-value attr)]
       (let [st (inst-st "initialize_vector_block")]
-        (render-st st (mapcat (fn [x]
-                                (list ["push_backs" (format "this->%s.push_back(%s);"
-                                                            (:member-name attr)
-                                                            x)]
-                                      ["emplace_backs" (format "this->%s.emplace_back(%s);"
-                                                               (:member-name attr) x)]))
-                              array-values))))))
+        (render-st st (map (fn [x]
+                             (list ["push_backs" (format "this->%s.push_back(%s);"
+                                                         (:member-name attr)
+                                                         x)]
+                                   ["emplace_backs" (format "this->%s.emplace_back(%s);"
+                                                            (:member-name attr) x)]))
+                           array-values))))))
 
 (defn- initialize-members [st attr-builder]
   (fn [comp-key]
@@ -148,22 +152,22 @@
 
 (defn- attributes [st attr-builder]
   (fn [comp-key]
-    (render-st st (mapcat (comp #(list ["types" (:define-type %)]
-                                       ["names" (:member-name %)]
-                                       ["docs" ((doc-lines (inst-st "doc_lines")) %)])
-                                (partial attr-builder comp-key))
-                          (component-attribute-keys comp-key)))))
+    (render-st st (map (comp #(list ["types" (:define-type %)]
+                                    ["names" (:member-name %)]
+                                    ["docs" ((doc-lines (inst-st "doc_lines")) %)])
+                             (partial attr-builder comp-key))
+                       (component-attribute-keys comp-key)))))
 
 (defn- getters-and-setters [st attr-builder]
   (fn [comp-key]
-    (render-st st (mapcat (comp #(list ["types" (:getter-return-type %)]
-                                       ["getters" (:getter-name %)]
-                                       ["setters" (:setter-name %)]
-                                       ["setter_arg_types" (:setter-argument-type %)]
-                                       ["m_names" (:member-name %)]
-                                       ["arg_names" (:setter-argument-name %)])
-                                (partial attr-builder comp-key))
-                          (component-attribute-keys comp-key)))))
+    (render-st st (map (comp #(list ["types" (:getter-return-type %)]
+                                    ["getters" (:getter-name %)]
+                                    ["setters" (:setter-name %)]
+                                    ["setter_arg_types" (:setter-argument-type %)]
+                                    ["m_names" (:member-name %)]
+                                    ["arg_names" (:setter-argument-name %)])
+                             (partial attr-builder comp-key))
+                       (component-attribute-keys comp-key)))))
 
 (defn gen-component [comp-key]
   "生成一个Cpp Component类头文件"
@@ -190,20 +194,20 @@
     (let [name-lens (map #(-> % cpp-component-gen-name count) comp-key-list)
           max-len (apply max name-lens)
           padding-map (zipmap comp-key-list (map (comp #(apply str %) #(repeat % \space) (partial - max-len)) name-lens))]
-      (render-st st (mapcat (fn [x]
-                              (list ["comps" (cpp-component-gen-name x)]
-                                    ["paddings" (padding-map x)]
-                                    ["sids" (format "%#x" (gen-sid (cpp-component-name x)))])) comp-key-list)))))
+      (render-st st (map (fn [x]
+                           (list ["comps" (cpp-component-gen-name x)]
+                                 ["paddings" (padding-map x)]
+                                 ["sids" (format "%#x" (gen-sid (cpp-component-name x)))])) comp-key-list)))))
 
 (defn- component-raw-name-initialize [st]
   (fn [comp-key-list]
     (let [name-lens (map #(-> % cpp-component-gen-name count) comp-key-list)
           max-len (apply max name-lens)
           padding-map (zipmap comp-key-list (map (comp #(apply str %) #(repeat % \space) (partial - max-len)) name-lens))]
-      (render-st st (mapcat (fn [x]
-                              (list ["comps" (cpp-component-gen-name x)]
-                                    ["paddings" (padding-map x)]
-                                    ["raw_names" (name x)])) comp-key-list)))))
+      (render-st st (map (fn [x]
+                           (list ["comps" (cpp-component-gen-name x)]
+                                 ["paddings" (padding-map x)]
+                                 ["raw_names" (name x)])) comp-key-list)))))
 
 (defn- attribute-set-block-selector [attr]
   (let [raw-type (:raw-type attr)
@@ -314,9 +318,9 @@
                                              ["setter" (:setter-name attr-info)]
                                              ["type" (name raw-type)])])]
         (render-st (inst-st "atom_attribute_from_record_set")
-                   (list ["comp_name" (name comp-key)]
-                         ["attr_name" (:raw-name attr-info)]
-                         ["set_block" (render-st st op-list)]))))))
+                   ["comp_name" (name comp-key)]
+                   ["attr_name" (:raw-name attr-info)]
+                   ["set_block" (render-st st op-list)])))))
 
 (defn- array-attr-json-from-record-set-selector [comp-key]
   (fn [attr-info]
@@ -344,9 +348,9 @@
                                              ["setter" (:setter-name attr-info)]
                                              ["type" (name raw-type)])])]
         (render-st (inst-st "array_attribute_from_record_set")
-                   (list ["comp_name" (name comp-key)]
-                         ["attr_name" (:raw-name attr-info)]
-                         ["set_block" (render-st st op-list)]))))))
+                   ["comp_name" (name comp-key)]
+                   ["attr_name" (:raw-name attr-info)]
+                   ["set_block" (render-st st op-list)])))))
 
 (defn- attr-json-from-record-set [comp-key]
   (fn [attr-key]
@@ -364,55 +368,59 @@
 
 (defn- factory-find-component-node [st]
   (fn [comp-key]
-    (render-st st (list ["go_tag" (name *go-component-tag*)]
-                        ["raw_name" (name comp-key)]
-                        ["class_name" (cpp-component-name comp-key)]))))
+    (render-st st
+               ["go_tag" (name *go-component-tag*)]
+               ["raw_name" (name comp-key)]
+               ["class_name" (cpp-component-name comp-key)])))
 
 (defn- component-factory-define [st find-component-node build-attributes json-from-record-set]
   (fn [comp-key]
-    (render-st st (list* ["class_name" (cpp-component-name comp-key)]
-                         ["factory_name" (cpp-component-factory-name comp-key)]
-                         ["raw_name" (name comp-key)]
-                         ["find_component_node" (find-component-node comp-key)]
-                         (concat (map #(vector "build_attributes" %)
-                                      (build-attributes comp-key))
-                                 (json-from-record-set comp-key))))))
+    (render-st st
+               ["class_name" (cpp-component-name comp-key)]
+               ["factory_name" (cpp-component-factory-name comp-key)]
+               ["raw_name" (name comp-key)]
+               ["find_component_node" (find-component-node comp-key)]
+               (map #(vector "build_attributes" %)
+                    (build-attributes comp-key))
+               (json-from-record-set comp-key))))
 
 (defn- component-factory-cpp [st]
   (fn [comp-key-list]
-    (render-st st (list* ["file_name" *component-factory-cpp-name*]
-                         ["date", (get-date)]
-                         (mapcat (fn [x]
-                                   (let [build-attributes (factory-build-attributes
-                                                           make-cpp-attribute)
-                                         find-component-node (factory-find-component-node
-                                                              (inst-st "find_component_node"))
-                                         json-from-record-set comp-attr-json-from-record-set
-                                         define-st (component-factory-define
-                                                    (inst-st "component_factory_define") find-component-node
-                                                    build-attributes
-                                                    json-from-record-set)]
-                                     (list ["component_headers", (cpp-component-header-filename x)]
-                                           ["component_factory_defines", (define-st x)])))
-                                 comp-key-list)
-                         ))))
+    (render-st st
+               ["file_name" *component-factory-cpp-name*]
+               ["date", (get-date)]
+               (map (fn [x]
+                      (let [build-attributes (factory-build-attributes
+                                              make-cpp-attribute)
+                            find-component-node (factory-find-component-node
+                                                 (inst-st "find_component_node"))
+                            json-from-record-set comp-attr-json-from-record-set
+                            define-st (component-factory-define
+                                       (inst-st "component_factory_define") find-component-node
+                                       build-attributes
+                                       json-from-record-set)]
+                        (list ["component_headers", (cpp-component-header-filename x)]
+                              ["component_factory_defines", (define-st x)])))
+                    comp-key-list))))
 
 (defn- component-factory-decl [st]
   (fn [comp-key]
-    (render-st st (list ["factory_name" (cpp-component-factory-name comp-key)]
-                        ["interface_name" "IComponent"]))))
+    (render-st st
+               ["factory_name" (cpp-component-factory-name comp-key)]
+               ["interface_name" "IComponent"])))
 
 (defn- component-factory-header [st]
   (fn [comp-key-list]
-    (render-st st (list* ["file_name" *component-factory-header-name*]
-                         ["guard" "_COMPONENT_FACTORY_H_"]
-                         ["manifest" *manifest*]
-                         ["date" (get-date)]
-                         (map (fn [x]
-                                (let [decl-st (component-factory-decl
-                                               (inst-st "component_factory_decl"))]
-                                  ["factory_decls" (decl-st x)]))
-                              comp-key-list)))))
+    (render-st st
+               ["file_name" *component-factory-header-name*]
+               ["guard" "_COMPONENT_FACTORY_H_"]
+               ["manifest" *manifest*]
+               ["date" (get-date)]
+               (map (fn [x]
+                      (let [decl-st (component-factory-decl
+                                     (inst-st "component_factory_decl"))]
+                        ["factory_decls" (decl-st x)]))
+                    comp-key-list))))
 
 (defn gen-component-factory [comp-key-list]
   "生成一个Cpp Component类Factory"
@@ -427,29 +435,32 @@
     (let [attr-info (make-cpp-attribute comp-key attr-key)
           test-fn (:array-item-test attr-info)
           idx-seq (range (count test-values))]
-      (render-st st (list* ["array_type" (:define-type attr-info)]
-                           ["getter" (:getter-name attr-info)]
-                           (map (fn [i v]
-                                  (vector "statements" (test-fn "vec_val" i v)))
-                                idx-seq test-values))))))
+      (render-st st
+                 ["array_type" (:define-type attr-info)]
+                 ["getter" (:getter-name attr-info)]
+                 (map (fn [i v]
+                        (vector "statements" (test-fn "vec_val" i v)))
+                      idx-seq test-values)))))
 
 (defn- attr-test-group [st]
   (fn [comp-key]
     (let [attr-list (component-attribute-keys comp-key)
           test-case (comp-key *component-factory-test-case-table*)]
-      (render-st st (concat (map #(vector "statements" %) (:atom-attribute-test-statments test-case))
-                            (map (fn [x]
-                                   (let [st-fn (array-attr-test-block (inst-st "array_attr_test_block")
-                                                                      (-> test-case :test-value-map x))]
-                                     (vector "statements" (st-fn comp-key x))))
-                                 (filter #(not (atom-attribute? comp-key %)) attr-list)))))))
+      (render-st st
+                 (map #(vector "statements" %) (:atom-attribute-test-statments test-case))
+                 (map (fn [x]
+                        (let [st-fn (array-attr-test-block (inst-st "array_attr_test_block")
+                                                           (-> test-case :test-value-map x))]
+                          (vector "statements" (st-fn comp-key x))))
+                      (filter #(not (atom-attribute? comp-key %)) attr-list))))))
 
 (defn- define-sub-cursors [comp-key]
   (let [array-attr-list (filter-component-attributes (comp not (partial atom-attribute? comp-key)) comp-key)]
     (map (fn [x]
            (let [st (inst-st "define_sub_cursor")
                  attr-info (make-cpp-attribute comp-key x)]
-             ["define_sub_cursors" (render-st st (list ["var_name" (:variable-name attr-info)]))]))
+             ["define_sub_cursors"
+              (render-st st ["var_name" (:variable-name attr-info)])]))
          array-attr-list)))
 
 (defn- set-sub-cursors [comp-key]
@@ -457,81 +468,82 @@
     (map (fn [x]
            (let [st (inst-st "set_sub_cursor")
                  attr-info (make-cpp-attribute comp-key x)]
-             ["set_sub_cursors" (render-st st (list ["attr_name" (:raw-name attr-info)]
-                                                    ["var_name" (:variable-name attr-info)]))]))
+             ["set_sub_cursors"
+              (render-st st
+                         ["attr_name" (:raw-name attr-info)]
+                         ["var_name" (:variable-name attr-info)])]))
          array-attr-list)))
 
 (defn- expect-mock-cursors [comp-key]
-  (letfn [(flat [l]
-            (if (nil? l)
-              nil
-              (let [car (first l)]
-                (if (vector? car)
-                  (cons car (flat (next l)))
-                  (concat car (flat (next l)))))))]
-    (let [attr-list (component-attribute-keys comp-key)
-          test-case (comp-key *component-factory-test-case-table*)]
-      (flat (map (fn [x]
-                   (let [attr-info (make-cpp-attribute comp-key x)]
-                     (if (atom-attribute? comp-key x)
-                       (let [st (inst-st "expect_root_mock_cursor")]
-                         ["expect_mock_cursors" (render-st st (list ["cursor_name" "root"]
-                                                                    ["field_name" (:variable-name attr-info)]
-                                                                    ["value" (str \" (db-string-value (:raw-type attr-info)
-                                                                                                      comp-key x
-                                                                                                      (-> test-case :test-value-map x)) \")]))])
-                       (let [st (inst-st "expect_sub_mock_cursor")
-                             value-vec (-> test-case :test-value-map x)
-                             op-list (list* ["cursor_name" (:variable-name attr-info)]
-                                            ["field_name" "item"]
-                                            ["count" (count value-vec)]
-                                            (mapcat (fn [v]
-                                                      (list 
-                                                       ["has_records" "true"]
-                                                       ["values" (str \" (db-string-value (:raw-type attr-info)
-                                                                                          comp-key x v) \")]))
-                                                    value-vec))]
-                         ["expect_mock_cursors" (render-st st op-list)]))))
-                 attr-list)))))
+  (let [attr-list (component-attribute-keys comp-key)
+        test-case (comp-key *component-factory-test-case-table*)]
+    (map (fn [x]
+           (let [attr-info (make-cpp-attribute comp-key x)]
+             (if (atom-attribute? comp-key x)
+               (let [st (inst-st "expect_root_mock_cursor")]
+                 ["expect_mock_cursors"
+                  (render-st st
+                             ["cursor_name" "root"]
+                             ["field_name" (:variable-name attr-info)]
+                             ["value" (str \" (db-string-value (:raw-type attr-info)
+                                                               comp-key x
+                                                               (-> test-case :test-value-map x)) \")])])
+               (let [st (inst-st "expect_sub_mock_cursor")
+                     value-vec (-> test-case :test-value-map x)
+                     op-list (list ["cursor_name" (:variable-name attr-info)]
+                                   ["field_name" "item"]
+                                   ["count" (count value-vec)]
+                                   (map (fn [v]
+                                          (list 
+                                           ["has_records" "true"]
+                                           ["values" (str \" (db-string-value (:raw-type attr-info)
+                                                                              comp-key x v) \")]))
+                                        value-vec))]
+                 ["expect_mock_cursors" (render-st st op-list)]))))
+         attr-list)))
 
 (defn- final-sub-cursors [comp-key]
   (let [array-attr-list (filter-component-attributes (comp not (partial atom-attribute? comp-key)) comp-key)]
     (map (fn [x]
            (let [st (inst-st "expect_call_get_record")
                  attr-info (make-cpp-attribute comp-key x)]
-             ["final_sub_cursors" (render-st st (list ["cursor_name" (:variable-name attr-info)]
-                                                      ["value" "false"]))]))
+             ["final_sub_cursors"
+              (render-st st
+                         ["cursor_name" (:variable-name attr-info)]
+                         ["value" "false"])]))
          array-attr-list)))
 
 (defn- mock-cursor-block [comp-key]
   (let [st (inst-st "mock_cursors")
         attr-list (component-attribute-keys comp-key)]
-    (render-st st (concat (define-sub-cursors comp-key)
-                          (set-sub-cursors comp-key) 
-                          (expect-mock-cursors comp-key)
-                          (final-sub-cursors comp-key)))))
+    (render-st st
+               (define-sub-cursors comp-key)
+               (set-sub-cursors comp-key) 
+               (expect-mock-cursors comp-key)
+               (final-sub-cursors comp-key))))
 
 (defn- comp-test [st]
   (fn [comp-key]
     (let [attr-test-group-fn (attr-test-group (inst-st "attr_test_group"))
           test-case (comp-key *component-factory-test-case-table*)]
-      (render-st st (list* ["comp_name" (cpp-component-name comp-key)]
-                           ["factory_name" (cpp-component-factory-name comp-key)]
-                           ["raw_name" (name comp-key)]
-                           ["mock_cursor_block" (mock-cursor-block comp-key)] 
-                           ["attr_test_group" (attr-test-group-fn comp-key)]
-                           (map #(vector "xml_string" %) (string/split-lines (:xml-element-str test-case)))
-                           )))))
+      (render-st st
+                 ["comp_name" (cpp-component-name comp-key)]
+                 ["factory_name" (cpp-component-factory-name comp-key)]
+                 ["raw_name" (name comp-key)]
+                 ["mock_cursor_block" (mock-cursor-block comp-key)] 
+                 ["attr_test_group" (attr-test-group-fn comp-key)]
+                 (map #(vector "xml_string" %) (string/split-lines (:xml-element-str test-case)))))))
 
 (defn- component-factory-test-file [st]
   (fn [comp-key-list]
-    (render-st st (list* ["manifest" *manifest*]
-                         ["filename" (cpp-component-factory-test-filename)]
-                         ["date" (get-date)]
-                         (concat (map #(vector "comp_headers" (cpp-component-header-filename %))
-                                      comp-key-list)
-                                 (map #(vector "comp_tests" ((comp-test (inst-st "comp_test")) %))
-                                      comp-key-list))))))
+    (render-st st
+               ["manifest" *manifest*]
+               ["filename" (cpp-component-factory-test-filename)]
+               ["date" (get-date)]
+               (map #(vector "comp_headers" (cpp-component-header-filename %))
+                    comp-key-list)
+               (map #(vector "comp_tests" ((comp-test (inst-st "comp_test")) %))
+                    comp-key-list))))
 
 (defn gen-component-factory-test [comp-key-list]
   "生成cpp Component Factory的单元测试代码"
@@ -541,58 +553,58 @@
 
 (defn- game-object-decl [st]
   (fn [go-key]
-    (render-st st (list ["factory_name" (cpp-game-object-factory-name go-key)]
-                        ["game_object_interface" "IGameObject"]))))
+    (render-st st
+               ["factory_name" (cpp-game-object-factory-name go-key)]
+               ["game_object_interface" "IGameObject"])))
 
 (defn- game-object-factory-header [st]
   (fn [go-list]
-    (render-st st (list* ["file_name" *game-object-factory-header-name*]
-                         ["guard" "_GAME_OBJECT_FACTORY_H_"]
-                         ["manifest" *manifest*]
-                         ["date" (get-date)]
-                         (map (fn [x]
-                                (let [decl-fn (game-object-decl
-                                               (inst-st "game_object_factory_decl"))]
-                                  (vector "factory_decls" (decl-fn x))))
-                              go-list)))))
+    (render-st st ["file_name" *game-object-factory-header-name*]
+               ["guard" "_GAME_OBJECT_FACTORY_H_"]
+               ["manifest" *manifest*]
+               ["date" (get-date)]
+               (map (fn [x]
+                      (let [decl-fn (game-object-decl
+                                     (inst-st "game_object_factory_decl"))]
+                        (vector "factory_decls" (decl-fn x))))
+                    go-list))))
 
 (defn- game-object-create-component [st factory-name]
   (fn [comp-key]
-    (render-st st (list ["factory_name" factory-name]
-                        ["comp_interface" "IComponent"]
-                        ["comp_name" (cpp-component-name comp-key)]
-                        ["comp_factory_name" (cpp-component-factory-name comp-key)]))))
+    (render-st st ["factory_name" factory-name]
+               ["comp_interface" "IComponent"]
+               ["comp_name" (cpp-component-name comp-key)]
+               ["comp_factory_name" (cpp-component-factory-name comp-key)])))
 
 (defn- game-object-create-component-from-json [st factory-name]
   (fn [comp-key]
-    (render-st st (list ["factory_name" factory-name]
-                        ["comp_interface" "IComponent"]
-                        ["comp_name" (cpp-component-name comp-key)]
-                        ["comp_factory_name" (cpp-component-factory-name comp-key)]))))
+    (render-st st ["factory_name" factory-name]
+               ["comp_interface" "IComponent"]
+               ["comp_name" (cpp-component-name comp-key)]
+               ["comp_factory_name" (cpp-component-factory-name comp-key)])))
 
 (defn- game-object-factory-define [st]
   (fn [obj-key]
     (let [comp-list (keys (make-concrete-template obj-key))]
-      (render-st st (list* ["factory_name" (cpp-game-object-factory-name obj-key)]
-                           ["obj_interface" "IGameObject"]
-                           (mapcat (fn [x]
-                                     (list ["create_components" ((game-object-create-component (inst-st "create_component")
-                                                                                               (cpp-game-object-factory-name obj-key)) x)]
-                                           ["create_components_from_json" ((game-object-create-component-from-json (inst-st "create_component_from_json")
-                                                                                                                   (cpp-game-object-factory-name obj-key)) x)]))
-                                   comp-list)))
-      )))
+      (render-st st ["factory_name" (cpp-game-object-factory-name obj-key)]
+                 ["obj_interface" "IGameObject"]
+                 (map (fn [x]
+                        (list ["create_components" ((game-object-create-component (inst-st "create_component")
+                                                                                  (cpp-game-object-factory-name obj-key)) x)]
+                              ["create_components_from_json" ((game-object-create-component-from-json (inst-st "create_component_from_json")
+                                                                                                      (cpp-game-object-factory-name obj-key)) x)]))
+                      comp-list)))))
 
 (defn- game-object-factory-cpp [st]
   (fn [go-list]
-    (render-st st (list* ["file_name" *game-object-factory-cpp-name*]
-                         ["manifest" *manifest*]
-                         ["date" (get-date)]
-                         ["header" *game-object-factory-header-name*]
-                         (map (fn [x]
-                                (vector "factory_defines"
-                                        ((game-object-factory-define (inst-st "game_object_factory_define")) x)))
-                              go-list)))))
+    (render-st st ["file_name" *game-object-factory-cpp-name*]
+               ["manifest" *manifest*]
+               ["date" (get-date)]
+               ["header" *game-object-factory-header-name*]
+               (map (fn [x]
+                      (vector "factory_defines"
+                              ((game-object-factory-define (inst-st "game_object_factory_define")) x)))
+                    go-list))))
 
 (defn gen-game-object-factory [go-list]
   "生成一个Cpp GameObject类Factory"
@@ -616,10 +628,10 @@
 (defn- comp-to-json [st]
   (fn [comp-key]
     (let [attr-list (component-attribute-keys comp-key)]
-      (render-st st (list* ["class_name" (cpp-component-gen-name comp-key)]
-                           (map (fn [x]
-                                  (vector "attribute_to_jsons" (attribute->json comp-key x)))
-                                attr-list))))))
+      (render-st st ["class_name" (cpp-component-gen-name comp-key)]
+                 (map (fn [x]
+                        (vector "attribute_to_jsons" (attribute->json comp-key x)))
+                      attr-list)))))
 
 (defn- json->attribute [comp-key attr-key]
   (let [info (make-cpp-attribute comp-key attr-key)]
@@ -639,27 +651,27 @@
 (defn- comp-from-json [st]
   (fn [comp-key]
     (let [attr-list (component-attribute-keys comp-key)]
-      (render-st st (list* ["class_name" (cpp-component-gen-name comp-key)]
-                           (map (fn [x]
-                                  (vector "attribute_from_jsons" (json->attribute comp-key x)))
-                                attr-list))))))
+      (render-st st ["class_name" (cpp-component-gen-name comp-key)]
+                 (map (fn [x]
+                        (vector "attribute_from_jsons" (json->attribute comp-key x)))
+                      attr-list)))))
 
 (defn- json-function-define [st]
   (fn [comp-key]
-    (render-st st (list ["to_json" ((comp-to-json (inst-st "to_json")) comp-key)]
-                        ["from_json" ((comp-from-json (inst-st "from_json")) comp-key)]))))
+    (render-st st ["to_json" ((comp-to-json (inst-st "to_json")) comp-key)]
+               ["from_json" ((comp-from-json (inst-st "from_json")) comp-key)])))
 
 (defn- component-define-cpp [st]
   (fn [comp-list]
-    (render-st st (list* ["filename" *component-define-cpp*]
-                         ["date" (get-date)]
-                         ["manifest" *manifest*]
-                         ["sid_initialize" ((component-sid-initialize (inst-st "component_sid_initialize")) comp-list)]
-                         ["raw_name_initialize" ((component-raw-name-initialize (inst-st "component_raw_name_initialize")) comp-list)]
-                         (mapcat (fn [x]
-                                   (list ["component_headers" (cpp-component-gen-header-filename x)]
-                                         ["component_defines" ((json-function-define (inst-st "json_function_define")) x)]))
-                                 comp-list)))))
+    (render-st st ["filename" *component-define-cpp*]
+               ["date" (get-date)]
+               ["manifest" *manifest*]
+               ["sid_initialize" ((component-sid-initialize (inst-st "component_sid_initialize")) comp-list)]
+               ["raw_name_initialize" ((component-raw-name-initialize (inst-st "component_raw_name_initialize")) comp-list)]
+               (map (fn [x]
+                      (list ["component_headers" (cpp-component-gen-header-filename x)]
+                            ["component_defines" ((json-function-define (inst-st "json_function_define")) x)]))
+                    comp-list))))
 
 (defn gen-component-define-cpp [comp-key-list]
   (with-stg *cpp-component-stg*
@@ -672,11 +684,11 @@
     (let [attr-list (filter (fn [x]
                               (not (atom-attribute? comp-key x)))
                             (component-attribute-keys comp-key))]
-      (render-st st (list* ["comp_name" (cpp-component-name comp-key)]
-                           ["sqls" "root"]
-                           (map (fn [x]
-                                  (vector "sqls" (:variable-name (make-cpp-attribute comp-key x))))
-                                attr-list)) 80))))
+      (render-st st 80 ["comp_name" (cpp-component-name comp-key)]
+                 ["sqls" "root"]
+                 (map (fn [x]
+                        (vector "sqls" (:variable-name (make-cpp-attribute comp-key x))))
+                      attr-list)))))
 
 (defn- db-load-all-signature [st]
   (fn [obj-key]
@@ -685,15 +697,15 @@
                                   (map (fn [y]
                                          (:variable-name (make-cpp-attribute x y)))
                                        (filter-component-attributes (comp not (partial atom-attribute? x)) x))) comp-list)]
-      (render-st st (list* ["sqls" "root"]
-                           (map #(vector "sqls" %) all-attr-list)) 80))))
+      (render-st st 80 ["sqls" "root"]
+                 (map #(vector "sqls" %) all-attr-list)))))
 
 (defn- db-load-game-object-component [st]
   (fn [comp-key]
-    (render-st st (list ["factory_name" (cpp-component-factory-name comp-key)]
-                        ["jv" "jv"]
-                        ["rs" "rs"]
-                        ["comp_name" (name comp-key)]))))
+    (render-st st ["factory_name" (cpp-component-factory-name comp-key)]
+               ["jv" "jv"]
+               ["rs" "rs"]
+               ["comp_name" (name comp-key)])))
 
 (defn- db-init-game-object-sql-command [st]
   (fn [obj-key]
@@ -702,9 +714,9 @@
                                           (map (fn [y]
                                                  [y (:variable-name (make-cpp-attribute x y))])
                                                (filter-component-attributes (comp not (partial atom-attribute? x)) x))) comp-list))]
-      (render-st st (mapcat (fn [[attr sql]]
-                              (list ["attrs" (name attr)]
-                                    ["sqls" sql])) all-attr-map)))))
+      (render-st st (map (fn [[attr sql]]
+                           (list ["attrs" (name attr)]
+                                 ["sqls" sql])) all-attr-map)))))
 
 (defn- db-load-all-arg-list [st]
   (fn [obj-key]
@@ -713,56 +725,56 @@
                                   (map (fn [y]
                                          (:variable-name (make-cpp-attribute x y)))
                                        (filter-component-attributes (comp not (partial atom-attribute? x)) x))) comp-list)]
-      (render-st st (list* ["sqls" "root"]
-                           (map #(vector "sqls" %) all-attr-list)) 80))))
+      (render-st st 80 ["sqls" "root"]
+                 (map #(vector "sqls" %) all-attr-list)))))
 
 (defn- db-load-all-define [st]
   (fn [obj-key]
     (let [comp-list (keys (make-concrete-template obj-key))
           init-sql-command-fn (db-init-game-object-sql-command (inst-st "init_game_object_sql_command"))
           db-load-all-arg-list-fn (db-load-all-arg-list (inst-st "arg_list"))]
-      (render-st st (list* ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
-                           ["go_name" (name obj-key)]
-                           ["arg_list" (db-load-all-arg-list-fn obj-key)]
-                           ["init_sql_command" (init-sql-command-fn obj-key)]
-                           ["rs" "rs"]
-                           (map (fn [x]
-                                  (let [f (db-load-game-object-component
-                                           (inst-st "load_game_object_component"))]
-                                    ["load_game_object_components" (f x)])) comp-list))))))
+      (render-st st ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
+                 ["go_name" (name obj-key)]
+                 ["arg_list" (db-load-all-arg-list-fn obj-key)]
+                 ["init_sql_command" (init-sql-command-fn obj-key)]
+                 ["rs" "rs"]
+                 (map (fn [x]
+                        (let [f (db-load-game-object-component
+                                 (inst-st "load_game_object_component"))]
+                          ["load_game_object_components" (f x)])) comp-list)))))
 
 (defn- db-sql-cmd-class-define [st]
   (fn [obj-key]
-    (render-st st (list ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
-                        ["load_all_define" ((db-load-all-define
-                                             (inst-st "load_all_define")) obj-key)]))))
+    (render-st st ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
+               ["load_all_define" ((db-load-all-define
+                                    (inst-st "load_all_define")) obj-key)])))
 
 (defn- game-object-db-define [st]
   (fn [go-list]
-    (render-st st (list* ["file_name" *game-object-db-define-cpp*]
-                         ["manifest" *manifest*]
-                         ["date" (get-date)]
-                         ["game_object_db_header" *game-object-db-header*]
-                         (map (fn [x]
-                                ["sql_cmd_class_defines" ((db-sql-cmd-class-define
-                                                           (inst-st "sql_cmd_class_define")) x)]) go-list)))))
+    (render-st st ["file_name" *game-object-db-define-cpp*]
+               ["manifest" *manifest*]
+               ["date" (get-date)]
+               ["game_object_db_header" *game-object-db-header*]
+               (map (fn [x]
+                      ["sql_cmd_class_defines" ((db-sql-cmd-class-define
+                                                 (inst-st "sql_cmd_class_define")) x)]) go-list))))
 
 (defn- db-sql-cmd-class [st]
   (fn [obj-key]
-    (render-st st (list ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
-                        ["load_all_signature" ((db-load-all-signature
-                                                (inst-st "load_all_signature")) obj-key)]))))
+    (render-st st ["class_name" (cpp-game-object-sql-cmd-name obj-key)]
+               ["load_all_signature" ((db-load-all-signature
+                                       (inst-st "load_all_signature")) obj-key)])))
 
 (defn- game-object-db-header [st]
   (fn [go-list]
-    (render-st st (list* ["file_name" *game-object-db-header*]
-                         ["guard" "_GAME_OBJECT_DB_H_"]
-                         ["manifest" *manifest*]
-                         ["date" (get-date)]
-                         (map (fn [x]
-                                ["sql_cmd_classes" ((db-sql-cmd-class
-                                                     (inst-st "sql_cmd_class")) x)])
-                              go-list)))))
+    (render-st st ["file_name" *game-object-db-header*]
+               ["guard" "_GAME_OBJECT_DB_H_"]
+               ["manifest" *manifest*]
+               ["date" (get-date)]
+               (map (fn [x]
+                      ["sql_cmd_classes" ((db-sql-cmd-class
+                                           (inst-st "sql_cmd_class")) x)])
+                    go-list))))
 
 (defn gen-game-object-db [go-list]
   (with-stg *cpp-game-object-db-stg*
@@ -774,48 +786,48 @@
 (defn- sql-func-decl [func-key]
   (if-let [func-info (sql-func-info func-key)]
     (let [st (inst-st "sql_func_decl")]
-      (render-st st (list* ["func_name" (-> func-info :func-name clojure-token->cpp-token)]
-                           ["doc" (:doc func-info)]
-                           ["args" "char* __dest"]
-                           ["args" "int __n"]
-                           (map (fn [x]
-                                  ["args" (sql-func-arg-decl x)])
-                                (partition 2 (:arg-spec func-info)))) 80))))
+      (render-st st 80 ["func_name" (-> func-info :func-name clojure-token->cpp-token)]
+                 ["doc" (:doc func-info)]
+                 ["args" "char* __dest"]
+                 ["args" "int __n"]
+                 (map (fn [x]
+                        ["args" (sql-func-arg-decl x)])
+                      (partition 2 (:arg-spec func-info)))))))
 
 (defn- sql-func-define [func-key]
   (if-let [func-info (sql-func-info func-key)]
     (let [st (inst-st "sql_func_define")]
-      (render-st st (list* ["func_name" (-> func-info :func-name clojure-token->cpp-token)]
-                           ["args" "char* __dest"]
-                           ["args" "int __n"]
-                           (concat (map (fn [x]
-                                          ["args" (sql-func-arg-decl x)])
-                                        (partition 2 (:arg-spec func-info)))
-                                   (map (fn [x]
-                                          ["fmt_str" x])
-                                        (string/split (:fmt-str func-info) #"@"))
-                                   (map (fn [x]
-                                          ["fmt_arg_list" x])
-                                        (:arg-list func-info)))) 80))))
+      (render-st st 80 ["func_name" (-> func-info :func-name clojure-token->cpp-token)]
+                 ["args" "char* __dest"]
+                 ["args" "int __n"]
+                 (map (fn [x]
+                        ["args" (sql-func-arg-decl x)])
+                      (partition 2 (:arg-spec func-info)))
+                 (map (fn [x]
+                        ["fmt_str" x])
+                      (string/split (:fmt-str func-info) #"@"))
+                 (map (fn [x]
+                        ["fmt_arg_list" x])
+                      (:arg-list func-info))))))
 
 (defn- sql-class-define [func-list]
   (let [st (inst-st "sql_class_define")]
-    (render-st st (list* ["manifest" *manifest*]
-                         ["date" (get-date)]
-                         ["header_file" *game-sql-header*]
-                         ["filename" *game-sql-cpp*]
-                         (map (fn [x]
-                                ["sql_func_defines" (sql-func-define x)])
-                              func-list)))))
+    (render-st st ["manifest" *manifest*]
+               ["date" (get-date)]
+               ["header_file" *game-sql-header*]
+               ["filename" *game-sql-cpp*]
+               (map (fn [x]
+                      ["sql_func_defines" (sql-func-define x)])
+                    func-list))))
 
 (defn- sql-class-header [func-list]
   (let [st (inst-st "sql_class_header")]
-    (render-st st (list* ["manifest" *manifest*]
-                         ["date" (get-date)]
-                         ["filename" *game-sql-header*]
-                         (map (fn [x]
-                                ["sql_func_decls" (sql-func-decl x)])
-                              func-list)))))
+    (render-st st ["manifest" *manifest*]
+               ["date" (get-date)]
+               ["filename" *game-sql-header*]
+               (map (fn [x]
+                      ["sql_func_decls" (sql-func-decl x)])
+                    func-list))))
 
 (defn gen-sql-class [func-list]
   (with-stg *cpp-game-sql-stg*
