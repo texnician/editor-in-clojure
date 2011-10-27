@@ -68,14 +68,15 @@
     (.inspect st (first opt))
     (.inspect st)))
 
-(def *st-group* nil)
+(declare *st-group*)
 
 (defn- inst-st [st-name]
   (.getInstanceOf *st-group* st-name))
 
 (defmacro with-stg [stg & body]
   `(binding [*st-group* (STGroupFile. ~stg)]
-     ~@body))
+     (let [~'group nil]
+       ~@body)))
 
 (defn- component-class-file [st component-class]
   (fn [comp-key]
@@ -410,11 +411,11 @@
 
 (defn gen-component-factory [comp-key-list]
   "生成一个Cpp Component类Factory"
-  (let [group (STGroupFile. *cpp-component-factory-stg*)
-        cpp-st (component-factory-cpp (inst-st "component_factory_cpp") group)
-        header-st (component-factory-header (inst-st "component_factory_header") group)]
-    (spit (in-dir *cpp-include-dir* *component-factory-header-name*) (header-st comp-key-list))
-    (spit (in-dir *cpp-src-dir* *component-factory-cpp-name*) (cpp-st comp-key-list))))
+  (with-stg *cpp-component-factory-stg*
+    (let [cpp-st (component-factory-cpp (inst-st "component_factory_cpp") group)
+          header-st (component-factory-header (inst-st "component_factory_header") group)]
+      (spit (in-dir *cpp-include-dir* *component-factory-header-name*) (header-st comp-key-list))
+      (spit (in-dir *cpp-src-dir* *component-factory-cpp-name*) (cpp-st comp-key-list)))))
 
 (defn- array-attr-test-block [st test-values]
   (fn [comp-key attr-key]
@@ -534,10 +535,10 @@
 
 (defn gen-component-factory-test [comp-key-list]
   "生成cpp Component Factory的单元测试代码"
-  (let [group (STGroupFile. *cpp-test-factory-stg*)
-        test-factory-file-fn (component-factory-test-file (inst-st "test_factory_file")
-                                                          group)]
-    (spit (in-dir *cpp-test-dir* *component-factory-test-filename*) (test-factory-file-fn comp-key-list))))
+  (with-stg *cpp-test-factory-stg*
+    (let [test-factory-file-fn (component-factory-test-file (inst-st "test_factory_file")
+                                                            group)]
+      (spit (in-dir *cpp-test-dir* *component-factory-test-filename*) (test-factory-file-fn comp-key-list)))))
 
 '(gen-component-factory-test '(:combat-property :monster-property :rpg-property :vip-item :trade :seeding :item-base :base))
 
@@ -598,11 +599,11 @@
 
 (defn gen-game-object-factory [go-list]
   "生成一个Cpp GameObject类Factory"
-  (let [group (STGroupFile. *cpp-game-object-factory-stg*)
-        cpp-st (game-object-factory-cpp (inst-st "game_object_factory_cpp") group)
-        header-st (game-object-factory-header (inst-st "game_object_factory_header") group)]
-    (spit (in-dir *cpp-src-dir* *game-object-factory-cpp-name*) (cpp-st go-list))
-    (spit (in-dir *cpp-include-dir* *game-object-factory-header-name*) (header-st go-list))))
+  (with-stg *cpp-game-object-factory-stg*
+    (let [cpp-st (game-object-factory-cpp (inst-st "game_object_factory_cpp") group)
+          header-st (game-object-factory-header (inst-st "game_object_factory_header") group)]
+      (spit (in-dir *cpp-src-dir* *game-object-factory-cpp-name*) (cpp-st go-list))
+      (spit (in-dir *cpp-include-dir* *game-object-factory-header-name*) (header-st go-list)))))
 
 (defn- attribute->json [group]
   (fn [comp-key attr-key]
@@ -666,9 +667,10 @@
                                  comp-list)))))
 
 (defn gen-component-define-cpp [comp-key-list]
-  (let [group (STGroupFile. *cpp-component-stg*)
-        component-cpp-st (inst-st "component_cpp")]
-    (spit (in-dir *cpp-src-dir* *component-define-cpp*) ((component-define-cpp component-cpp-st group) comp-key-list))))
+  (with-stg *cpp-component-stg*
+    (let [component-cpp-st (inst-st "component_cpp")]
+      (spit (in-dir *cpp-src-dir* *component-define-cpp*)
+            ((component-define-cpp component-cpp-st group) comp-key-list)))))
 
 (defn- db-load-component-signature [st]
   (fn [comp-key]
@@ -768,11 +770,11 @@
                               go-list)))))
 
 (defn gen-game-object-db [go-list]
-  (let [group (STGroupFile. *cpp-game-object-db-stg*)
-        game-object-db-header-fn (game-object-db-header (inst-st "game_object_db_header") group)
-        game-object-db-define-fn (game-object-db-define (inst-st "game_object_db_define") group)]
-    (spit (in-dir *cpp-include-dir* *game-object-db-header*) (game-object-db-header-fn go-list))
-    (spit (in-dir *cpp-src-dir* *game-object-db-define-cpp*) (game-object-db-define-fn go-list))))
+  (with-stg *cpp-game-object-db-stg*
+    (let [game-object-db-header-fn (game-object-db-header (inst-st "game_object_db_header") group)
+          game-object-db-define-fn (game-object-db-define (inst-st "game_object_db_define") group)]
+      (spit (in-dir *cpp-include-dir* *game-object-db-header*) (game-object-db-header-fn go-list))
+      (spit (in-dir *cpp-src-dir* *game-object-db-define-cpp*) (game-object-db-define-fn go-list)))))
 
 (defn- sql-func-decl [group]
   (fn [func-key]
@@ -825,7 +827,7 @@
                                 func-list))))))
 
 (defn gen-sql-class [func-list]
-  (let [group (STGroupFile. *cpp-game-sql-stg*)]
+  (with-stg *cpp-game-sql-stg*
     (spit (in-dir *cpp-sql-src-dir* *game-sql-cpp*)
           ((sql-class-define group) func-list))
     (spit (in-dir *cpp-sql-inclue-dir* *game-sql-header*)
