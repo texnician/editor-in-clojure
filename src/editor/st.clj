@@ -63,12 +63,14 @@
       (.render st opt)
       (.render st))))
 
-(defn- inspect-st [st seq & opt]
-  (doseq [op (map st-add-op seq)]
-    (op st))
-  (if opt
-    (.inspect st (first opt))
-    (.inspect st)))
+(defn- inspect-st [st & args]
+  (let [opt (if (-> args first number?) (first args) nil)
+        seq (if opt (next args) args)]
+    (doseq [op (map st-add-op (flatten-op-list seq))]
+      (op st))
+    (if opt
+      (.inspect st opt)
+      (.inspect st))))
 
 (defn- op-pair? [p]
   (and (vector? p) (= (count p) 2) (string? (first p))))
