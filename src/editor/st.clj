@@ -68,6 +68,16 @@
     (.inspect st (first opt))
     (.inspect st)))
 
+(defn- op-pair? [p]
+  (and (vector? p) (= (count p) 2) (string? (first p)) (string? (second p))))
+
+(defn- flatten-op-list [op-list]
+  (if (empty? op-list)
+    ()
+    (if (op-pair? (first op-list))
+      (cons (first op-list) (flatten-op-list (next op-list)))
+      (concat (flatten-op-list (first op-list)) (flatten-op-list (next op-list))))))
+
 (declare *st-group*)
 
 (defn- inst-st [st-name]
@@ -195,26 +205,25 @@
                                     ["paddings" (padding-map x)]
                                     ["raw_names" (name x)])) comp-key-list)))))
 
-(defn- attribute-set-block-selector []
-  (fn [attr]
-    (let [raw-type (:raw-type attr)
-          [st op-list] (cond (int-type? raw-type) [(inst-st "set_int_value")
-                                                   (list ["attr" (:variable-name attr)]
-                                                         ["setter" (:setter-name attr)]
-                                                         ["int_type" (:define-type attr)]
-                                                         ["atoi" (atoi raw-type)])]
-                             (= :string raw-type) [(inst-st "set_string_value")
-                                                   (list ["attr" (:variable-name attr)]
-                                                         ["setter" (:setter-name attr)])] 
-                             (= :enum raw-type) [(inst-st "set_enum_value")
+(defn- attribute-set-block-selector [attr]
+  (let [raw-type (:raw-type attr)
+        [st op-list] (cond (int-type? raw-type) [(inst-st "set_int_value")
                                                  (list ["attr" (:variable-name attr)]
                                                        ["setter" (:setter-name attr)]
-                                                       ["enum_int_val" (name *enum-int-value-tag*)])]
-                             (= :bool raw-type) [(inst-st "set_bool_value")
+                                                       ["int_type" (:define-type attr)]
+                                                       ["atoi" (atoi raw-type)])]
+                           (= :string raw-type) [(inst-st "set_string_value")
                                                  (list ["attr" (:variable-name attr)]
-                                                       ["setter" (:setter-name attr)])]
-                             :else (throw (Exception. (format "unknown type %s" raw-type))))]
-      (render-st st op-list))))
+                                                       ["setter" (:setter-name attr)])] 
+                           (= :enum raw-type) [(inst-st "set_enum_value")
+                                               (list ["attr" (:variable-name attr)]
+                                                     ["setter" (:setter-name attr)]
+                                                     ["enum_int_val" (name *enum-int-value-tag*)])]
+                           (= :bool raw-type) [(inst-st "set_bool_value")
+                                               (list ["attr" (:variable-name attr)]
+                                                     ["setter" (:setter-name attr)])]
+                           :else (throw (Exception. (format "unknown type %s" raw-type))))]
+    (render-st st op-list)))
 
 (defn- st-has-attribute? [st attr]
   (let [attrs (keys (.getAttributes st))]
@@ -225,40 +234,39 @@
     (let [op-table ((comp #(list ["component_name" (cpp-component-name comp-key)]
                                  ["variable_name" (:variable-name %)]
                                  ["attr_name" (:raw-name %)]
-                                 ["set_block" ((set-block-selector) %)])
+                                 ["set_block" (set-block-selector %)])
                           (partial attr-builder comp-key)) attr-key)]
       (render-st st op-table))))
 
-(defn- array-attribute-set-block-selector []
-  (fn [attr]
-    (let [raw-type (:raw-type attr)
-          [st op-list] (cond (int-type? raw-type) [(inst-st "set_int_array_value")
-                                                   (list ["setter" (:setter-name attr)]
-                                                         ["attr" (:variable-name attr)]
-                                                         ["array_type" (:define-type attr)]
-                                                         ["atoi" (atoi raw-type)])]
-                             (= :string raw-type) [(inst-st "set_string_array_value")
-                                                   (list ["setter" (:setter-name attr)]
-                                                         ["attr" (:variable-name attr)])]
-                             (= :enum raw-type) [(inst-st "set_enum_array_value")
-                                                 (list ["attr" (:variable-name attr)]
-                                                       ["setter" (:setter-name attr)]
-                                                       ["enum_int_val" (name *enum-int-value-tag*)])]
-                             (= :bool raw-type) [(inst-st "set_bool_array_value")
-                                                 (list ["attr" (:variable-name attr)]
-                                                       ["setter" (:setter-name attr)])]
-                             :else [(inst-st "set_unknown_value")
-                                    (list ["attr" (:variable-name attr)]
-                                          ["setter" (:setter-name attr)]
-                                          ["type" (name raw-type)])])]
-      (render-st st op-list))))
+(defn- array-attribute-set-block-selector [attr]
+  (let [raw-type (:raw-type attr)
+        [st op-list] (cond (int-type? raw-type) [(inst-st "set_int_array_value")
+                                                 (list ["setter" (:setter-name attr)]
+                                                       ["attr" (:variable-name attr)]
+                                                       ["array_type" (:define-type attr)]
+                                                       ["atoi" (atoi raw-type)])]
+                           (= :string raw-type) [(inst-st "set_string_array_value")
+                                                 (list ["setter" (:setter-name attr)]
+                                                       ["attr" (:variable-name attr)])]
+                           (= :enum raw-type) [(inst-st "set_enum_array_value")
+                                               (list ["attr" (:variable-name attr)]
+                                                     ["setter" (:setter-name attr)]
+                                                     ["enum_int_val" (name *enum-int-value-tag*)])]
+                           (= :bool raw-type) [(inst-st "set_bool_array_value")
+                                               (list ["attr" (:variable-name attr)]
+                                                     ["setter" (:setter-name attr)])]
+                           :else [(inst-st "set_unknown_value")
+                                  (list ["attr" (:variable-name attr)]
+                                        ["setter" (:setter-name attr)]
+                                        ["type" (name raw-type)])])]
+    (render-st st op-list)))
 
 (defn- build-array-attribute [st attr-builder set-block-selector]
   (fn [comp-key attr-key]
     (let [op-table ((comp #(list ["component_name" (cpp-component-name comp-key)]
                                  ["variable_name" (:variable-name %)]
                                  ["attr_name" (:raw-name %)]
-                                 ["set_block" ((set-block-selector) %)])
+                                 ["set_block" (set-block-selector %)])
                           (partial attr-builder comp-key)) attr-key)]
       (render-st st op-table))))
 
@@ -348,12 +356,11 @@
                         (array-attr-json-from-record-set-selector comp-key))]
       (selector-fn attr-info))))
 
-(defn- comp-attr-json-from-record-set []
-  (fn [comp-key]
-    (let [attr-list (component-attribute-keys comp-key)
-          f (attr-json-from-record-set comp-key)]
-      (map (fn [x]
-             ["attributes_from_record_set" (f x)]) attr-list))))
+(defn- comp-attr-json-from-record-set [comp-key]
+  (let [attr-list (component-attribute-keys comp-key)
+        f (attr-json-from-record-set comp-key)]
+    (map (fn [x]
+           ["attributes_from_record_set" (f x)]) attr-list)))
 
 (defn- factory-find-component-node [st]
   (fn [comp-key]
@@ -380,7 +387,7 @@
                                                            make-cpp-attribute)
                                          find-component-node (factory-find-component-node
                                                               (inst-st "find_component_node"))
-                                         json-from-record-set (comp-attr-json-from-record-set)
+                                         json-from-record-set comp-attr-json-from-record-set
                                          define-st (component-factory-define
                                                     (inst-st "component_factory_define") find-component-node
                                                     build-attributes
@@ -437,26 +444,24 @@
                                      (vector "statements" (st-fn comp-key x))))
                                  (filter #(not (atom-attribute? comp-key %)) attr-list)))))))
 
-(defn- define-sub-cursors []
-  (fn [comp-key]
-    (let [array-attr-list (filter-component-attributes (comp not (partial atom-attribute? comp-key)) comp-key)]
-      (map (fn [x]
-             (let [st (inst-st "define_sub_cursor")
-                   attr-info (make-cpp-attribute comp-key x)]
-               ["define_sub_cursors" (render-st st (list ["var_name" (:variable-name attr-info)]))]))
-           array-attr-list))))
+(defn- define-sub-cursors [comp-key]
+  (let [array-attr-list (filter-component-attributes (comp not (partial atom-attribute? comp-key)) comp-key)]
+    (map (fn [x]
+           (let [st (inst-st "define_sub_cursor")
+                 attr-info (make-cpp-attribute comp-key x)]
+             ["define_sub_cursors" (render-st st (list ["var_name" (:variable-name attr-info)]))]))
+         array-attr-list)))
 
-(defn- set-sub-cursors []
-  (fn [comp-key]
-    (let [array-attr-list (filter-component-attributes (comp not (partial atom-attribute? comp-key)) comp-key)]
-      (map (fn [x]
-             (let [st (inst-st "set_sub_cursor")
-                   attr-info (make-cpp-attribute comp-key x)]
-               ["set_sub_cursors" (render-st st (list ["attr_name" (:raw-name attr-info)]
-                                                      ["var_name" (:variable-name attr-info)]))]))
-           array-attr-list))))
+(defn- set-sub-cursors [comp-key]
+  (let [array-attr-list (filter-component-attributes (comp not (partial atom-attribute? comp-key)) comp-key)]
+    (map (fn [x]
+           (let [st (inst-st "set_sub_cursor")
+                 attr-info (make-cpp-attribute comp-key x)]
+             ["set_sub_cursors" (render-st st (list ["attr_name" (:raw-name attr-info)]
+                                                    ["var_name" (:variable-name attr-info)]))]))
+         array-attr-list)))
 
-(defn- expect-mock-cursors []
+(defn- expect-mock-cursors [comp-key]
   (letfn [(flat [l]
             (if (nil? l)
               nil
@@ -464,50 +469,47 @@
                 (if (vector? car)
                   (cons car (flat (next l)))
                   (concat car (flat (next l)))))))]
-    (fn [comp-key]
-      (let [attr-list (component-attribute-keys comp-key)
-            test-case (comp-key *component-factory-test-case-table*)]
-        (flat (map (fn [x]
-                     (let [attr-info (make-cpp-attribute comp-key x)]
-                       (if (atom-attribute? comp-key x)
-                         (let [st (inst-st "expect_root_mock_cursor")]
-                           ["expect_mock_cursors" (render-st st (list ["cursor_name" "root"]
-                                                                      ["field_name" (:variable-name attr-info)]
-                                                                      ["value" (str \" (db-string-value (:raw-type attr-info)
-                                                                                                        comp-key x
-                                                                                                        (-> test-case :test-value-map x)) \")]))])
-                         (let [st (inst-st "expect_sub_mock_cursor")
-                               value-vec (-> test-case :test-value-map x)
-                               op-list (list* ["cursor_name" (:variable-name attr-info)]
-                                              ["field_name" "item"]
-                                              ["count" (count value-vec)]
-                                              (mapcat (fn [v]
-                                                        (list 
-                                                         ["has_records" "true"]
-                                                         ["values" (str \" (db-string-value (:raw-type attr-info)
-                                                                                            comp-key x v) \")]))
-                                                      value-vec))]
-                           ["expect_mock_cursors" (render-st st op-list)]))))
-                   attr-list))))))
+    (let [attr-list (component-attribute-keys comp-key)
+          test-case (comp-key *component-factory-test-case-table*)]
+      (flat (map (fn [x]
+                   (let [attr-info (make-cpp-attribute comp-key x)]
+                     (if (atom-attribute? comp-key x)
+                       (let [st (inst-st "expect_root_mock_cursor")]
+                         ["expect_mock_cursors" (render-st st (list ["cursor_name" "root"]
+                                                                    ["field_name" (:variable-name attr-info)]
+                                                                    ["value" (str \" (db-string-value (:raw-type attr-info)
+                                                                                                      comp-key x
+                                                                                                      (-> test-case :test-value-map x)) \")]))])
+                       (let [st (inst-st "expect_sub_mock_cursor")
+                             value-vec (-> test-case :test-value-map x)
+                             op-list (list* ["cursor_name" (:variable-name attr-info)]
+                                            ["field_name" "item"]
+                                            ["count" (count value-vec)]
+                                            (mapcat (fn [v]
+                                                      (list 
+                                                       ["has_records" "true"]
+                                                       ["values" (str \" (db-string-value (:raw-type attr-info)
+                                                                                          comp-key x v) \")]))
+                                                    value-vec))]
+                         ["expect_mock_cursors" (render-st st op-list)]))))
+                 attr-list)))))
 
-(defn- final-sub-cursors []
-  (fn [comp-key]
-    (let [array-attr-list (filter-component-attributes (comp not (partial atom-attribute? comp-key)) comp-key)]
-      (map (fn [x]
-             (let [st (inst-st "expect_call_get_record")
-                   attr-info (make-cpp-attribute comp-key x)]
-               ["final_sub_cursors" (render-st st (list ["cursor_name" (:variable-name attr-info)]
-                                                        ["value" "false"]))]))
-           array-attr-list))))
+(defn- final-sub-cursors [comp-key]
+  (let [array-attr-list (filter-component-attributes (comp not (partial atom-attribute? comp-key)) comp-key)]
+    (map (fn [x]
+           (let [st (inst-st "expect_call_get_record")
+                 attr-info (make-cpp-attribute comp-key x)]
+             ["final_sub_cursors" (render-st st (list ["cursor_name" (:variable-name attr-info)]
+                                                      ["value" "false"]))]))
+         array-attr-list)))
 
-(defn- mock-cursor-block []
-  (fn [comp-key]
-    (let [st (inst-st "mock_cursors")
-          attr-list (component-attribute-keys comp-key)]
-      (render-st st (concat ((define-sub-cursors) comp-key)
-                            ((set-sub-cursors) comp-key) 
-                            ((expect-mock-cursors) comp-key)
-                            ((final-sub-cursors) comp-key))))))
+(defn- mock-cursor-block [comp-key]
+  (let [st (inst-st "mock_cursors")
+        attr-list (component-attribute-keys comp-key)]
+    (render-st st (concat (define-sub-cursors comp-key)
+                          (set-sub-cursors comp-key) 
+                          (expect-mock-cursors comp-key)
+                          (final-sub-cursors comp-key)))))
 
 (defn- comp-test [st]
   (fn [comp-key]
@@ -516,7 +518,7 @@
       (render-st st (list* ["comp_name" (cpp-component-name comp-key)]
                            ["factory_name" (cpp-component-factory-name comp-key)]
                            ["raw_name" (name comp-key)]
-                           ["mock_cursor_block" ((mock-cursor-block) comp-key)] 
+                           ["mock_cursor_block" (mock-cursor-block comp-key)] 
                            ["attr_test_group" (attr-test-group-fn comp-key)]
                            (map #(vector "xml_string" %) (string/split-lines (:xml-element-str test-case)))
                            )))))
@@ -600,48 +602,46 @@
       (spit (in-dir *cpp-src-dir* *game-object-factory-cpp-name*) (cpp-st go-list))
       (spit (in-dir *cpp-include-dir* *game-object-factory-header-name*) (header-st go-list)))))
 
-(defn- attribute->json []
-  (fn [comp-key attr-key]
-    (let [info (make-cpp-attribute comp-key attr-key)]
-      (let [[st op-list] (if (atom-attribute? comp-key attr-key)
-                           [(inst-st "atom_attribute_to_json")
-                            (list ["raw_name" (:raw-name info)]
-                                  ["attr_name" (:member-name info)])]
-                           [(inst-st "array_attribute_to_json")
-                            (list ["raw_name" (:raw-name info)]
-                                  ["attr_name" (:member-name info)])])]
-        (render-st st op-list)))))
+(defn- attribute->json [comp-key attr-key]
+  (let [info (make-cpp-attribute comp-key attr-key)]
+    (let [[st op-list] (if (atom-attribute? comp-key attr-key)
+                         [(inst-st "atom_attribute_to_json")
+                          (list ["raw_name" (:raw-name info)]
+                                ["attr_name" (:member-name info)])]
+                         [(inst-st "array_attribute_to_json")
+                          (list ["raw_name" (:raw-name info)]
+                                ["attr_name" (:member-name info)])])]
+      (render-st st op-list))))
 
 (defn- comp-to-json [st]
   (fn [comp-key]
     (let [attr-list (component-attribute-keys comp-key)]
       (render-st st (list* ["class_name" (cpp-component-gen-name comp-key)]
                            (map (fn [x]
-                                  (vector "attribute_to_jsons" ((attribute->json) comp-key x)))
+                                  (vector "attribute_to_jsons" (attribute->json comp-key x)))
                                 attr-list))))))
 
-(defn- json->attribute []
-  (fn [comp-key attr-key]
-    (let [info (make-cpp-attribute comp-key attr-key)]
-      (let [[st op-list] (if (atom-attribute? comp-key attr-key)
-                           [(inst-st "atom_attribute_from_json")
-                            (list ["raw_name" (:raw-name info)]
-                                  ["default_value" (:default-value info)]
-                                  ["attr_name" (:member-name info)]
-                                  ["converter" ((:raw-type info) *json-converter-table*)])]
-                           [(inst-st "array_attribute_from_json")
-                            (list ["raw_name" (:raw-name info)]
-                                  ["vec_type" (:define-type info)]
-                                  ["attr_name" (:member-name info)]
-                                  ["converter" ((:raw-type info) *json-converter-table*)])])]
-        (render-st st op-list)))))
+(defn- json->attribute [comp-key attr-key]
+  (let [info (make-cpp-attribute comp-key attr-key)]
+    (let [[st op-list] (if (atom-attribute? comp-key attr-key)
+                         [(inst-st "atom_attribute_from_json")
+                          (list ["raw_name" (:raw-name info)]
+                                ["default_value" (:default-value info)]
+                                ["attr_name" (:member-name info)]
+                                ["converter" ((:raw-type info) *json-converter-table*)])]
+                         [(inst-st "array_attribute_from_json")
+                          (list ["raw_name" (:raw-name info)]
+                                ["vec_type" (:define-type info)]
+                                ["attr_name" (:member-name info)]
+                                ["converter" ((:raw-type info) *json-converter-table*)])])]
+      (render-st st op-list))))
 
 (defn- comp-from-json [st]
   (fn [comp-key]
     (let [attr-list (component-attribute-keys comp-key)]
       (render-st st (list* ["class_name" (cpp-component-gen-name comp-key)]
                            (map (fn [x]
-                                  (vector "attribute_from_jsons" ((json->attribute) comp-key x)))
+                                  (vector "attribute_from_jsons" (json->attribute comp-key x)))
                                 attr-list))))))
 
 (defn- json-function-define [st]
@@ -771,59 +771,55 @@
       (spit (in-dir *cpp-include-dir* *game-object-db-header*) (game-object-db-header-fn go-list))
       (spit (in-dir *cpp-src-dir* *game-object-db-define-cpp*) (game-object-db-define-fn go-list)))))
 
-(defn- sql-func-decl []
-  (fn [func-key]
-    (if-let [func-info (sql-func-info func-key)]
-      (let [st (inst-st "sql_func_decl")]
-        (render-st st (list* ["func_name" (-> func-info :func-name clojure-token->cpp-token)]
-                              ["doc" (:doc func-info)]
-                              ["args" "char* __dest"]
-                              ["args" "int __n"]
-                              (map (fn [x]
-                                     ["args" (sql-func-arg-decl x)])
-                                   (partition 2 (:arg-spec func-info)))) 80)))))
-
-(defn- sql-func-define []
-  (fn [func-key]
-    (if-let [func-info (sql-func-info func-key)]
-      (let [st (inst-st "sql_func_define")]
-        (render-st st (list* ["func_name" (-> func-info :func-name clojure-token->cpp-token)]
-                             ["args" "char* __dest"]
-                             ["args" "int __n"]
-                             (concat (map (fn [x]
-                                            ["args" (sql-func-arg-decl x)])
-                                          (partition 2 (:arg-spec func-info)))
-                                     (map (fn [x]
-                                            ["fmt_str" x])
-                                          (string/split (:fmt-str func-info) #"@"))
-                                     (map (fn [x]
-                                            ["fmt_arg_list" x])
-                                          (:arg-list func-info)))) 80)))))
-
-(defn- sql-class-define []
-  (fn [func-list]
-    (let [st (inst-st "sql_class_define")]
-      (render-st st (list* ["manifest" *manifest*]
-                           ["date" (get-date)]
-                           ["header_file" *game-sql-header*]
-                           ["filename" *game-sql-cpp*]
+(defn- sql-func-decl [func-key]
+  (if-let [func-info (sql-func-info func-key)]
+    (let [st (inst-st "sql_func_decl")]
+      (render-st st (list* ["func_name" (-> func-info :func-name clojure-token->cpp-token)]
+                           ["doc" (:doc func-info)]
+                           ["args" "char* __dest"]
+                           ["args" "int __n"]
                            (map (fn [x]
-                                  ["sql_func_defines" ((sql-func-define) x)])
-                                func-list))))))
+                                  ["args" (sql-func-arg-decl x)])
+                                (partition 2 (:arg-spec func-info)))) 80))))
 
-(defn- sql-class-header []
-  (fn [func-list]
-    (let [st (inst-st "sql_class_header")]
-      (render-st st (list* ["manifest" *manifest*]
-                           ["date" (get-date)]
-                           ["filename" *game-sql-header*]
-                           (map (fn [x]
-                                  ["sql_func_decls" ((sql-func-decl) x)])
-                                func-list))))))
+(defn- sql-func-define [func-key]
+  (if-let [func-info (sql-func-info func-key)]
+    (let [st (inst-st "sql_func_define")]
+      (render-st st (list* ["func_name" (-> func-info :func-name clojure-token->cpp-token)]
+                           ["args" "char* __dest"]
+                           ["args" "int __n"]
+                           (concat (map (fn [x]
+                                          ["args" (sql-func-arg-decl x)])
+                                        (partition 2 (:arg-spec func-info)))
+                                   (map (fn [x]
+                                          ["fmt_str" x])
+                                        (string/split (:fmt-str func-info) #"@"))
+                                   (map (fn [x]
+                                          ["fmt_arg_list" x])
+                                        (:arg-list func-info)))) 80))))
+
+(defn- sql-class-define [func-list]
+  (let [st (inst-st "sql_class_define")]
+    (render-st st (list* ["manifest" *manifest*]
+                         ["date" (get-date)]
+                         ["header_file" *game-sql-header*]
+                         ["filename" *game-sql-cpp*]
+                         (map (fn [x]
+                                ["sql_func_defines" (sql-func-define x)])
+                              func-list)))))
+
+(defn- sql-class-header [func-list]
+  (let [st (inst-st "sql_class_header")]
+    (render-st st (list* ["manifest" *manifest*]
+                         ["date" (get-date)]
+                         ["filename" *game-sql-header*]
+                         (map (fn [x]
+                                ["sql_func_decls" (sql-func-decl x)])
+                              func-list)))))
 
 (defn gen-sql-class [func-list]
   (with-stg *cpp-game-sql-stg*
     (spit (in-dir *cpp-sql-src-dir* *game-sql-cpp*)
-          ((sql-class-define) func-list))
+          (sql-class-define func-list))
     (spit (in-dir *cpp-sql-inclue-dir* *game-sql-header*)
-          ((sql-class-header) func-list))))
+          (sql-class-header func-list))))
