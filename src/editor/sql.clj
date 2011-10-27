@@ -253,7 +253,7 @@
 (defn- get-attribute-sql-value [comp-key attr-key]
   (let [attr-type (get-attribute-type comp-key attr-key)
         value-str (get-attribute-default-value comp-key attr-key)]
-    (cond (= attr-type :string) value-str
+    (cond (and (= attr-type :string) (atom-attribute? comp-key attr-key)) value-str
           (= attr-type :enum) (enum-int-value (get-attribute-in-domain comp-key attr-key) (keyword value-str))
           (= attr-type :bool) (if (read-string value-str) 1 0)
           :else (read-string value-str))))
