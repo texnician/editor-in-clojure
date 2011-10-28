@@ -54,6 +54,8 @@
   (fn [st]
     (.render st l)))
 
+(declare flatten-op-list)
+
 (defn- render-st [st & args]
   (let [opt (if (-> args first number?) (first args) nil)
         seq (if opt (next args) args)]
