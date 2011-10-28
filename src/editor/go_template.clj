@@ -32,10 +32,10 @@
 (deftemplate pit
   "坑的模板"
   (base :name "未命名的坑")
-  (item-base))
+  (scene-object))
 
 (deftemplate tree
   "树的模板"
   (base :name "未命名的树")
-  (item-base))
+  (scene-object))
 

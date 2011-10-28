@@ -31,6 +31,10 @@
   (max-own-num :type int :default 99999 :doc "物品的最大持有数量")
   (item-lifetime :type int :default 0 :doc "物品的存在时间，0表示无限制"))
 
+(defcomponent scene-object
+  "场景元素的基本属性"
+  (scene-object-position :type int :default 0 :doc "元素在场景中的位置"))
+
 (defcomponent seeding
   "种子属性组件"
   (fruit-id :type int :default 0 :doc "果实id" :reference fruits-domain))
