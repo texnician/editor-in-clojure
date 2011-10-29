@@ -37,6 +37,7 @@ sql_class_define(manifest, date, header_file, filename, sql_func_defines) ::= <<
 <sql_func_defines:{x|<x>}; separator="\n\n">
 
 // <filename> ends here
+
 >>
 
 sql_func_define(func_name, args, fmt_str, fmt_arg_list) ::= <<
