@@ -12,6 +12,7 @@
   "种子的模板"
   (base :name "未命名的种子")
   (item-base :item-lifetime 3)
+  (trade)
   (seeding))
 
 (deftemplate monster
@@ -39,3 +40,13 @@
   (base :name "未命名的树")
   (scene-object))
 
+(deftemplate fish
+  "鱼的模板"
+  (base :name "未命名的鱼")
+  (trade)
+  (fish-property))
+
+(deftemplate fish-bait
+  "鱼饵的模板"
+  (base :name "未命名的鱼饵")
+  (fish-bait-property))

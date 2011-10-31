@@ -39,6 +39,22 @@
   "种子属性组件"
   (fruit-id :type int :default 0 :doc "果实id" :reference fruits-domain))
 
+(defcomponent fish-property
+  "鱼类属性组件"
+  (fish-height :type int :default 0 :doc "体长")
+  (fish-water-type :type int :default 1 :doc "淡水/咸水（淡水：1；咸水：2）")
+  (fish-buoy :type int*2 :default [1 2] :doc "对应浮漂")
+  (fish-attrate :type int :default 6 :doc "关注概率")
+  (fish-rare :type int :default 1 :doc "是否稀有（普通：1；稀有：2）")
+  (fish-fkbtrate :type int :default 4 :doc "假装咬钩概率")
+  (fish-bdtime :type int :default 1000 :doc "咬钩判定时间")
+  (fish-action :type int*8 :default [5 5 0 0 0 0 0 0] :doc "行为"))
+
+(defcomponent fish-bait-property
+  "鱼饵属性组件"
+  (:fish-bait-nmattadd :type int :default 0 :doc "普通关注加成")
+  (:fish-bait-rrattadd :type int :default 0 :doc "稀有关注加成"))
+
 (defcomponent trade
   "交易相关的组件"
   (is-tradable :type bool :default true :doc "是否可以交易")
