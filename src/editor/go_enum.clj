@@ -11,6 +11,9 @@
   SUBSTANCE                             ;物质
   DEMON                                 ;恶魔
   ZOMBIE                                ;僵尸
+  MENG                                  ;萌
+  DARK                                  ;黑暗
+  UNREAL                                ;幻兽
   )
 
 (defenum monster-rank-enum
