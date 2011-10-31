@@ -39,3 +39,8 @@
   "树的模板"
   (base :name "未命名的树")
   (scene-object))
+
+(deftemplate skill-group
+  "技能组模板"
+  (base :name "未命名的技能组")
+  (skill-group-data))

@@ -86,7 +86,7 @@
   (mr-earth :type int :default 1 :doc "抗性 地咒")
   (mr-wind :type int :default 1 :doc "抗性 风咒")
   (mr-water :type int :default 1 :doc "抗性 水冰咒")
-  (mr-turnder :type int :default 1 :doc "圣雷")
+  (mr-thunder :type int :default 1 :doc "圣雷")
   (mr-dark :type int :default 1 :doc "黑暗")
   (mr-light :type int :default 1 :doc "光")
   (mr-year :type int :default 1 :doc "年")
@@ -119,11 +119,13 @@
   (exp-gain-system :type int :default 0 :doc "经验体系"))
 
 (defcomponent skill-caster
+  "拥有技能信息组件"
   (skill-group-id :type int :default 0 :doc "技能组id")
   (extend-skill-group :type int* :default [] :doc "扩展技能组id")
   (talent-group :type int* :default [] :doc "天赋id列表"))
 
 (defcomponent weapon-equip
+  "装备武器组件"
   (equip-sword :type bool :default false :doc "剑")
   (equip-axe :type bool :default false :doc "斧")
   (equip-hammer :type bool :default false :doc "锤")
@@ -131,3 +133,8 @@
   (equip-whip :type bool :default false :doc "鞭")
   (equip-claw :type bool :default false :doc "爪")
   (equip-staff :type bool :default false :doc "杖"))
+
+(defcomponent skill-group-data
+  "技能组信息组件"
+  (skill-group-id-table :type int* :default [] :doc "技能id表") 
+  (skill-group-sp-table :type int* :default [] :doc "技能SP列表，与id表对应"))

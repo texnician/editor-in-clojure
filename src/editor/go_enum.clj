@@ -38,3 +38,50 @@
 
 (defenum role-class-enum
   DEFAULT-CLASS)
+
+(defenum skill-function-enum
+  ATTACK                                ;攻击
+  DEFENCE                               ;防御
+  REGENERATE                            ;回复
+  WEAKEN                                ;弱化
+  ASSIST                                ;辅助
+  SPECIAL)                              ;特殊
+
+(defenum skill-class-enum
+  CURSE                                 ;咒术
+  CLEAVE                                ;斩击术
+  PHYSICAL                              ;体术
+  BREATH                                ;吐息术
+  DANCE)                                ;舞技
+
+(defenum skill-property-enum
+  FIRE                                  ;火
+  EARTH                                 ;地
+  WIND                                  ;风         
+  WATER                                 ;水
+  THUNDER                               ;圣雷
+  DARK                                  ;黑暗
+  LIGHT                                 ;光
+  YEAR                                  ;年
+  FIRE-BREATH                           ;火吐息
+  FROST-BREATH                          ;冰霜吐息
+  DYING                                 ;濒死
+  CONFUSE                               ;幻惑
+  POISON                                ;毒药
+  MANA-ABSORB                           ;法术吸收
+  CHAOS                                 ;混乱
+  SPIRIT                                ;精神
+  PARALYSIS                             ;麻痹
+  SLEEP                                 ;沉睡
+  ZERO-ATTACK                           ;0攻
+  SUNDER-ARMOR                          ;破甲
+  SLOW                                  ;缓速
+  FOOL                                  ;降智
+  ZERO-RESIST                           ;无抗
+  )
+
+(defenum skill-range-enum
+  SINGLE-ENEMY                          ;敌方单体
+  ALL-ENEMY                             ;敌方全体
+  SINGLE-FRIEND                         ;友方单体
+  ALL-FRIEND)                           ;友方全体
