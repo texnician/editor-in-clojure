@@ -35,7 +35,7 @@
 
 (def *component-factory-test-case-table*
   {:base (deffactory-test :base {:id 1001 :name "TestObject"})
-   :combat-property (deffactory-test :combat-property {:magic-resistance (str [1 2 3 4 5 6 7 8 9 10])})
+   :combat-property (deffactory-test :combat-property)
    :monster-property (deffactory-test :monster-property)
    :rpg-property (deffactory-test :rpg-property)
    :vip-item (deffactory-test :vip-item)
@@ -44,8 +44,10 @@
    :item-base (deffactory-test :item-base)
    :role-info (deffactory-test :role-info)
    :currency (deffactory-test :currency)
+   :scene-object (deffactory-test :scene-object {:scene-object-position 11})
+   :skill-caster (deffactory-test :skill-caster)
    :scene-object (deffactory-test :fish-property)
    :scene-object (deffactory-test :fish-bait-property)
-   :scene-object (deffactory-test :scene-object {:scene-object-position 11})})
+   :weapon-equip (deffactory-test :weapon-equip)})
 
 ;(deffactory-test :combat-property {:attack 80 :defence 99 :speed 7 :mental 29 :dodge-rate 73 :crit-rate 1500 :magic-resistance 0x2C})
