@@ -51,3 +51,8 @@
   "鱼饵的模板"
   (base :name "未命名的鱼饵")
   (fish-bait-property))
+
+(deftemplate fish-pole
+  "鱼竿的模板"
+  (base :name "未命名的鱼竿")
+  (fish-pole-property))

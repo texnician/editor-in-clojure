@@ -51,9 +51,13 @@
   (fish-action :type int*8 :default [5 5 0 0 0 0 0 0] :doc "行为"))
 
 (defcomponent fish-bait-property
-  "鱼饵属性组件"
+  "鱼竿属性组件"
   (:fish-bait-nmattadd :type int :default 0 :doc "普通关注加成")
   (:fish-bait-rrattadd :type int :default 0 :doc "稀有关注加成"))
+
+(defcomponent fish-pole-property
+  "鱼饵属性组件"
+  (:fish-bdatime :type int :default 0 :doc "鱼咬钩判定增加时间"))
 
 (defcomponent trade
   "交易相关的组件"
