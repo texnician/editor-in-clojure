@@ -89,7 +89,7 @@
   (mr-thunder :type int :default 1 :doc "圣雷")
   (mr-dark :type int :default 1 :doc "黑暗")
   (mr-light :type int :default 1 :doc "光")
-  (mr-year :type int :default 1 :doc "年")
+  (mr-think :type int :default 1 :doc "念")
   (mr-fire-breath :type int :default 1 :doc "火焰吐息")
   (mr-frost-breath :type int :default 1 :doc "冰霜吐息")
   (mr-physical-seal :type int :default 1 :doc "体术封印")
@@ -138,3 +138,27 @@
   "技能组信息组件"
   (skill-group-id-table :type int* :default [] :doc "技能id表") 
   (skill-group-sp-table :type int* :default [] :doc "技能SP列表，与id表对应"))
+
+(defcomponent skill-common
+  "技能信息组件，主动被动技能都有"
+  (sk-tool-tip :type string :default "No Tips" :doc "TIPS")
+  (sk-special-info :type string :default "No Info" :doc "特殊参数说明"))
+
+(defcomponent active-skill
+  "主动技能组件"
+  (sk-property-1 :type enum :in-domain skill-property-enum :default UNDEFINED-PROPERTY :doc "伤害属性1")
+  (sk-property-2 :type enum :in-domain skill-property-enum :default UNDEFINED-PROPERTY :doc "伤害属性1")
+  (sk-mp :type int :default 0 :doc "MP")
+  (sk-range :type enum :in-domain skill-range-enum :default SINGLE-ENEMY :doc "技能范围")
+  (sk-crtical :type int :default 0 :doc "暴击")
+  (sk-max-dmg :type int :default 0 :doc "最大伤害")
+  (sk-base-dmg-lower :type int :default 0 :doc "基础伤害下限")
+  (sk-base-dmg-upper :type int :default 0 :doc "基础伤害上限")
+  (sk-int-lower :type int :default 0 :doc "智力加成下限")
+  (sk-int-upper :type int :default 0 :doc "智力加成上限")
+  (sk-final-dmg-lower :type int :default 0 :doc "最终基础伤害下限")
+  (sk-final-dmg-upper :type int :default 0 :doc "最终基础伤害上限")
+  (sk-attack-multi-lower :type int :default 0 :doc "伤害加成倍数,添整数，万分比，比如11000 = 1.1")
+  (sk-attack-multi-upper :type int :default 0 :doc "伤害加成倍数,添整数，万分比，比如11000 = 1.1")
+  (sk-species-multi-lower :type int :default 0 :doc "怪物物种加成下限，万分比")
+  (sk-species-multi-upper :type int :default 0 :doc "怪物物种加成上限，万分比"))

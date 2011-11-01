@@ -55,6 +55,7 @@
   DANCE)                                ;舞技
 
 (defenum skill-property-enum
+  UNDEFINED-PROPERTY                    ;默认无属性
   FIRE                                  ;火
   EARTH                                 ;地
   WIND                                  ;风         
@@ -62,7 +63,7 @@
   THUNDER                               ;圣雷
   DARK                                  ;黑暗
   LIGHT                                 ;光
-  YEAR                                  ;年
+  THINK                                 ;念
   FIRE-BREATH                           ;火吐息
   FROST-BREATH                          ;冰霜吐息
   DYING                                 ;濒死

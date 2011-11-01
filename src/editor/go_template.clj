@@ -44,3 +44,15 @@
   "技能组模板"
   (base :name "未命名的技能组")
   (skill-group-data))
+
+
+(deftemplate active-skill
+  "主动技能"
+  (base)
+  (skill-common))
+
+(deftemplate passive-skill
+  "被动技能"
+  (base)
+  (skill-common)
+  (active-skill))
