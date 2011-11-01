@@ -59,6 +59,10 @@
   "鱼饵属性组件"
   (:fish-bdatime :type int :default 0 :doc "鱼咬钩判定增加时间"))
 
+(defcomponent insect-property
+  "昆虫属性组件"
+  (insect-height :type int*2 :default [5 15] :doc "体长"))
+
 (defcomponent trade
   "交易相关的组件"
   (is-tradable :type bool :default true :doc "是否可以交易")

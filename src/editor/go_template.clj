@@ -56,3 +56,8 @@
   "鱼竿的模板"
   (base :name "未命名的鱼竿")
   (fish-pole-property))
+
+(deftemplate insect
+  "昆虫的模板"
+  (base :name "未命名的昆虫")
+  (insect-property))
