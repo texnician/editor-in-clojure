@@ -30,7 +30,10 @@
                                            ((partial make-atom-attribute-test-statement comp-key) k v))
                                          kv)
      :test-value-map (into {} (map (fn [[k v]]
-                                     [k (read-string v)])
+                                     (if (= (:raw-type (make-cpp-attribute comp-key k)) :string)
+                                       [k v]
+                                       ;; if not string, read string value
+                                       [k (read-string v)]))
                                    kv))}))
 
 (def *component-factory-test-case-table*
@@ -47,6 +50,8 @@
    :scene-object (deffactory-test :scene-object {:scene-object-position 11})
    :skill-caster (deffactory-test :skill-caster)
    :weapon-equip (deffactory-test :weapon-equip)
-   :skill-group-data (deffactory-test :skill-group-data)})
+   :skill-group-data (deffactory-test :skill-group-data)
+   :skill-common (deffactory-test :skill-common)
+   :active-skill (deffactory-test :active-skill)})
 
 ;(deffactory-test :combat-property {:attack 80 :defence 99 :speed 7 :mental 29 :dodge-rate 73 :crit-rate 1500 :magic-resistance 0x2C})
