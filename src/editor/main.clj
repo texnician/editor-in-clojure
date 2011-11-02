@@ -44,11 +44,17 @@
         sql-list (keys (get-domain :sql))]
     (doseq [c comp-list]
       (gen-component c))
+    (println "gen-component-define-cpp comp-list")
     (gen-component-define-cpp comp-list)
+    (println "gen-component-factory comp-list")
     (gen-component-factory comp-list)
+    (println "gen-component-factory-test comp-list")
     (gen-component-factory-test comp-list)
+    (println "gen-game-object-factory comp-list")
     (gen-game-object-factory go-list)
+    (println "gen-gameobject-db comp-list")
     (gen-game-object-db go-list)
+    (println "gen-sql-class comp-list")
     (gen-sql-class sql-list)))
 
 (def *opt-table*
