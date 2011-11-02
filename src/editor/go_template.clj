@@ -46,12 +46,12 @@
   (skill-group-data))
 
 
-(deftemplate active-skill
+(deftemplate passive-skill
   "主动技能"
   (base)
   (skill-common))
 
-(deftemplate passive-skill
+(deftemplate active-skill
   "被动技能"
   (base)
   (skill-common)

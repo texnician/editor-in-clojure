@@ -84,5 +84,6 @@
 (defenum skill-range-enum
   SINGLE-ENEMY                          ;敌方单体
   ALL-ENEMY                             ;敌方全体
+  SELF                                  ;自己
   SINGLE-FRIEND                         ;友方单体
   ALL-FRIEND)                           ;友方全体
