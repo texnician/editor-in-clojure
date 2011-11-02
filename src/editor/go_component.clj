@@ -171,7 +171,7 @@
 (defcomponent active-skill
   "主动技能组件"
   (sk-property-1 :type enum :in-domain skill-property-enum :default UNDEFINED-PROPERTY :doc "伤害属性1")
-  (sk-property-2 :type enum :in-domain skill-property-enum :default UNDEFINED-PROPERTY :doc "伤害属性1")
+  (sk-property-2 :type enum :in-domain skill-property-enum :default UNDEFINED-PROPERTY :doc "伤害属性2")
   (sk-mp :type int :default 0 :doc "MP")
   (sk-range :type enum :in-domain skill-range-enum :default SINGLE-ENEMY :doc "技能范围")
   (sk-crtical :type int :default 0 :doc "暴击")

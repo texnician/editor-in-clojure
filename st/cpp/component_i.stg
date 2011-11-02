@@ -1,0 +1,14 @@
+component_swig_wrapper(filename, manifest, date, comps) ::= <<
+// <manifest>
+// @date: <date>
+
+%{
+<comps:{x|#include "<x>_component.h"}; separator="\n">
+%}
+
+%include "icomponent.h"
+<comps:{x|%include "component_gen/<x>_component_gen.h"}; separator="\n">
+<comps:{x|%include "<x>_component.h"}; separator="\n">
+>>
+
+// <filename> ends here

@@ -46,6 +46,8 @@
       (gen-component c))
     (println "gen-component-define-cpp comp-list")
     (gen-component-define-cpp comp-list)
+    (println "gen-component-swig-wrapper")
+    (gen-component-swig-wrapper comp-list)
     (println "gen-component-factory comp-list")
     (gen-component-factory comp-list)
     (println "gen-component-factory-test comp-list")
