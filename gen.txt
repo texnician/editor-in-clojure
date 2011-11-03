@@ -2,3 +2,6 @@
 (generate-cpp)
 (editor.main/generate-cpp)
 (create-role (go :player {:id 10 :name "xxx"}) "test_table" (go :monster))
+
+lein uberjar
+java -jar editor-1.1.0-beta-standalone.jar -c src/editor/pit.clj
