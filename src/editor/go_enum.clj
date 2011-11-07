@@ -66,10 +66,15 @@
   THINK                                 ;念
   FIRE-BREATH                           ;火吐息
   FROST-BREATH                          ;冰霜吐息
+  PHYSICAL-SEAL                         ;体术封
+  CLEAVE                                ;斩术封
   DYING                                 ;濒死
   CONFUSE                               ;幻惑
   POISON                                ;毒药
   MANA-ABSORB                           ;法术吸收
+  CURSE-SEAL                            ;咒封
+  BREATH-SEAL                           ;吐息封
+  DANCE-SEAL                            ;舞技封
   CHAOS                                 ;混乱
   SPIRIT                                ;精神
   PARALYSIS                             ;麻痹

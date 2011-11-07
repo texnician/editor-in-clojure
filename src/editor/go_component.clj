@@ -90,8 +90,8 @@
   (summon-cost :type int :default 1 :max 3 :doc "召唤消耗;仅在配置阵容时有用")
   (capture-inherent :type int :default 1 :doc "捕获固有值"))
 
-(defcomponent combat-property
-  "战斗相关属性组件"
+(defcomponent dynamic-combat-property
+  "动态战斗属性,需要存档"
   (hp :type int :default 1 :doc "hp;战斗时最重要的可见变量;HP=0时，判定为死亡状态。死亡状态则从战场上移除，失去一切战斗功能")
   (max-hp :type int :default 1 :doc "Max HP")
   (mp :type int :default 1
@@ -106,6 +106,10 @@
   (max-speed :type int :default 1 :doc "最大速度")
   (mental :type int :default 1 :doc "智力;影响魔法攻击效果以及MP")
   (max-mental :type int :default 1 :doc "最大智慧")
+  (buff-list :type int* :default [] :doc "当前身上的buff list"))
+
+(defcomponent combat-property
+  "战斗相关属性组件"
   (mr-fire :type int :default 1 :doc "抗性 火咒")
   (mr-earth :type int :default 1 :doc "抗性 地咒")
   (mr-wind :type int :default 1 :doc "抗性 风咒")

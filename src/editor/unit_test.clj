@@ -39,6 +39,7 @@
 (def *component-factory-test-case-table*
   {:base (deffactory-test :base {:id 1001 :name "TestObject"})
    :combat-property (deffactory-test :combat-property)
+   :dynamic-combat-property (deffactory-test :dynamic-combat-property)
    :monster-property (deffactory-test :monster-property)
    :rpg-property (deffactory-test :rpg-property)
    :vip-item (deffactory-test :vip-item)

@@ -20,6 +20,7 @@
   (base :name "未命名的怪物")
   (rpg-property)
   (monster-property)
+  (dynamic-combat-property)
   (combat-property)
   (skill-caster)
   (weapon-equip))
