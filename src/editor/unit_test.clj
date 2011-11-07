@@ -48,7 +48,7 @@
    :item-base (deffactory-test :item-base)
    :role-info (deffactory-test :role-info)
    :currency (deffactory-test :currency)
-   :scene-object (deffactory-test :scene-object {:scene-object-position 11})
+   :scene-object (deffactory-test :scene-object)
    :skill-caster (deffactory-test :skill-caster)
    :weapon-equip (deffactory-test :weapon-equip)
    :skill-group-data (deffactory-test :skill-group-data)
