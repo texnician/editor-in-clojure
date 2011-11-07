@@ -9,6 +9,7 @@
 
 (defcomponent role-info
   "角色信息组件"
+  (role-accname :type string :default "(unamed account)" :doc "人物所属帐号名")
   (role-class :type enum :default DEFAULT-CLASS :in-domain role-class-enum :doc "人物职业")
   (role-class-level :type int :default 1 :doc "职业等级")
   (role-title :type int :default 0 :doc "人物称号")
@@ -33,7 +34,8 @@
 
 (defcomponent scene-object
   "场景元素的基本属性"
-  (scene-object-position :type int :default 0 :doc "元素在场景中的位置"))
+  (scene-obj-pos-x :type int :default 0 :doc "元素在场景中的X坐标")
+  (scene-obj-pos-y :type int :default 0 :doc "元素在场景中的Y坐标"))
 
 (defcomponent seeding
   "种子属性组件"
