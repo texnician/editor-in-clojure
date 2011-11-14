@@ -108,7 +108,9 @@
   (max-speed :type int :default 1 :doc "最大速度")
   (mental :type int :default 1 :doc "智力;影响魔法攻击效果以及MP")
   (max-mental :type int :default 1 :doc "最大智慧")
-  (buff-list :type int* :default [] :doc "当前身上的buff list"))
+  (buff-list :type int* :default [] :doc "当前身上的buff list")
+  (default-ai-config :type enum :in-domain ai-config :default OFFENSIVE :doc "默认AI配置, OFFENSIVE(全力出击), NORMAL_ATTACK (普通攻击), STRATEGY(战术攻击), DEFENSIVE(保命优先)")
+  (is-alive :type bool :default true :doc "怪物是否存活"))
 
 (defcomponent combat-property
   "战斗相关属性组件"
@@ -146,8 +148,7 @@
   (defence-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
   (speed-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
   (mental-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
-  (exp-gain-system :type int :default 0 :doc "经验体系")
-  (default-ai-config :type enum :in-domain ai-config :default NORMAL_ATTACK :doc "默认AI配置, OFFENSIVE(全力出击), NORMAL_ATTACK (普通攻击), STRATEGY(战术攻击), DEFENSIVE(保命优先)"))
+  (exp-gain-system :type int :default 0 :doc "经验体系"))
 
 (defcomponent skill-caster
   "拥有技能信息组件"
