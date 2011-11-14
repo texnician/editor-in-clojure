@@ -146,7 +146,8 @@
   (defence-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
   (speed-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
   (mental-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
-  (exp-gain-system :type int :default 0 :doc "经验体系"))
+  (exp-gain-system :type int :default 0 :doc "经验体系")
+  (default-ai-config :type enum :in-domain ai-config :default NORMAL_ATTACK :doc "默认AI配置, OFFENSIVE(全力出击), NORMAL_ATTACK (普通攻击), STRATEGY(战术攻击), DEFENSIVE(保命优先)"))
 
 (defcomponent skill-caster
   "拥有技能信息组件"
@@ -191,4 +192,5 @@
   (sk-attack-multi-lower :type int :default 0 :doc "伤害加成倍数,添整数，万分比，比如11000 = 1.1")
   (sk-attack-multi-upper :type int :default 0 :doc "伤害加成倍数,添整数，万分比，比如11000 = 1.1")
   (sk-species-multi-lower :type int :default 0 :doc "怪物物种加成下限，万分比")
-  (sk-species-multi-upper :type int :default 0 :doc "怪物物种加成上限，万分比"))
+  (sk-species-multi-upper :type int :default 0 :doc "怪物物种加成上限，万分比")
+  (sk-ai-config-table :type int* :default [100, 100, 100, 100] :doc "AI配置"))

@@ -92,3 +92,10 @@
   SELF                                  ;自己
   SINGLE-FRIEND                         ;友方单体
   ALL-FRIEND)                           ;友方全体
+
+(defenum ai-config
+  OFFENSIVE ;全力出击
+  NORMAL_ATTACK ;普通攻击
+  STRATEGY ;战术攻击
+  DEFENSIVE ;保命优先
+  )
