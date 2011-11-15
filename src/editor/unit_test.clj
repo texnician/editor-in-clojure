@@ -57,6 +57,7 @@
    :fish-property (deffactory-test :fish-property)
    :fish-bait-property (deffactory-test :fish-bait-property)
    :fish-pole-property (deffactory-test :fish-pole-property)
-   :insect-property (deffactory-test :insect-property)})
+   :insect-property (deffactory-test :insect-property)
+   :pet-property (deffactory-test :pet-property)})
 
 ;(deffactory-test :combat-property {:attack 80 :defence 99 :speed 7 :mental 29 :dodge-rate 73 :crit-rate 1500 :magic-resistance 0x2C})

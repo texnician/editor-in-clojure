@@ -23,7 +23,8 @@
   (dynamic-combat-property)
   (combat-property)
   (skill-caster)
-  (weapon-equip))
+  (weapon-equip)
+  (pet-property))
 
 (deftemplate player
   "玩家的模板"

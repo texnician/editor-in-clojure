@@ -81,36 +81,48 @@
 (defcomponent rpg-property
   "RPG游戏通用属性组件"
   (level :type int :default 1 :max 100 :doc "等级;战斗时暂时无用。与技能点习得与属性增加有关")
-  (exp :type int :default 0 :doc "经验;经验满，则等级提升;经验主要在战斗胜利后获得，其它途径也可获得"))
+  (exp :type int :default 0 :doc "经验;经验满，则等级提升;经验主要在战斗胜利后获得，其它途径也可获得")
+  (next-level-exp :type int :default 10 :doc "升级到下一等级所需经验"))
+
+(defcomponent pet-property
+  "宠物特有属性"
+  (pet-owner :type uint64 :default 0 :doc "宠物所有者id(玩家id)")
+  (generation :type int :default 0 :doc "RANK后的+X;X >= 0, 当为0时不显示,当为10以上时显示一个ICON;表示该怪物是融合几次后的产物(没融合一次，新生怪RANK后数字+1);若被融合怪物双方的X不同，则取较大的X+1")
+  (pet-hometown :type string :default "SNDA Innovations" :doc "家乡")
+  (pet-birthday :type string :default "2011/11/15" :doc "生日"))
 
 (defcomponent monster-property
   "怪物专有属性组件"
   (species :type enum :default UNDEFINED-SPECIES :in-domain monster-species-enum
            :doc "物种属性;在战斗中，有专门针对某物种的攻击技能，带来附加伤害。物种属性也与怪物合成有关")
   (monster-rank :type enum :default SS :in-domain monster-rank-enum :doc "RANK;战斗中暂时无用。与怪物属性有关，最明显的怪物强弱标识")
-  (generation :type int :default 0 :doc "RANK后的+X;X >= 0, 当为0时不显示,当为10以上时显示一个ICON;表示该怪物是融合几次后的产物(没融合一次，新生怪RANK后数字+1);若被融合怪物双方的X不同，则取较大的X+1")
   (summon-cost :type int :default 1 :max 3 :doc "召唤消耗;仅在配置阵容时有用")
-  (capture-inherent :type int :default 1 :doc "捕获固有值"))
+  (capture-inherent :type int :default 1 :doc "捕获固有值")
+  (mp-height :type string :default "3.1415926" :doc "身高")
+  (mp-weight :type string :default "2.7182818" :doc "体重")
+  (mp-intro :type string :default "WHO IS YOUR DADDY?" :doc "简介"))
 
 (defcomponent dynamic-combat-property
   "动态战斗属性,需要存档"
   (hp :type int :default 1 :doc "hp;战斗时最重要的可见变量;HP=0时，判定为死亡状态。死亡状态则从战场上移除，失去一切战斗功能")
-  (max-hp :type int :default 1 :doc "Max HP")
+  (full-hp :type int :default 1 :doc "当前最大hp;")
   (mp :type int :default 1
       :doc "战斗时较重要的可见变量。技能使用都是要通过消耗MP来进行的;MP=0时，或者
       MP<技能需要MP，则不能释放技能;有些攻击会根据MP值来进行共计数值的判定")
-  (max-mp :type int :default 1 :doc "Max MP")
+  (full-mp :type int :default 1 :doc "当前最大mp;")
   (attack :type int :default 1 :doc "攻击;影响物理攻击与斩击技能")
-  (max-attack :type int :default 1 :doc "最大攻击")
+  (full-attack :type int :default 1 :doc "当前最大攻击力")
   (defence :type int :default 1 :doc "防御;影响受到的物理攻击免伤")
-  (max-defence :type int :default 1 :doc "最大防御")
+  (full-defence :type int :default 1 :doc "当前最大防御")
   (speed :type int :default 1 :doc "速度;影响行动指令执行时的先后顺序;影响回避率")
-  (max-speed :type int :default 1 :doc "最大速度")
+  (full-speed :type int :default 1 :doc "当前最大速度")
   (mental :type int :default 1 :doc "智力;影响魔法攻击效果以及MP")
-  (max-mental :type int :default 1 :doc "最大智慧")
+  (full-mental :type int :default 1 :doc "当前最大智力")
   (buff-list :type int* :default [] :doc "当前身上的buff list")
+  (lineup :type int :default 0 :doc "替补/主力")
   (default-ai-config :type enum :in-domain ai-config :default OFFENSIVE :doc "默认AI配置, OFFENSIVE(全力出击), NORMAL_ATTACK (普通攻击), STRATEGY(战术攻击), DEFENSIVE(保命优先)")
-  (is-alive :type bool :default true :doc "怪物是否存活"))
+  (is-alive :type bool :default true :doc "怪物是否存活")
+  (cur-weapon :type int :default 0 :doc "武器， 0表示空手"))
 
 (defcomponent combat-property
   "战斗相关属性组件"
@@ -143,12 +155,18 @@
   (mr-fool :type int :default 1 :doc "降智")
   (mr-zero-resist :type int :default 1 :doc "无抗")
   (hp-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
-  (mp-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
-  (attack-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
-  (defence-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
-  (speed-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
-  (mental-grow-system :type int* :default [0, 0, 0, 0] :doc "hp成长体系")
-  (exp-gain-system :type int :default 0 :doc "经验体系"))
+  (mp-grow-system :type int* :default [0, 0, 0, 0] :doc "mp成长体系")
+  (attack-grow-system :type int* :default [0, 0, 0, 0] :doc "attack成长体系")
+  (defence-grow-system :type int* :default [0, 0, 0, 0] :doc "defence成长体系")
+  (speed-grow-system :type int* :default [0, 0, 0, 0] :doc "speed成长体系")
+  (mental-grow-system :type int* :default [0, 0, 0, 0] :doc "mental成长体系")
+  (exp-gain-system :type int :default 0 :doc "经验体系")
+  (max-hp :type int :default 1 :doc "Max HP")
+  (max-mp :type int :default 1 :doc "Max MP")
+  (max-attack :type int :default 1 :doc "最大攻击")
+  (max-defence :type int :default 1 :doc "最大防御")
+  (max-speed :type int :default 1 :doc "最大速度")
+  (max-mental :type int :default 1 :doc "最大智慧"))
 
 (defcomponent skill-caster
   "拥有技能信息组件"
