@@ -26,6 +26,13 @@
   (weapon-equip)
   (pet-property))
 
+(deftemplate card-monster
+  "卡牌兽的模板"
+  (base :name "默认的卡牌兽")
+  (rpg-property)
+  (dynamic-combat-property)
+  (pet-property))
+
 (deftemplate player
   "玩家的模板"
   (base :name "未命名的玩家")
@@ -42,7 +49,6 @@
   "树的模板"
   (base :name "未命名的树")
   (scene-object))
-
 
 (deftemplate skill-group
   "技能组模板"

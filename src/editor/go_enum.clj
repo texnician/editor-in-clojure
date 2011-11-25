@@ -17,14 +17,15 @@
   )
 
 (defenum monster-rank-enum
-  SS
-  S
-  A
-  B
-  C
-  D
+  X
+  F
   E
-  F)
+  D
+  C
+  B
+  A
+  S
+  SS)
 
 (defenum magic-resistance-enum
   MR-VULNERABLE

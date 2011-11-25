@@ -4,7 +4,7 @@
 (defcomponent base
   "Game object基本组件"
   (id :type int :default 0 :doc "Domain内的唯一id")
-  (object-id :type int :default 0 :doc "GameObject运行时id")
+  (unique-id :type uint64 :default 0 :doc "object的唯一id，通过数据库分配")
   (name :type string :default "(unamed object)" :doc "Object的名字"))
 
 (defcomponent role-info
@@ -87,6 +87,8 @@
 (defcomponent pet-property
   "宠物特有属性"
   (pet-owner :type uint64 :default 0 :doc "宠物所有者id(玩家id)")
+  (monster-template-id :type int :default 0 :doc "卡牌兽对应的怪物模板id")
+  (polar :type int :default 0 :doc "怪物极性，0表示+, 1表示-")
   (generation :type int :default 0 :doc "RANK后的+X;X >= 0, 当为0时不显示,当为10以上时显示一个ICON;表示该怪物是融合几次后的产物(没融合一次，新生怪RANK后数字+1);若被融合怪物双方的X不同，则取较大的X+1")
   (pet-hometown :type string :default "SNDA Innovations" :doc "家乡")
   (pet-birthday :type string :default "2011/11/15" :doc "生日"))
@@ -111,15 +113,12 @@
       MP<技能需要MP，则不能释放技能;有些攻击会根据MP值来进行共计数值的判定")
   (full-mp :type int :default 1 :doc "当前最大mp;")
   (attack :type int :default 1 :doc "攻击;影响物理攻击与斩击技能")
-  (full-attack :type int :default 1 :doc "当前最大攻击力")
   (defence :type int :default 1 :doc "防御;影响受到的物理攻击免伤")
-  (full-defence :type int :default 1 :doc "当前最大防御")
   (speed :type int :default 1 :doc "速度;影响行动指令执行时的先后顺序;影响回避率")
-  (full-speed :type int :default 1 :doc "当前最大速度")
   (mental :type int :default 1 :doc "智力;影响魔法攻击效果以及MP")
-  (full-mental :type int :default 1 :doc "当前最大智力")
   (buff-list :type int* :default [] :doc "当前身上的buff list")
-  (lineup :type int :default 0 :doc "替补/主力")
+  (lineup :type int :default 0 :doc "替补/主力/仓库")
+  (lineup-pos :type int :default 0 :doc "阵容中的位置0/1/2/3/4/5")
   (default-ai-config :type enum :in-domain ai-config :default OFFENSIVE :doc "默认AI配置, OFFENSIVE(全力出击), NORMAL_ATTACK (普通攻击), STRATEGY(战术攻击), DEFENSIVE(保命优先)")
   (is-alive :type bool :default true :doc "怪物是否存活")
   (cur-weapon :type int :default 0 :doc "武器， 0表示空手"))
