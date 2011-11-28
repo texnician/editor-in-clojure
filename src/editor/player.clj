@@ -33,7 +33,7 @@
 :flower-rowIndex [20, 22, 20, 22, 20, 22]
 ;flower-state 1花苗 2花苞 3开花 4枯死
 :flower-state [3, 3, 3, 3, 2, 2]
-:tree-growdays [10, 11, 5, 10, 11, 9 ]
+:flower-growdays [10, 11, 5, 10, 11, 9 ]
 :stone-type [999 999 999]
 :stone-colIndex [20, 45, 48 ]
 :stone-rowIndex [11, 27, 17  ]
