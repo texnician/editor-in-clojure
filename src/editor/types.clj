@@ -137,6 +137,35 @@
             int-value
             (clojure-token->cpp-enum-token (get-attribute-default-value comp-key attr-key)))))
 
+(defmethod attribute-default-value [:int :python] [comp-key attr-key lang]
+  (get-attribute-default-value comp-key attr-key))
+
+(defmethod attribute-default-value [:uint :python] [comp-key attr-key lang]
+  (str (get-attribute-default-value comp-key attr-key)))
+
+(defmethod attribute-default-value [:int64 :python] [comp-key attr-key lang]
+  (str (get-attribute-default-value comp-key attr-key)))
+
+(defmethod attribute-default-value [:uint64 :python] [comp-key attr-key lang]
+  (str (get-attribute-default-value comp-key attr-key)))
+
+(defmethod attribute-default-value [:string :python] [comp-key attr-key lang]
+  (str \' (get-attribute-default-value comp-key attr-key) \'))
+
+(defmethod attribute-default-value [:bool :python] [comp-key attr-key lang]
+  (if (= (get-attribute-default-value comp-key attr-key) "true")
+    "True"
+    (if (= (get-attribute-default-value comp-key attr-key) "false")
+      "False"
+      (assert false))))
+
+(defmethod attribute-default-value [:enum :python] [comp-key attr-key lang]
+  (let [int-value (enum-int-value (keyword (:in-domain (get-attribute-meta-info comp-key attr-key #{:in-domain})))
+                                  (keyword (get-attribute-default-value comp-key attr-key)))]
+    (format "%d"
+            int-value)))
+
+
 (defmulti attribute-default-array-value (fn [comp-key attr-key lang]
                                           [(get-attribute-type comp-key attr-key) lang]))
 
@@ -171,6 +200,7 @@
                     (format "%d /* %s */" int-value (clojure-token->cpp-enum-token x))))
                 (read-string (get-attribute-default-value comp-key attr-key)))))))
 
+
 (defmethod attribute-default-array-value [:string :cpp] [comp-key attr-key lang]
   (if-not (atom-attribute? comp-key attr-key)
     (into [] (map #(str \" % \") (read-string (get-attribute-default-value comp-key attr-key))))))
@@ -178,6 +208,47 @@
 (defmethod attribute-default-array-value [:bool :cpp] [comp-key attr-key lang]
   (if-not (atom-attribute? comp-key attr-key)
     (read-string (get-attribute-default-value comp-key attr-key))))
+
+(defmethod attribute-default-array-value [:int :python] [comp-key attr-key lang]
+  (if-not (atom-attribute? comp-key attr-key)
+    (read-string (get-attribute-default-value comp-key attr-key))))
+
+(defmethod attribute-default-array-value [:uint :python] [comp-key attr-key lang]
+  (if-not (atom-attribute? comp-key attr-key)
+    (into [] (map (fn [x]
+                    (str x))
+                  (read-string (get-attribute-default-value comp-key attr-key))))))
+
+(defmethod attribute-default-array-value [:int64 :python] [comp-key attr-key lang]
+  (if-not (atom-attribute? comp-key attr-key)
+    (into [] (map (fn [x]
+                    (str x))
+                  (read-string (get-attribute-default-value comp-key attr-key))))))
+
+(defmethod attribute-default-array-value [:uint64 :python] [comp-key attr-key lang]
+  (if-not (atom-attribute? comp-key attr-key)
+    (into [] (map (fn [x]
+                    (str x))
+                  (read-string (get-attribute-default-value comp-key attr-key))))))
+
+(defmethod attribute-default-array-value [:enum :python] [comp-key attr-key lang]
+  (if-not (atom-attribute? comp-key attr-key)
+    (let [domain-key (keyword (:in-domain (get-attribute-meta-info comp-key attr-key #{:in-domain})))]
+      (vec (map (fn [x]
+                  (let [int-value (enum-int-value domain-key (keyword x))]
+                    (format "%d" int-value)))
+                (read-string (get-attribute-default-value comp-key attr-key)))))))
+
+(defmethod attribute-default-array-value [:string :python] [comp-key attr-key lang]
+  (if-not (atom-attribute? comp-key attr-key)
+    (into [] (map #(str \' % \') (read-string (get-attribute-default-value comp-key attr-key))))))
+
+(defmethod attribute-default-array-value [:bool :python] [comp-key attr-key lang]
+  (if-not (atom-attribute? comp-key attr-key)
+    (let [v (read-string (get-attribute-default-value comp-key attr-key))]
+      (if v
+        "True"
+        "False"))))
 
 (defmulti attribute-test-statement (fn [comp-key attr-key lang & rest]
                                      [(get-attribute-type comp-key attr-key) lang]))
@@ -333,6 +404,25 @@
    :setter-argument-name (setter-argument-name attr-key :cpp)
    :default-value (attribute-default-value comp-key attr-key :cpp)
    :default-array-value (attribute-default-array-value comp-key attr-key :cpp)
+   :doc (:doc (get-attribute-meta-info comp-key attr-key #{:doc}))
+   :array-item-test (array-attribute-item-test-statement comp-key attr-key :cpp)
+   :assert-eq (attribute-assert-eq comp-key attr-key :cpp)
+   :assert-ne (attribute-assert-ne comp-key attr-key :cpp)})
+
+(defn make-python-attribute [comp-key attr-key]
+  {:key attr-key
+   :raw-type (get-attribute-type comp-key attr-key)
+   :raw-name (name attr-key)
+   :variable-name (variable-name attr-key :cpp)
+   :member-name (attribute-member-name attr-key :cpp)
+   :define-type (define-type comp-key attr-key :cpp)
+   :getter-return-type (getter-return-type comp-key attr-key :cpp)
+   :getter-name (cpp-getter-name attr-key)
+   :setter-name (cpp-setter-name attr-key)
+   :setter-argument-type (setter-argument-type comp-key attr-key :cpp)
+   :setter-argument-name (setter-argument-name attr-key :cpp)
+   :default-value (attribute-default-value comp-key attr-key :python)
+   :default-array-value (attribute-default-array-value comp-key attr-key :python)
    :doc (:doc (get-attribute-meta-info comp-key attr-key #{:doc}))
    :array-item-test (array-attribute-item-test-statement comp-key attr-key :cpp)
    :assert-eq (attribute-assert-eq comp-key attr-key :cpp)

@@ -71,6 +71,10 @@ initialize_vector_block(push_backs, emplace_backs) ::= <<
 }
 >>
 
+push_back(attr, val) ::= "this-><attr>.push_back(<val>);"
+
+emplace_back(attr, val) ::= "this-><attr>.emplace_back(<val>);"
+
 getters_and_setters(types, getters, setters, setter_arg_types, m_names, arg_names) ::= "<types, getters, setters, setter_arg_types, m_names, arg_names:{t,g,s,sa,m,a |<getter_and_setter(t, g, s, sa, m, a)>}; separator=\"\n\n\">"
 
 getter_and_setter(type, getter, setter, setter_arg_type, m_name, arg_name) ::= <<

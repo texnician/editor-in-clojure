@@ -1,0 +1,178 @@
+component_class(name, comp_name, bases, initialize_list, initialize_members, sid, attributes, getters_and_setters) ::= <<
+class Py<name>(object):
+    def __init__(self):
+        <attributes>
+        <initialize_list>
+        <initialize_members>
+
+    def Sid():
+        return <sid>
+        
+    def Name():
+        return '<comp_name>'
+
+    <getters_and_setters>
+>>
+
+bases(base_list) ::= "<if(base_list)>: <base_list:{x | public <x>}; separator=\", \"><endif>"
+
+doc_lines(lines) ::= "<lines:{x|<doc_line(x)>}; separator=\"\n\">"
+
+doc_line(line) ::= "# <line>"
+
+attributes(types, names, docs) ::= "<types, names, docs:{t,n,d |<attr(t, n, d)>}; separator=\"\n\">"
+
+attr(type, name, doc) ::= <<
+<doc>
+self.<name> = None
+>>
+
+initialize_list(attrs, values) ::= "<if(attrs)><attrs, values:{a, v |<initial_attr(a, v)>}; wrap, anchor, separator=\"\n\"><endif>"
+
+initial_attr(attr, value) ::= "self.<attr> = <value>"
+
+initialize_members(blocks) ::= <<
+<blocks:{x|<x>}; separator="\n\n">
+>>
+
+initialize_vector_block(push_backs, emplace_backs) ::= <<
+<push_backs:{x|<x>}; separator="\n">
+>>
+
+push_back(attr, val) ::= <<
+if type(self.<attr>) is list:
+    self.<attr>.append(<val>)
+else:
+    self.<attr> = [<val>]
+>>
+
+emplace_back(attr, val) ::= ""
+
+getters_and_setters(types, getters, setters, setter_arg_types, m_names, arg_names) ::= "<types, getters, setters, setter_arg_types, m_names, arg_names:{t,g,s,sa,m,a |<getter_and_setter(t, g, s, sa, m, a)>}; separator=\"\n\n\">"
+
+getter_and_setter(type, getter, setter, setter_arg_type, m_name, arg_name) ::= <<
+def <getter>(self):
+    return self.<m_name>
+
+def <setter>(self, <arg_name>):
+    self.<m_name> = <arg_name>
+>>
+
+component_header(filename, date, manifest, name, body) ::= <<
+# <manifest>
+# @date: <date>
+
+<body>
+
+# <filename> ends here
+>>
+
+component_sid_initialize(comps, paddings, sids) ::= <<
+<comps, paddings, sids:{c, p, s|const unsigned int <c>::sid_ <p> = <s>;}; separator="\n">
+
+// Detect hash conflict, compiler would emit 're-defined variable' error on conflict.
+<comps, sids:{c, s|static const char* const __<s> = "<c>";}; separator="\n">
+>>
+
+component_raw_name_initialize(comps, paddings, raw_names) ::= <<
+<comps, paddings, raw_names:{c, p, r|const char* const <c>::raw_name_ <p> = "<r>";}; separator="\n">
+>>
+
+py_component(comps) ::= <<
+#!/usr/local/bin/python
+# -*- coding: utf-8 -*-
+
+<comps:{x|<x>}; separator="\n\n">
+
+if __name__ == '__main__':
+   print(dir())
+
+>>
+
+component_cpp(filename, date, manifest, sid_initialize, raw_name_initialize, component_headers, component_defines) ::= <<
+// <manifest>
+// @date: <date>
+
+#include "define.h"
+#include "hw_logger.h"
+#include "json/json.h"
+#include "json/json_util.h"
+<component_headers:{x|#include "<x>"}; separator="\n">
+
+<sid_initialize>
+
+<raw_name_initialize>
+
+<component_defines:{x|<x>}; separator="\n\n">
+
+// <filename> ends here
+
+>>
+
+json_function_define(to_json, from_json) ::= <<
+<to_json>
+
+<from_json>
+>>
+
+to_json(class_name, attribute_to_jsons) ::= <<
+Json::Value <class_name>::ToJSONValue() const
+{
+    Json::Value root;
+
+    <attribute_to_jsons:{x|<x>}; separator="\n">
+
+    return root;
+}
+>>
+
+from_json(class_name, attribute_from_jsons) ::= <<
+bool <class_name>::FromJSONValue(const Json::Value& root)
+{
+    try
+    {
+        <attribute_from_jsons:{x|<x>}; separator="\n">
+        
+        return true;
+    }
+    catch (std::runtime_error& e) {
+        LOG(L_ERROR, "FromJSONValue error: %s", e.what());
+        return false;
+    }
+}
+>>
+
+atom_attribute_to_json(raw_name, attr_name) ::= <<
+root["<raw_name>"] = this-\><attr_name>;
+>>
+
+array_attribute_to_json(raw_name, attr_name) ::= <<
+{
+    Json::Value& array = root["<raw_name>"];
+    ArrayToJsonValue(this-\><attr_name>, &array);
+}
+>>
+
+atom_attribute_from_json(raw_name, default_value, attr_name, converter) ::= <<
+this-\><attr_name> = root.get("<raw_name>", <default_value>).<converter>();
+>>
+
+array_attribute_from_json(raw_name, vec_type, attr_name, converter) ::= <<
+{
+    const Json::Value& array = root["<raw_name>"];
+    <vec_type> vec_val;
+    vec_val.reserve(array.size());
+    for (Json::ArrayIndex i = 0; i \< array.size(); ++i) {
+#if defined(_CXX0X_)
+        vec_val.emplace_back(array[i].<converter>());
+#else
+        vec_val.push_back(array[i].<converter>());
+#endif
+    }
+#if defined(_CXX0X_)
+    this-><attr_name> = std::move(vec_val);
+#else
+    this-><attr_name>.swap(vec_val);
+#endif
+}
+>>

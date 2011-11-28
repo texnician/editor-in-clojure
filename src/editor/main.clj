@@ -44,6 +44,7 @@
         sql-list (keys (get-domain :sql))]
     (doseq [c comp-list]
       (gen-component c))
+    (gen-python-component comp-list)
     (println "gen-component-define-cpp comp-list")
     (gen-component-define-cpp comp-list)
     (println "gen-component-swig-wrapper")
