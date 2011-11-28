@@ -35,6 +35,7 @@
   (flower-colIndex :type int*8 :default [] :doc "花的x坐标")
   (flower-rowIndex :type int*8 :default [] :doc "花的y坐标")
   (flower-state :type int*8 :default [] :doc "花的状态")
+  (stone-type :type int*8 :default [] :doc "石头类型")
   (stone-colIndex :type int*8 :default [] :doc "石头的x坐标")
   (stone-rowIndex :type int*8 :default [] :doc "石头的y坐标")
   (home-weather :type int :default 0 :doc "家园天气"))
