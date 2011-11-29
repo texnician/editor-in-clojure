@@ -6,7 +6,7 @@
 :name "初生玩家模板" 
 :role-class 1 
 :role-class-level 1 
-:role-title "新手玩家" 
+:role-title 1 
 :guild 0 
 :role-logic 100
 :role-reaction 100
@@ -20,15 +20,21 @@
 :default-player-avataritems  [90001, 80001, 70001, ]
 :card-list [8, 14]
 :card-level-list [10, 12]
+;tree-type 1苹果树 2梨树 3橘子树 4椰子树
 :tree-type [4, 4, 1, 3, 2, 3]
 :tree-colIndex [10, 12, 14, 25, 27, 29]
 :tree-rowIndex [26, 26, 16, 20, 20, 20]
-:tree-state [3, 3, 3, 3, 3, 3]
-:flower-type [1, 2, 3, 4, 1, 1]
+;tree-state 1小树苗 2小树 3大树 4结果树 5枯死树
+:tree-state [3, 3, 4, 3, 3, 4]
+:tree-growdays [5 5 5 5 5 5]
+;flower-type 101黄郁金香 102白郁金香 103红郁金香 104粉郁金香 105蓝郁金香 106紫色郁金香
+:flower-type [101, 102, 103, 104, 101, 101]
 :flower-colIndex [40, 40, 42, 42, 44, 44]
 :flower-rowIndex [20, 22, 20, 22, 20, 22]
+;flower-state 1花苗 2花苞 3开花 4枯死
 :flower-state [3, 3, 3, 3, 2, 2]
-
+:flower-growdays [10, 11, 5, 10, 11, 9 ]
+:stone-type [999 999 999]
 :stone-colIndex [20, 45, 48 ]
 :stone-rowIndex [11, 27, 17  ]
 
