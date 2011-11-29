@@ -133,7 +133,7 @@
   (speed :type int :default 1 :doc "速度;影响行动指令执行时的先后顺序;影响回避率")
   (mental :type int :default 1 :doc "智力;影响魔法攻击效果以及MP")
   (buff-list :type int* :default [] :doc "当前身上的buff list")
-  (lineup :type int :default 0 :doc "替补/主力/仓库")
+  (lineup :type int :default 2 :doc "主力 0/替补 1/仓库 2")
   (lineup-pos :type int :default 0 :doc "阵容中的位置0/1/2/3/4/5")
   (default-ai-config :type enum :in-domain ai-config :default OFFENSIVE :doc "默认AI配置, OFFENSIVE(全力出击), NORMAL_ATTACK (普通攻击), STRATEGY(战术攻击), DEFENSIVE(保命优先)")
   (is-alive :type bool :default true :doc "怪物是否存活")
