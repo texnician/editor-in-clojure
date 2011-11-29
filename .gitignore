@@ -14,3 +14,4 @@ pom.xml
 *.orig
 .*.sw*
 cpp_gen/*
+python_gen/*

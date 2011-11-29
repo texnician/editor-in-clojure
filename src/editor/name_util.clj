@@ -42,6 +42,9 @@
 (defn cpp-component-gen-header-filename [comp-key]
   (format "%s_component_gen.h" (clojure-token->cpp-variable-token comp-key)))
 
+(defn python-component-gen-filename [comp-key]
+  "py_component.py")
+
 (defn cpp-getter-name [attr-key]
   "Return c++ getter name"
   (format "Get%s" (clojure-token->cpp-token attr-key)))
