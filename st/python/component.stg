@@ -4,10 +4,12 @@ class Py<name>(object):
         <attributes>
         <initialize_list>
         <initialize_members>
-
+        
+    @staticmethod
     def Sid():
         return <sid>
         
+    @staticmethod                   
     def Name():
         return '<comp_name>'
 

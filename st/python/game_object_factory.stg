@@ -1,0 +1,97 @@
+game_object_factory_header(file_name, guard, manifest, date, factory_decls) ::= <<
+// <manifest>
+// @date: <date>
+
+#ifndef <guard>
+#define <guard>
+
+<includes()>
+
+<declares()>
+
+<factory_decls:{x|<x>}; separator="\n\n">
+
+#endif // <guard>
+
+// <file_name> ends here
+
+>>
+
+includes() ::= <<
+#include \<memory\>
+#include "define.h"
+#include "igame_object_factory.h"
+>>
+
+declares() ::= <<
+class TiXmlElement;
+class IGameObject;
+>>
+
+obj_ptr(class) ::= "SHARED_PTR\<<class>>"
+
+game_object_factory_decl(factory_name, game_object_interface) ::= <<
+class HW_BASE_API <factory_name> : public IGameObjectFactory
+{
+protected:
+    virtual <obj_ptr(game_object_interface)> DoCreateFromXML(const TiXmlElement* data);
+
+    virtual <obj_ptr(game_object_interface)> DoCreateFromJSON(const Json::Value& data);
+};
+>>
+
+game_object_factory_cpp(file_name, manifest, date, header, factory_defines) ::= <<
+# <manifest>
+# @date: <date>
+
+import py_component
+import py_component_factory
+
+class PyGameObject(object):
+    def __init__(self):
+        self.comp_map = {}
+
+    def FindComponent(self, name):
+        try:
+            return self.comp_map[name]
+        except KeyError:
+            return None
+
+    def AddComponent(self, comp):
+        self.comp_map[comp.Name()] = comp
+
+<factory_defines:{x|<x>}; separator="\n\n">
+
+# <file_name> ends here
+
+>>
+
+game_object_factory_define(factory_name, obj_interface, create_components, create_components_from_json) ::= <<
+class Py<factory_name>(object):
+    def CreateFromXML(self, xml_data):
+        p_object = PyGameObject()
+
+        <create_components:{x|<x>}; separator="\n\n">
+        
+        return p_object
+>>
+
+comp_ptr(interface) ::= "std::auto_ptr\<<interface>>"
+
+create_component(factory_name, comp_interface, comp_name, comp_factory_name) ::= <<
+if 1:
+    factory = py_component_factory.Py<comp_factory_name>()
+    p_comp = factory.CreateFromXML(xml_data)
+    p_object.AddComponent(p_comp)
+>>
+
+create_component_from_json(factory_name, comp_interface, comp_name, comp_factory_name) ::= <<
+{
+    <comp_factory_name> factory;
+    <comp_ptr(comp_interface)> p_comp(factory.CreateFromJSON(data));
+    if (p_object->AddComponent(p_comp) == false) {
+        LOG(L_ERROR, "'<factory_name>' AddComponent '<comp_name>' error");
+        return NULL;
+    }
+}
+>>

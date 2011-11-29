@@ -44,7 +44,6 @@
         sql-list (keys (get-domain :sql))]
     (doseq [c comp-list]
       (gen-component c))
-    (gen-python-component comp-list)
     (println "gen-component-define-cpp comp-list")
     (gen-component-define-cpp comp-list)
     (println "gen-component-swig-wrapper")
@@ -58,7 +57,10 @@
     (println "gen-gameobject-db comp-list")
     (gen-game-object-db go-list)
     (println "gen-sql-class comp-list")
-    (gen-sql-class sql-list)))
+    (gen-sql-class sql-list)
+    (gen-python-component comp-list)
+    (gen-python-component-factory comp-list)
+    (gen-python-game-object-factory go-list)))
 
 (def *opt-table*
   {:-c {:func compile-xml :doc "Compile domain scripts, output xml data files."}
