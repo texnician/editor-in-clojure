@@ -329,30 +329,30 @@
                                                            ["variable_name" (:variable-name attr-info)]
                                                            ["cursor_value_getter" "GetPODFieldFromCursor"]
                                                            ["field_name" (:variable-name attr-info)]
-                                                           ["comp_name" (name comp-key)]
-                                                           ["attr_name" (:raw-name attr-info)])]
+                                                           ["comp_name" (clojure-token->cpp-variable-token (name comp-key))]
+                                                           ["attr_name" (:variable-name attr-info)])]
                                (= :string raw-type) [(inst-st "set_string_from_record_set")
                                                      (list ["variable_name" (:variable-name attr-info)]
                                                            ["field_name" (:variable-name attr-info)]
-                                                           ["attr_name" (:raw-name attr-info)]
-                                                           ["comp_name" (name comp-key)])]
+                                                           ["attr_name" (:variable-name attr-info)]
+                                                           ["comp_name" (clojure-token->cpp-variable-token (name comp-key))])]
                                (= :enum raw-type) [(inst-st "set_enum_from_record_set")
                                                    (list ["variable_name" (:variable-name attr-info)]
                                                          ["field_name" (:variable-name attr-info)]
-                                                         ["attr_name" (:raw-name attr-info)]
-                                                         ["comp_name" (name comp-key)])]
+                                                         ["attr_name" (:variable-name attr-info)]
+                                                         ["comp_name" (clojure-token->cpp-variable-token (name comp-key))])]
                                (= :bool raw-type) [(inst-st "set_bool_from_record_set")
                                                    (list ["variable_name" (:variable-name attr-info)]
                                                          ["field_name" (:variable-name attr-info)]
-                                                         ["attr_name" (:raw-name attr-info)]
-                                                         ["comp_name" (name comp-key)])]
+                                                         ["attr_name" (:variable-name attr-info)]
+                                                         ["comp_name" (clojure-token->cpp-variable-token (name comp-key))])]
                                :else  [(inst-st "set_unknown_value")
                                        (list ["attr" (:variable-name attr-info)]
                                              ["setter" (:setter-name attr-info)]
                                              ["type" (name raw-type)])])]
         (render-st (inst-st "atom_attribute_from_record_set")
-                   ["comp_name" (name comp-key)]
-                   ["attr_name" (:raw-name attr-info)]
+                   ["comp_name" (clojure-token->cpp-variable-token (name comp-key))]
+                   ["attr_name" (:variable-name attr-info)]
                    ["set_block" (render-st st op-list)])))))
 
 (defn- array-attr-json-from-record-set-selector [comp-key]
@@ -362,27 +362,27 @@
                                                      (list ["int_type" (:define-type attr-info)]
                                                            ["cursor_value_getter" "GetPODFieldFromCursor"]
                                                            ["field_name" "item"]
-                                                           ["comp_name" (name comp-key)]
-                                                           ["attr_name" (:raw-name attr-info)])]
+                                                           ["comp_name" (clojure-token->cpp-variable-token (name comp-key))]
+                                                           ["attr_name" (:variable-name attr-info)])]
                                (= :string raw-type) [(inst-st "set_string_array_from_record_set")
                                                      (list ["field_name" "item"]
-                                                           ["attr_name" (:raw-name attr-info)]
-                                                           ["comp_name" (name comp-key)])]
+                                                           ["attr_name" (:variable-name attr-info)]
+                                                           ["comp_name" (clojure-token->cpp-variable-token (name comp-key))])]
                                (= :enum raw-type) [(inst-st "set_enum_array_from_record_set")
                                                    (list ["field_name" "item"]
-                                                         ["attr_name" (:raw-name attr-info)]
-                                                         ["comp_name" (name comp-key)])]
+                                                         ["attr_name" (:variable-name attr-info)]
+                                                         ["comp_name" (clojure-token->cpp-variable-token (name comp-key))])]
                                (= :bool raw-type) [(inst-st "set_bool_array_from_record_set")
                                                    (list ["field_name" "item"]
-                                                         ["attr_name" (:raw-name attr-info)]
-                                                         ["comp_name" (name comp-key)])]
+                                                         ["attr_name" (:variable-name attr-info)]
+                                                         ["comp_name" (clojure-token->cpp-variable-token (name comp-key))])]
                                :else  [(inst-st "set_unknown_value")
                                        (list ["attr" (:variable-name attr-info)]
                                              ["setter" (:setter-name attr-info)]
                                              ["type" (name raw-type)])])]
         (render-st (inst-st "array_attribute_from_record_set")
-                   ["comp_name" (name comp-key)]
-                   ["attr_name" (:raw-name attr-info)]
+                   ["comp_name" (clojure-token->cpp-variable-token (name comp-key))]
+                   ["attr_name" (:variable-name attr-info)]
                    ["set_block" (render-st st op-list)])))))
 
 (defn- attr-json-from-record-set [comp-key]
@@ -411,7 +411,7 @@
     (render-st st
                ["class_name" (cpp-component-name comp-key)]
                ["factory_name" (cpp-component-factory-name comp-key)]
-               ["raw_name" (name comp-key)]
+               ["raw_name" (clojure-token->cpp-variable-token (name comp-key))]
                ["find_component_node" (find-component-node comp-key)]
                (map #(vector "build_attributes" %)
                     (build-attributes comp-key))
@@ -568,7 +568,7 @@
       (render-st st
                  ["comp_name" (cpp-component-name comp-key)]
                  ["factory_name" (cpp-component-factory-name comp-key)]
-                 ["raw_name" (name comp-key)]
+                 ["raw_name" (clojure-token->cpp-variable-token (name comp-key))]
                  ["mock_cursor_block" (mock-cursor-block comp-key)] 
                  ["attr_test_group" (attr-test-group-fn comp-key)]
                  (map #(vector "xml_string" %) (string/split-lines (:xml-element-str test-case)))))))
@@ -663,10 +663,10 @@
   (let [info (make-cpp-attribute comp-key attr-key)]
     (let [[st op-list] (if (atom-attribute? comp-key attr-key)
                          [(inst-st "atom_attribute_to_json")
-                          (list ["raw_name" (:raw-name info)]
+                          (list ["raw_name" (:variable-name info)]
                                 ["attr_name" (:member-name info)])]
                          [(inst-st "array_attribute_to_json")
-                          (list ["raw_name" (:raw-name info)]
+                          (list ["raw_name" (:variable-name info)]
                                 ["attr_name" (:member-name info)])])]
       (render-st st op-list))))
 
@@ -682,12 +682,12 @@
   (let [info (make-cpp-attribute comp-key attr-key)]
     (let [[st op-list] (if (atom-attribute? comp-key attr-key)
                          [(inst-st "atom_attribute_from_json")
-                          (list ["raw_name" (:raw-name info)]
+                          (list ["raw_name" (:variable-name info)]
                                 ["default_value" (:default-value info)]
                                 ["attr_name" (:member-name info)]
                                 ["converter" ((:raw-type info) *json-converter-table*)])]
                          [(inst-st "array_attribute_from_json")
-                          (list ["raw_name" (:raw-name info)]
+                          (list ["raw_name" (:variable-name info)]
                                 ["vec_type" (:define-type info)]
                                 ["attr_name" (:member-name info)]
                                 ["converter" ((:raw-type info) *json-converter-table*)])])]
